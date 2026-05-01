@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>电容检查及测温</title>
+    <link rel="stylesheet" href="../../common/css/style.css">
+    <style>
+        body { background: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        .module-header { display: flex; align-items: center; padding: 15px 20px; background: white; border-bottom: 1px solid #eee; gap: 15px; }
+        .module-title { font-size: 16pt; font-weight: bold; color: #333; flex: 1; }
+        .module-main { padding: 20px; }
+        
+        /* Form sections */
+        .form-section { background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .section-title { font-size: 14pt; font-weight: bold; color: #333; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #2196F3; }
+        
+        /* Inspector & Date row */
+        .form-row { display: flex; margin-bottom: 12px; align-items: center; gap: 10px; }
+        .form-label { width: 70px; font-size: 12pt; color: #555; flex-shrink: 0; }
+        .form-input { flex: 1; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 12pt; }
+        .form-input:focus { outline: none; border-color: #2196F3; }
+        
+        /* Location grid */
+        .location-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .location-item { 
+            padding: 12px 8px; border: 2px solid #e0e0e0; border-radius: 8px; 
+            text-align: center; cursor: pointer; transition: all 0.2s; font-size: 10pt;
+            min-height: 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .location-item:hover { border-color: #2196F3; }
+        .location-item.selected { border-color: #2196F3; background: #E3F2FD; }
+        .location-item.completed { border-color: #4CAF50; background: #E8F5E9; color: #2E7D32; }
+        .location-item.completed .loc-name { color: #2E7D32; }
+        .location-item.expanded { 
+            grid-column: 1 / -1; 
+            background: white; 
+            border-color: #2196F3;
+            text-align: left;
+            min-height: auto;
+        }
+        .loc-header { display: flex; justify-content: space-between; align-items: center; }
+        .loc-name { font-weight: bold; color: #333; }
+        .loc-toggle { font-size: 14pt; transition: transform 0.3s; color: #666; }
+        .loc-toggle.expanded { transform: rotate(90deg); }
+        .loc-status { font-size: 9pt; margin-top: 3px; }
+        
+        /* Expanded check content */
+        .check-content { display: none; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ddd; }
+        .expanded .check-content { display: block; }
+        .check-row { display: flex; align-items: center; padding: 8px 0; gap: 10px; }
+        .check-row:last-child { margin-bottom: 0; }
+        .check-num { width: 20px; height: 20px; background: #2196F3; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10pt; font-weight: bold; flex-shrink: 0; }
+        .check-text { flex: 1; font-size: 11pt; color: #333; }
+        .check-options { display: flex; gap: 10px; }
+        .check-options label { display: flex; align-items: center; gap: 3px; cursor: pointer; font-size: 11pt; }
+        .check-options input[type="radio"] { width: 16px; height: 16px; cursor: pointer; }
+        .check-options input[type="radio"]:checked + span { color: #2196F3; font-weight: bold; }
+        
+        /* Photo upload */
+        .photo-section { margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ddd; }
+        .photo-label { font-size: 12pt; color: #333; margin-bottom: 8px; display: block; }
+        .photo-upload-area { 
+            border: 2px dashed #ccc; border-radius: 8px; padding: 20px; text-align: center;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .photo-upload-area:hover { border-color: #2196F3; background: #f5f5f5; }
+        .photo-upload-area.has-photo { border-color: #4CAF50; background: #E8F5E9; }
+        .photo-upload-area input[type="file"] { display: none; }
+        .photo-icon { font-size: 24pt; margin-bottom: 5px; }
+        .photo-hint { font-size: 10pt; color: #888; }
+        .photo-preview { max-width: 100%; max-height: 150px; margin-top: 10px; border-radius: 4px; }
+        .photo-filename { font-size: 10pt; color: #666; margin-top: 5px; word-break: break-all; }
+        
+        /* Complete button */
+        .complete-section { margin-top: 15px; display: flex; gap: 10px; align-items: center; }
+        .btn-complete { 
+            flex: 1; padding: 12px; background: #4CAF50; color: white; border: none; 
+            border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer;
+        }
+        .btn-complete:active { background: #388E3C; }
+        .btn-complete:disabled { background: #ccc; cursor: not-allowed; }
+        .btn-undo { 
+            padding: 12px 16px; background: #ff9800; color: white; border: none; 
+            border-radius: 8px; font-size: 14px; cursor: pointer;
+        }
+        .btn-undo:active { background: #F57C00; }
+        
+        /* Selected summary */
+        .selected-summary { 
+            display: none; margin-top: 15px; padding: 12px 15px; 
+            background: #E3F2FD; border: 2px solid #2196F3; border-radius: 8px;
+        }
+        .selected-summary.visible { display: block; }
+        .selected-summary .title { font-size: 12pt; font-weight: bold; color: #1565C0; margin-bottom: 5px; }
+        .selected-summary .locations { font-size: 11pt; color: #333; line-height: 1.6; }
+        
+        /* Buttons */
+        .btn-group { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-generate { flex: 1; padding: 16px; background: #2196F3; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .btn-generate:active { background: #1976D2; }
+        .btn-generate:disabled { background: #ccc; cursor: not-allowed; }
+        .btn-clear { padding: 16px 24px; background: #ff9800; color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-clear:active { background: #F57C00; }
+        
+        /* Loading overlay */
+        #loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 9999; }
+        .loading-box { background: white; padding: 30px 50px; border-radius: 12px; text-align: center; }
+        .loading-box p { margin-top: 15px; color: #333; }
+        
+        /* Note */
+        .note { text-align: center; color: #888; font-size: 11px; margin-top: 15px; }
+        
+        /* Completed count */
+        .completed-count { text-align: center; margin-top: 10px; font-size: 12pt; color: #4CAF50; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="module-header">
+            <button class="btn-back" onclick="parent.postMessage('goBackToCategory', '*')">← 返回分类</button>
+            <h2 class="module-title">🔌 电容检查及测温记录</h2>
+        </header>
+
+        <main class="module-main">
+            <!-- Inspector & Date -->
+            <div class="form-section">
+                <div class="section-title">📝 基本信息</div>
+                <div class="form-row">
+                    <span class="form-label">检查人</span>
+                    <input type="text" class="form-input" id="inspector" placeholder="请输入检查人姓名">
+                </div>
+                <div class="form-row">
+                    <span class="form-label">检测日期</span>
+                    <input type="date" class="form-input" id="check-date">
+                </div>
+                <div class="completed-count" id="completed-count"></div>
+            </div>
+
+            <!-- Location Selection -->
+            <div class="form-section">
+                <div class="section-title">📍 选择检查位置（点击展开检查内容）</div>
+                <div class="location-grid" id="location-grid"></div>
+                
+                <!-- Selected summary -->
+                <div class="selected-summary" id="selected-summary">
+                    <div class="title">已完成检查的位置：</div>
+                    <div class="locations" id="selected-locations"></div>
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="btn-group">
+                <button class="btn-generate" id="btn-generate" disabled>📥 生成报告（需先完成检查）</button>
+                <button class="btn-clear" id="btn-clear">🗑 清空</button>
+            </div>
+
+            <p class="note">提示：每个位置需上传热成像照片并点击"完成检查"后才能生成报告</p>
+        </main>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay">
+        <div class="loading-box">
+            <div style="font-size:24px;">⏳</div>
+            <p>正在生成Excel报告...</p>
+        </div>
+    </div>
+
+    <script src="../../common/js/lib/jszip.min.js"></script>
+    <script src="../../common/js/lib/xlsx.full.min.js"></script>
+    <script src="module.js"></script>
+</body>
+</html>

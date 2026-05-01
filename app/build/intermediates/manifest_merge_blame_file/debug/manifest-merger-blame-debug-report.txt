@@ -1,0 +1,117 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.example.propertymaintenance"
+4    android:versionCode="1"
+5    android:versionName="1.0.1" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="21"
+9        android:targetSdkVersion="34" />
+10
+11    <uses-permission android:name="android.permission.CAMERA" />
+11-->/home/wayne/Android/PropertyMaintenance/app/src/main/AndroidManifest.xml:4:5-65
+11-->/home/wayne/Android/PropertyMaintenance/app/src/main/AndroidManifest.xml:4:22-62
+12    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+12-->/home/wayne/Android/PropertyMaintenance/app/src/main/AndroidManifest.xml:5:5-80
+12-->/home/wayne/Android/PropertyMaintenance/app/src/main/AndroidManifest.xml:5:22-77
+13    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+13-->/home/wayne/Android/PropertyMaintenance/app/src/main/AndroidManifest.xml:6:5-81
+13-->/home/wayne/Android/PropertyMaintenance/app/src/main/AndroidManifest.xml:6:22-78
+14    <uses-permission android:name="android.permission.INTERNET" />
+14-->/home/wayne/Android/PropertyMaintenance/app/src/main/AndroidManifest.xml:7:5-67
+14-->/home/wayne/Android/PropertyMaintenance/app/src/main/AndroidManifest.xml:7:22-64
+15
+16    <uses-feature
+16-->/home/wayne/Android/PropertyMaintenance/app/src/main/AndroidManifest.xml:9:5-85
+17        android:name="android.hardware.camera"
+17-->/home/wayne/Android/PropertyMaintenance/app/src/main/AndroidManifest.xml:9:19-57
+18        android:required="false" />
+18-->/home/wayne/Android/PropertyMaintenance/app/src/main/AndroidManifest.xml:9:58-82
+19
+20    <permission
+20-->[androidx.core:core:1.9.0] /home/wayne/.gradle/caches/transforms-3/543740e42155bb89dcbd6bdda0f43b68/transformed/core-1.9.0/AndroidManifest.xml:22:5-24:47
+21        android:name="com.example.propertymaintenance.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+21-->[androidx.core:core:1.9.0] /home/wayne/.gradle/caches/transforms-3/543740e42155bb89dcbd6bdda0f43b68/transformed/core-1.9.0/AndroidManifest.xml:23:9-81
+22        android:protectionLevel="signature" />
+22-->[androidx.core:core:1.9.0] /home/wayne/.gradle/caches/transforms-3/543740e42155bb89dcbd6bdda0f43b68/transformed/core-1.9.0/AndroidManifest.xml:24:9-44
+23
+24    <uses-permission android:name="com.example.propertymaintenance.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+24-->[androidx.core:core:1.9.0] /home/wayne/.gradle/caches/transforms-3/543740e42155bb89dcbd6bdda0f43b68/transformed/core-1.9.0/AndroidManifest.xml:26:5-97
+24-->[androidx.core:core:1.9.0] /home/wayne/.gradle/caches/transforms-3/543740e42155bb89dcbd6bdda0f43b68/transformed/core-1.9.0/AndroidManifest.xml:26:22-94
+25
+26    <application
+26-->/home/wayne/Android/PropertyMaintenance/app/src/main/AndroidManifest.xml:11:5-36:19
+27        android:allowBackup="true"
+27-->/home/wayne/Android/PropertyMaintenance/app/src/main/AndroidManifest.xml:12:9-35
+28        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+28-->[androidx.core:core:1.9.0] /home/wayne/.gradle/caches/transforms-3/543740e42155bb89dcbd6bdda0f43b68/transformed/core-1.9.0/AndroidManifest.xml:28:18-86
+29        android:debuggable="true"
+30        android:extractNativeLibs="true"
+31        android:icon="@mipmap/ic_launcher"
+31-->/home/wayne/Android/PropertyMaintenance/app/src/main/AndroidManifest.xml:13:9-43
+32        android:label="物业维保管理系统"
+32-->/home/wayne/Android/PropertyMaintenance/app/src/main/AndroidManifest.xml:14:9-33
+33        android:supportsRtl="true"
+33-->/home/wayne/Android/PropertyMaintenance/app/src/main/AndroidManifest.xml:15:9-35
+34        android:theme="@style/AppTheme"
+34-->/home/wayne/Android/PropertyMaintenance/app/src/main/AndroidManifest.xml:16:9-40
+35        android:usesCleartextTraffic="true" >
+35-->/home/wayne/Android/PropertyMaintenance/app/src/main/AndroidManifest.xml:17:9-44
+36        <activity
+36-->/home/wayne/Android/PropertyMaintenance/app/src/main/AndroidManifest.xml:18:9-25:20
+37            android:name="com.example.propertymaintenance.MainActivity"
+37-->/home/wayne/Android/PropertyMaintenance/app/src/main/AndroidManifest.xml:19:13-41
+38            android:exported="true" >
+38-->/home/wayne/Android/PropertyMaintenance/app/src/main/AndroidManifest.xml:20:13-36
+39            <intent-filter>
+39-->/home/wayne/Android/PropertyMaintenance/app/src/main/AndroidManifest.xml:21:13-24:29
+40                <action android:name="android.intent.action.MAIN" />
+40-->/home/wayne/Android/PropertyMaintenance/app/src/main/AndroidManifest.xml:22:17-69
+40-->/home/wayne/Android/PropertyMaintenance/app/src/main/AndroidManifest.xml:22:25-66
+41
+42                <category android:name="android.intent.category.LAUNCHER" />
+42-->/home/wayne/Android/PropertyMaintenance/app/src/main/AndroidManifest.xml:23:17-77
+42-->/home/wayne/Android/PropertyMaintenance/app/src/main/AndroidManifest.xml:23:27-74
+43            </intent-filter>
+44        </activity>
+45
+46        <provider
+47            android:name="androidx.core.content.FileProvider"
+47-->/home/wayne/Android/PropertyMaintenance/app/src/main/AndroidManifest.xml:28:13-62
+48            android:authorities="com.example.propertymaintenance.fileprovider"
+48-->/home/wayne/Android/PropertyMaintenance/app/src/main/AndroidManifest.xml:29:13-64
+49            android:exported="false"
+49-->/home/wayne/Android/PropertyMaintenance/app/src/main/AndroidManifest.xml:30:13-37
+50            android:grantUriPermissions="true" >
+50-->/home/wayne/Android/PropertyMaintenance/app/src/main/AndroidManifest.xml:31:13-47
+51            <meta-data
+51-->/home/wayne/Android/PropertyMaintenance/app/src/main/AndroidManifest.xml:32:13-34:54
+52                android:name="android.support.FILE_PROVIDER_PATHS"
+52-->/home/wayne/Android/PropertyMaintenance/app/src/main/AndroidManifest.xml:33:17-67
+53                android:resource="@xml/file_paths" />
+53-->/home/wayne/Android/PropertyMaintenance/app/src/main/AndroidManifest.xml:34:17-51
+54        </provider>
+55        <provider
+55-->[androidx.emoji2:emoji2:1.2.0] /home/wayne/.gradle/caches/transforms-3/78e0f475248ccf690a14f03fa1cc16c2/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:24:9-32:20
+56            android:name="androidx.startup.InitializationProvider"
+56-->[androidx.emoji2:emoji2:1.2.0] /home/wayne/.gradle/caches/transforms-3/78e0f475248ccf690a14f03fa1cc16c2/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:25:13-67
+57            android:authorities="com.example.propertymaintenance.androidx-startup"
+57-->[androidx.emoji2:emoji2:1.2.0] /home/wayne/.gradle/caches/transforms-3/78e0f475248ccf690a14f03fa1cc16c2/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:26:13-68
+58            android:exported="false" >
+58-->[androidx.emoji2:emoji2:1.2.0] /home/wayne/.gradle/caches/transforms-3/78e0f475248ccf690a14f03fa1cc16c2/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:27:13-37
+59            <meta-data
+59-->[androidx.emoji2:emoji2:1.2.0] /home/wayne/.gradle/caches/transforms-3/78e0f475248ccf690a14f03fa1cc16c2/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:29:13-31:52
+60                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+60-->[androidx.emoji2:emoji2:1.2.0] /home/wayne/.gradle/caches/transforms-3/78e0f475248ccf690a14f03fa1cc16c2/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:30:17-75
+61                android:value="androidx.startup" />
+61-->[androidx.emoji2:emoji2:1.2.0] /home/wayne/.gradle/caches/transforms-3/78e0f475248ccf690a14f03fa1cc16c2/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:31:17-49
+62            <meta-data
+62-->[androidx.lifecycle:lifecycle-process:2.4.1] /home/wayne/.gradle/caches/transforms-3/a08e537b82c7c1ecb0346f490fbd9592/transformed/jetified-lifecycle-process-2.4.1/AndroidManifest.xml:31:13-33:52
+63                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+63-->[androidx.lifecycle:lifecycle-process:2.4.1] /home/wayne/.gradle/caches/transforms-3/a08e537b82c7c1ecb0346f490fbd9592/transformed/jetified-lifecycle-process-2.4.1/AndroidManifest.xml:32:17-78
+64                android:value="androidx.startup" />
+64-->[androidx.lifecycle:lifecycle-process:2.4.1] /home/wayne/.gradle/caches/transforms-3/a08e537b82c7c1ecb0346f490fbd9592/transformed/jetified-lifecycle-process-2.4.1/AndroidManifest.xml:33:17-49
+65        </provider>
+66    </application>
+67
+68</manifest>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>强电间月度巡检</title>
+    <link rel="stylesheet" href="../../common/css/style.css">
+    <script src="../../common/js/jspdf.min.js"></script>
+    <style>
+        body { padding: 20px; font-family: 'Microsoft YaHei', sans-serif; background: #f5f5f5; }
+        
+        .module-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
+        .module-title { font-size: 18pt; font-weight: bold; color: #333; }
+        
+        .action-bar { display: flex; gap: 10px; margin-bottom: 20px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; font-size: 12pt; cursor: pointer; }
+        .btn-primary { background: #1565C0; color: white; }
+        .btn-secondary { background: #9e9e9e; color: white; }
+        .btn-danger { background: #d32f2f; color: white; }
+        
+        .floor-item { background: white; border-radius: 8px; margin-bottom: 10px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .floor-header { display: flex; align-items: center; padding: 12px 15px; cursor: pointer; background: #fafafa; }
+        .floor-header:active { background: #f0f0f0; }
+        .floor-arrow { margin-right: 10px; color: #666; font-size: 10pt; }
+        .floor-name { flex: 1; font-size: 13pt; font-weight: bold; color: #333; }
+        .floor-count { font-size: 11pt; color: #666; background: #e0e0e0; padding: 3px 10px; border-radius: 12px; }
+        
+        .floor-rooms { padding: 10px; display: flex; flex-wrap: wrap; gap: 8px; background: white; justify-content: space-between; }
+        
+        .room-item { background: #f5f5f5; border-radius: 6px; overflow: hidden; min-width: calc((100% - 16px) / 3); flex: 1; }
+        .room-item.inspected { background: #e8f5e9; }
+        .room-header { display: flex; align-items: center; padding: 6px 8px; cursor: pointer; }
+        .room-header:active { background: #e0e0e0; }
+        .room-arrow { margin-right: 6px; color: #666; font-size: 9pt; flex-shrink: 0; }
+        .room-name { font-size: 10pt; color: #333; white-space: normal; overflow-wrap: break-word; flex: 1; min-width: 0; }
+        .room-status { font-size: 11pt; flex-shrink: 0; margin-left: 4px; }
+        .room-item.inspected .room-status { color: #4caf50; }
+        .room-item:not(.inspected) .room-status { color: #bbb; }
+        
+        .room-detail { padding: 10px; border-top: 1px solid #e0e0e0; background: white; }
+        
+        .photo-area { display: flex; flex-wrap: wrap; gap: 10px; }
+        .btn-delete-photo { width: 24px; height: 24px; border-radius: 50%; background: #d32f2f; color: white; border: none; font-size: 12pt; cursor: pointer; line-height: 24px; text-align: center; }
+
+        .btn-add-photo { width: 80px; height: 80px; border: 2px dashed #ccc; border-radius: 4px; background: #fafafa; cursor: pointer; font-size: 24pt; color: #999; display: flex; align-items: center; justify-content: center; }
+        .btn-add-photo:hover { border-color: #1565C0; color: #1565C0; }
+
+        .info-bar { background: #fff3e0; padding: 10px 15px; border-radius: 8px; margin-bottom: 15px; font-size: 11pt; color: #e65100; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="module-header">
+            <button class="btn-back" onclick="parent.postMessage('goBackToCategory', '*')">← 返回分类</button>
+            <h2 class="module-title">📋 强电间月度巡检</h2>
+        </header>
+        
+        <div class="info-bar">
+            💡 点击区域展开 → 点击强电间展开 → 拍照上传 → 统一生成PDF
+        </div>
+        
+        <div class="action-bar">
+            <button class="btn btn-primary" onclick="PowerRoomModule.generatePDF()">📄 生成PDF</button>
+            <button class="btn btn-danger" onclick="PowerRoomModule.clearAll()">🗑️ 清空数据</button>
+        </div>
+        
+        <div id="room-list">
+            <!-- 动态生成 -->
+        </div>
+    </div>
+    
+    <script src="module.js"></script>
+</body>
+</html>
