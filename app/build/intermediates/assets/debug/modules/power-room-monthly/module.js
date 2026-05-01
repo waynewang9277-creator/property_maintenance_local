@@ -536,6 +536,7 @@ var PowerRoomModule = {
             reader.onload = function(e) {
                 var base64 = e.target.result; // 包含 data:application/pdf;base64, 前缀
                 window.parent.saveFile('强电间巡检_' + self.formatDate(new Date()) + '.pdf', base64);
+                window.androidBridge.shareFile(base64, '强电间巡检_' + self.formatDate(new Date()) + '.pdf', 'application/pdf');
                 console.log('PDF saved via native bridge');
                 alert('PDF已保存到手机 Downloads 文件夹');
             };

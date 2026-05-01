@@ -119,14 +119,12 @@ var PowerRoomModule = {
                         html += '<div class="room-detail">';
                         html += '<div class="photo-area">';
                         if (hasPhoto) {
-                            for (var k = 0; k < roomData.photos.length; k++) {
-                                html += '<div class="photo-thumb">';
-                                html += '<img src="' + roomData.photos[k] + '" onclick="PowerRoomModule.previewPhoto(\'' + room + '\', ' + k + ')">';
-                                html += '<button class="btn-delete-photo" onclick="PowerRoomModule.deletePhoto(\'' + this.escapeHtml(room) + '\', ' + k + ')">×</button>';
-                                html += '</div>';
-                            }
+                            html += '<span style="color:#666;font-size:12px;margin-right:8px;">' + roomData.photos.length + '张照片</span>';
+                            html += '<button class="btn-retake-photo" onclick="PowerRoomModule.takePhoto(\'' + this.escapeHtml(room) + '\')">📷 重拍</button>';
+                            html += '<button class="btn-delete-photo" onclick="PowerRoomModule.deletePhoto(\'' + this.escapeHtml(room) + '\', -1)" style="margin-left:6px;background:#ff6b6b;color:white;border:none;padding:6px 12px;border-radius:4px;font-size:12px;">🗑 清空</button>';
+                        } else {
+                            html += '<button class="btn-add-photo" onclick="PowerRoomModule.takePhoto(\'' + this.escapeHtml(room) + '\')">📷 拍照</button>';
                         }
-                        html += '<button class="btn-add-photo" onclick="PowerRoomModule.takePhoto(\'' + this.escapeHtml(room) + '\')">📷 拍照</button>';
                         html += '</div>';
                         html += '</div>';
                     }
@@ -192,6 +190,7 @@ var PowerRoomModule = {
             console.log('Photo compressed, original size:', photoData.length, 'compressed size:', compressedPhoto.length);
             self.data[roomId].photos.push(compressedPhoto);
             self.saveData();
+            self.expandedRoom = null;
             self.render();
         });
     },
@@ -255,11 +254,17 @@ var PowerRoomModule = {
     
     deletePhoto: function(roomId, index) {
         if (this.data[roomId] && this.data[roomId].photos) {
-            this.data[roomId].photos.splice(index, 1);
-            if (this.data[roomId].photos.length === 0) {
+            if (index === -1) {
+                // 清空全部照片
                 delete this.data[roomId];
+            } else {
+                this.data[roomId].photos.splice(index, 1);
+                if (this.data[roomId].photos.length === 0) {
+                    delete this.data[roomId];
+                }
             }
             this.saveData();
+            this.expandedRoom = null;
             this.render();
         }
     },
