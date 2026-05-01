@@ -1,22 +1,4 @@
 // PowerRoomMonthly - 强电间月度巡检模块
-console.log('MODULE JS LOADED - power-room-monthly');
-
-// 存储拍照/选图回调 (callbackId -> callback)
-var _moduleCallbacks = {};
-
-// 监听来自父窗口的结果（通过 postMessage 传递）
-window.addEventListener('message', function(event) {
-    if (!event.data || !event.data.type) return;
-    if (event.data.type === 'fileChooseResult' || event.data.type === 'thermalCameraResult') {
-        var cid = event.data.callbackId;
-        var cb = _moduleCallbacks[cid];
-        if (cb) {
-            try { cb(event.data.roomId || event.data.extraData, event.data.base64); } catch(e) {}
-            delete _moduleCallbacks[cid];
-        }
-    }
-});
-
 var PowerRoomModule = {
     STORAGE_KEY: 'power_room_monthly_data',
     DATA_VERSION: '1.0',
@@ -138,7 +120,10 @@ var PowerRoomModule = {
                         html += '<div class="photo-area">';
                         if (hasPhoto) {
                             for (var k = 0; k < roomData.photos.length; k++) {
+                                html += '<div class="photo-thumb">';
+                                html += '<img src="' + roomData.photos[k] + '" onclick="PowerRoomModule.previewPhoto(\'' + room + '\', ' + k + ')">';
                                 html += '<button class="btn-delete-photo" onclick="PowerRoomModule.deletePhoto(\'' + this.escapeHtml(room) + '\', ' + k + ')">×</button>';
+                                html += '</div>';
                             }
                         }
                         html += '<button class="btn-add-photo" onclick="PowerRoomModule.takePhoto(\'' + this.escapeHtml(room) + '\')">📷 拍照</button>';
@@ -189,29 +174,20 @@ var PowerRoomModule = {
     },
     
     takePhoto: function(roomId) {
-        // 使用 postMessage 代替 window.parent.requestFileChoose（避免跨 frame 的 Same-Origin Policy 限制）
-        var callbackId = 'cb_' + Date.now();
-        _moduleCallbacks[callbackId] = function(roomId, base64) {
+        // 使用父窗口的文件选择器（因为 WebView 的 WebChromeClient 无法处理 iframe 内部的 input[type=file]）
+        window.parent.requestFileChoose(roomId, function(roomId, base64) {
             if (base64) {
                 PowerRoomModule.addPhoto(roomId, base64);
             }
-        };
-        console.log('[Module] takePhoto, roomId:', roomId, 'callbackId:', callbackId);
-        try {
-            window.parent.postMessage({ type: 'requestFileChoose', roomId: roomId, callbackId: callbackId }, '*');
-        } catch(e) {
-            console.error('[Module] postMessage requestFileChoose error:', e);
-        }
+        });
     },
     
     addPhoto: function(roomId, photoData) {
         var self = this;
         if (!this.data[roomId]) {
-            this.data[roomId] = { photos: [], originalPhotos: [], date: this.formatDate(new Date()) };
+            this.data[roomId] = { photos: [], date: this.formatDate(new Date()) };
         }
-        // 同时保存原始照片（用于PDF高质量输出）和压缩版（用于预览+存储）
-        this.data[roomId].originalPhotos.push(photoData);
-        // 压缩照片到100KB左右：缩小尺寸 + JPEG质量压缩（用于预览和localStorage存储）
+        // 压缩照片到100KB左右：缩小尺寸 + JPEG质量压缩
         this.compressImage(photoData, function(compressedPhoto) {
             console.log('Photo compressed, original size:', photoData.length, 'compressed size:', compressedPhoto.length);
             self.data[roomId].photos.push(compressedPhoto);
@@ -223,6 +199,8 @@ var PowerRoomModule = {
     // 压缩图片到100KB左右
     compressImage: function(dataUrl, callback) {
         var img = new Image();
+        img.crossOrigin = 'anonymous';
+        
         // 清理base64：去掉可能的换行符和空格
         var cleanDataUrl = dataUrl.replace(/[\r\n\s]/g, '');
         
@@ -274,49 +252,12 @@ var PowerRoomModule = {
         };
         img.src = cleanDataUrl;
     },
-
-    // PDF专用压缩：从原始照片重新压（质量0.9），仅缩尺寸不追求小文件
-    compressForPDF: function(originalDataUrl, callback) {
-        var img = new Image();
-        var cleanDataUrl = originalDataUrl.replace(/[\r\n\s]/g, '');
-
-        img.onload = function() {
-            // PDF用更长边1280px（足够打印A4）
-            var maxSize = 1280;
-            var width = img.width;
-            var height = img.height;
-            if (width > maxSize || height > maxSize) {
-                if (width > height) {
-                    height = Math.round(height * maxSize / width);
-                    width = maxSize;
-                } else {
-                    width = Math.round(width * maxSize / height);
-                    height = maxSize;
-                }
-            }
-
-            var canvas = document.createElement('canvas');
-            canvas.width = width;
-            canvas.height = height;
-            var ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, width, height);
-
-            // 质量0.9，不追求小文件（PDF里JPEG压缩一次就够了）
-            var result = canvas.toDataURL('image/jpeg', 0.9);
-            callback(result);
-        };
-        img.onerror = function() {
-            // 降级：用原始数据
-            callback(cleanDataUrl);
-        };
-        img.src = cleanDataUrl;
-    },
-
+    
     deletePhoto: function(roomId, index) {
         if (this.data[roomId] && this.data[roomId].photos) {
             this.data[roomId].photos.splice(index, 1);
-            if (this.data[roomId].originalPhotos) {
-                this.data[roomId].originalPhotos.splice(index, 1);
+            if (this.data[roomId].photos.length === 0) {
+                delete this.data[roomId];
             }
             this.saveData();
             this.render();
@@ -326,17 +267,8 @@ var PowerRoomModule = {
     previewPhoto: function(roomId, index) {
         var data = this.data[roomId];
         if (data && data.photos[index]) {
-            var modal = document.getElementById('photo-preview-modal');
-            var img = document.getElementById('photo-preview-img');
-            img.src = data.photos[index];
-            modal.classList.add('active');
+            window.open(data.photos[index], '_blank');
         }
-    },
-
-    closePreview: function() {
-        var modal = document.getElementById('photo-preview-modal');
-        modal.classList.remove('active');
-        document.getElementById('photo-preview-img').src = '';
     },
     
     formatDate: function(date) {
@@ -559,95 +491,59 @@ var PowerRoomModule = {
             y += 10;
             
             console.log('PDF header done, starting photo pages...');
-
+            
             // ===== 照片页（只有照片，无文字）=====
-            // 预处理所有照片：优先用原始照片压质量0.9，否则降级用压缩版
-            var self = this;
-            var photoQueue = [];
-
             for (var i = 0; i < summary.length; i++) {
                 var item = summary[i];
                 if (item.inspectedList.length === 0) continue;
-
+                
                 for (var j = 0; j < item.inspectedList.length; j++) {
                     var room = item.inspectedList[j];
-                    var roomData = self.data[room];
-
+                    var roomData = this.data[room];
+                    
                     if (!roomData || !roomData.photos || roomData.photos.length === 0) continue;
-
+                    
                     for (var k = 0; k < roomData.photos.length; k++) {
-                        var photoItem = { room: room, photoIndex: k, photoData: null };
-                        photoQueue.push(photoItem);
-                    }
-                }
-            }
-
-            // 预处理：每个照片用原始数据压质量0.9（异步）
-            if (photoQueue.length === 0) {
-                finishPDF();
-                return;
-            }
-
-            Promise.all(photoQueue.map(function(item) {
-                return new Promise(function(resolve) {
-                    var roomData = self.data[item.room];
-                    var hasOriginal = roomData && roomData.originalPhotos && roomData.originalPhotos[item.photoIndex];
-                    var sourceData = hasOriginal
-                        ? roomData.originalPhotos[item.photoIndex]
-                        : roomData.photos[item.photoIndex];
-
-                    self.compressForPDF(sourceData, function(hqPhoto) {
-                        item.photoData = hqPhoto;
-                        resolve();
-                    });
-                });
-            })).then(finishPDF).catch(function(err) {
-                console.error('Photo processing failed:', err);
-                alert('照片处理失败: ' + err.message);
-            });
-
-            // 照片预处理完成后生成PDF
-            function finishPDF() {
-                for (var p = 0; p < photoQueue.length; p++) {
-                    var item = photoQueue[p];
-                    pdf.addPage();
-
-                    pdf.setFontSize(14);
-                    pdf.setFont('helvetica', 'bold');
-                    pdf.text(item.room, margin, margin + 5);
-
-                    try {
-                        if (item.photoData) {
-                            pdf.addImage(item.photoData, 'JPEG', margin, margin + 10, pageWidth - margin * 2, pageHeight - margin * 2 - 10);
-                        } else {
+                        console.log('Processing photo', k, 'for room', room);
+                        // 每张照片一张A4纸，带标题
+                        pdf.addPage();
+                        
+                        // 标题：强电间编号
+                        pdf.setFontSize(14);
+                        pdf.setFont('helvetica', 'bold');
+                        pdf.text(room, margin, margin + 5);
+                        
+                        try {
+                            // 直接添加图片（不转换黑白，避免大图片处理超时）
+                            console.log('Adding image to PDF...');
+                            pdf.addImage(roomData.photos[k], 'JPEG', margin, margin + 10, pageWidth - margin * 2, pageHeight - margin * 2 - 10);
+                            console.log('Image added successfully');
+                        } catch(e) {
+                            console.error('Image add failed:', e.message);
                             pdf.setFontSize(10);
                             pdf.setFont('helvetica', 'normal');
-                            pdf.text('[Photo unavailable]', pageWidth / 2, pageHeight / 2, { align: 'center' });
+                            pdf.text('[Photo failed to load]', pageWidth / 2, pageHeight / 2, { align: 'center' });
                         }
-                    } catch(e) {
-                        pdf.setFontSize(10);
-                        pdf.setFont('helvetica', 'normal');
-                        pdf.text('[Photo failed to load]', pageWidth / 2, pageHeight / 2, { align: 'center' });
                     }
                 }
-
-                console.log('All photos processed, saving PDF...');
-
-                // 通过原生 Android 桥接保存 PDF（避免 WebView blob 下载失效）
-                var pdfBlob = pdf.output('blob');
-                var reader = new FileReader();
-                reader.onload = function(e) {
-                    var base64 = e.target.result; // 包含 data:application/pdf;base64, 前缀
-                    var fileName = '强电间巡检_' + self.formatDate(new Date()) + '.pdf';
-                    try { window.parent.postMessage({ type: 'shareFile', fileName: fileName, base64Data: base64 }, '*'); } catch(e) { console.error('shareFile postMessage error:', e); }
-                    console.log('PDF share triggered');
-                };
-                reader.onerror = function(e) {
-                    console.error('FileReader error:', e);
-                    alert('PDF生成失败');
-                };
-                reader.readAsDataURL(pdfBlob);
             }
+            
+            console.log('All photos processed, saving PDF...');
+            
+            // 通过原生 Android 桥接保存 PDF（避免 WebView blob 下载失效）
+            var pdfBlob = pdf.output('blob');
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var base64 = e.target.result; // 包含 data:application/pdf;base64, 前缀
+                window.parent.saveFile('强电间巡检_' + self.formatDate(new Date()) + '.pdf', base64);
+                console.log('PDF saved via native bridge');
+                alert('PDF已保存到手机 Downloads 文件夹');
+            };
+            reader.onerror = function(e) {
+                console.error('FileReader error:', e);
+                alert('PDF保存失败');
+            };
+            reader.readAsDataURL(pdfBlob);
         } catch(e) {
             console.error('PDF generation failed:', e);
             alert('PDF生成失败: ' + e.message);

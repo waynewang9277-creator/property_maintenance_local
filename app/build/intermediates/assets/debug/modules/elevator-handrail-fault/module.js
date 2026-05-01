@@ -1,21 +1,5 @@
 // Elevator Fault Report Module - 电梯月度故障报告
 
-// 存储回调（用于有回调的场景）
-var _faultModuleCallbacks = {};
-
-// 监听来自父窗口的结果
-window.addEventListener('message', function(event) {
-    if (!event.data || !event.data.type) return;
-    if (event.data.type === 'fileChooseResult' || event.data.type === 'thermalCameraResult') {
-        var cid = event.data.callbackId;
-        var cb = _faultModuleCallbacks[cid];
-        if (cb) {
-            try { cb(event.data.roomId || event.data.extraData, event.data.base64); } catch(e) {}
-            delete _faultModuleCallbacks[cid];
-        }
-    }
-});
-
 const FaultModule = {
     currentTab: 'report',
     currentBuilding: 'office',
@@ -418,7 +402,7 @@ const FaultModule = {
             var buffer = await new Promise(function(resolve, reject) {
                 console.log('[Debug] XHR creating...');
                 var xhr = new XMLHttpRequest();
-                xhr.open('GET', '../../templates/elevator_monthly_report.xlsx', true);
+                xhr.open('GET', '../../assets/templates/elevator_monthly_report.xlsx', true);
                 xhr.responseType = 'arraybuffer';
                 xhr.onload = function() {
                     console.log('[Debug] XHR onload, status:', xhr.status);
@@ -463,10 +447,6 @@ const FaultModule = {
             var p3Cell = xmlDoc1.querySelector('c[r="P3"]');
             if (p3Cell) {
                 p3Cell.setAttribute('t', 'inlineStr');
-                var existingV = p3Cell.querySelector('v');
-                if (existingV) p3Cell.removeChild(existingV);
-                var existingIs = p3Cell.querySelector('is');
-                if (existingIs) p3Cell.removeChild(existingIs);
                 var isEl = xmlDoc1.createElementNS(ns, 'is');
                 var tEl = xmlDoc1.createElementNS(ns, 't');
                 tEl.textContent = monthLabel;
@@ -501,6 +481,10 @@ const FaultModule = {
             console.log('[Debug] Q3 cell found:', q3Cell !== null);
             if (q3Cell) {
                 q3Cell.setAttribute('t', 'inlineStr');
+                var existingV2 = q3Cell.querySelector('v');
+                if (existingV2) q3Cell.removeChild(existingV2);
+                var existingIs2 = q3Cell.querySelector('is');
+                if (existingIs2) q3Cell.removeChild(existingIs2);
                 var isEl2 = xmlDoc2.createElementNS(ns, 'is');
                 var tEl2 = xmlDoc2.createElementNS(ns, 't');
                 tEl2.textContent = monthLabel;
@@ -549,7 +533,7 @@ const FaultModule = {
             if (calcPr2) {
                 var calcXml2 = await calcPr2.async('string');
                 if (calcXml2.indexOf('calcId') !== -1) {
-                    calcXml2 = calcXml2.replace(/(<calcPr[^>]*?)\/>/, '$1 fullCalcOnLoad="1"/>');
+                    calcXml2 = calcXml2.replace(/(<calcPr[^>]*?)\//, '$1 fullCalcOnLoad="1"/>');
                     zip.file('xl/workbook.xml', calcXml2);
                 }
             }
@@ -567,22 +551,48 @@ const FaultModule = {
 
             var fileName = '电梯月度故障报告_' + month.split('-')[1] + '月.xlsx';
 
-            // 直接调起分享面板
-            try { window.parent.postMessage({ type: 'shareFile', fileName: fileName, base64Data: base64 }, '*'); } catch(e) { console.error('shareFile postMessage error:', e); }
-            document.getElementById('loading-overlay').style.display = 'none';
-            var overlay = document.getElementById('loading-overlay');
-            if (overlay) {
-                overlay.innerHTML = '<div style="color:#4caf50;font-size:18px;font-weight:bold;padding:20px;">✅ 正在打开分享面板...</div>';
-                overlay.style.display = 'flex';
-                overlay.style.justifyContent = 'center';
-                overlay.style.alignItems = 'center';
-                overlay.style.background = 'rgba(255,255,255,0.95)';
-                overlay.style.flexDirection = 'column';
-                overlay.style.gap = '10px';
-                overlay.style.color = '#333';
-                overlay.onclick = function() { overlay.style.display = 'none'; };
-                setTimeout(function() { overlay.style.display = 'none'; }, 2000);
-            }
+            // 直接调用 saveFile，用超时兜底关闭 loading（Java 回调机制在部分 WebView 版本不通）
+            window.androidBridge.saveFile(base64, fileName);
+            var savedCallbackFired = false;
+            var origOnFileSaved = window.onFileSaved;
+            window.onFileSaved = function(success, errorMsg) {
+                if (savedCallbackFired) return;
+                savedCallbackFired = true;
+                window.onFileSaved = origOnFileSaved;
+                document.getElementById('loading-overlay').style.display = 'none';
+                var overlay = document.getElementById('loading-overlay');
+                if (overlay) {
+                    overlay.innerHTML = '<div style="color:#4caf50;font-size:18px;font-weight:bold;padding:20px;">✅ 报告已保存到手机 Downloads 文件夹！</div>';
+                    overlay.style.display = 'flex';
+                    overlay.style.justifyContent = 'center';
+                    overlay.style.alignItems = 'center';
+                    overlay.style.background = 'rgba(255,255,255,0.95)';
+                    overlay.style.flexDirection = 'column';
+                    overlay.style.gap = '10px';
+                    overlay.style.color = '#333';
+                    overlay.onclick = function() { overlay.style.display = 'none'; };
+                    setTimeout(function() { overlay.style.display = 'none'; }, 3000);
+                }
+            };
+            setTimeout(function() {
+                if (!savedCallbackFired) {
+                    savedCallbackFired = true;
+                    document.getElementById('loading-overlay').style.display = 'none';
+                    var overlay = document.getElementById('loading-overlay');
+                    if (overlay) {
+                        overlay.innerHTML = '<div style="color:#4caf50;font-size:18px;font-weight:bold;padding:20px;">✅ 报告已保存到手机 Downloads 文件夹！</div>';
+                        overlay.style.display = 'flex';
+                        overlay.style.justifyContent = 'center';
+                        overlay.style.alignItems = 'center';
+                        overlay.style.background = 'rgba(255,255,255,0.95)';
+                        overlay.style.flexDirection = 'column';
+                        overlay.style.gap = '10px';
+                        overlay.style.color = '#333';
+                        overlay.onclick = function() { overlay.style.display = 'none'; };
+                        setTimeout(function() { overlay.style.display = 'none'; }, 3000);
+                    }
+                }
+            }, 2000);
         } catch (err) {
             console.error(err);
             document.getElementById('loading-overlay').style.display = 'none';
@@ -914,7 +924,7 @@ const FaultModule = {
 
                 var buffer = await new Promise(function(resolve, reject) {
                     var xhr = new XMLHttpRequest();
-                    xhr.open('GET', '../../templates/elevator_monthly_stat.xlsx', true);
+                    xhr.open('GET', '../../assets/templates/elevator_monthly_stat.xlsx', true);
                     xhr.responseType = 'arraybuffer';
                     xhr.onload = function() {
                         console.log('[Debug] XHR onload, status:', xhr.status);
@@ -989,22 +999,48 @@ const FaultModule = {
                     reader.readAsDataURL(blob);
                 });
                 var statFileName = '电梯月度故障统计_' + month.split('-')[1] + '月.xlsx';
-                // 直接调起分享面板
-                try { window.parent.postMessage({ type: 'shareFile', fileName: statFileName, base64Data: base64 }, '*'); } catch(e) { console.error('shareFile postMessage error:', e); }
-                document.getElementById('loading-overlay').style.display = 'none';
-                var overlay = document.getElementById('loading-overlay');
-                if (overlay) {
-                    overlay.innerHTML = '<div style="color:#4caf50;font-size:18px;font-weight:bold;padding:20px;">✅ 正在打开分享面板...</div>';
-                    overlay.style.display = 'flex';
-                    overlay.style.justifyContent = 'center';
-                    overlay.style.alignItems = 'center';
-                    overlay.style.background = 'rgba(255,255,255,0.95)';
-                    overlay.style.flexDirection = 'column';
-                    overlay.style.gap = '10px';
-                    overlay.style.color = '#333';
-                    overlay.onclick = function() { overlay.style.display = 'none'; };
-                    setTimeout(function() { overlay.style.display = 'none'; }, 2000);
-                }
+                // 直接调用 saveFile，用超时兜底关闭 loading
+                window.androidBridge.saveFile(base64, statFileName);
+                var savedCallbackFired = false;
+                var origOnFileSaved = window.onFileSaved;
+                window.onFileSaved = function(success, errorMsg) {
+                    if (savedCallbackFired) return;
+                    savedCallbackFired = true;
+                    window.onFileSaved = origOnFileSaved;
+                    document.getElementById('loading-overlay').style.display = 'none';
+                    var overlay = document.getElementById('loading-overlay');
+                    if (overlay) {
+                        overlay.innerHTML = '<div style="color:#4caf50;font-size:18px;font-weight:bold;padding:20px;">✅ 统计表已保存到手机 Downloads 文件夹！</div>';
+                        overlay.style.display = 'flex';
+                        overlay.style.justifyContent = 'center';
+                        overlay.style.alignItems = 'center';
+                        overlay.style.background = 'rgba(255,255,255,0.95)';
+                        overlay.style.flexDirection = 'column';
+                        overlay.style.gap = '10px';
+                        overlay.style.color = '#333';
+                        overlay.onclick = function() { overlay.style.display = 'none'; };
+                        setTimeout(function() { overlay.style.display = 'none'; }, 3000);
+                    }
+                };
+                setTimeout(function() {
+                    if (!savedCallbackFired) {
+                        savedCallbackFired = true;
+                        document.getElementById('loading-overlay').style.display = 'none';
+                        var overlay = document.getElementById('loading-overlay');
+                        if (overlay) {
+                            overlay.innerHTML = '<div style="color:#4caf50;font-size:18px;font-weight:bold;padding:20px;">✅ 统计表已保存到手机 Downloads 文件夹！</div>';
+                            overlay.style.display = 'flex';
+                            overlay.style.justifyContent = 'center';
+                            overlay.style.alignItems = 'center';
+                            overlay.style.background = 'rgba(255,255,255,0.95)';
+                            overlay.style.flexDirection = 'column';
+                            overlay.style.gap = '10px';
+                            overlay.style.color = '#333';
+                            overlay.onclick = function() { overlay.style.display = 'none'; };
+                            setTimeout(function() { overlay.style.display = 'none'; }, 3000);
+                        }
+                    }
+                }, 2000);
             } catch (err) {
                 console.error('[Debug] Catch error:', err.message, err);
                 document.getElementById('loading-overlay').style.display = 'none';

@@ -2,22 +2,6 @@
 // 参照 battery-test 模块架构重写
 // 照片仅存内存，不写 localStorage
 
-// 存储拍照/选图回调
-var _busbarModuleCallbacks = {};
-
-// 监听来自父窗口的结果
-window.addEventListener('message', function(event) {
-    if (!event.data || !event.data.type) return;
-    if (event.data.type === 'fileChooseResult' || event.data.type === 'thermalCameraResult') {
-        var cid = event.data.callbackId;
-        var cb = _busbarModuleCallbacks[cid];
-        if (cb) {
-            try { cb(event.data.roomId || event.data.extraData, event.data.base64); } catch(e) {}
-            delete _busbarModuleCallbacks[cid];
-        }
-    }
-});
-
 const BusbarModule = {
     // 分组定义及设备列表
     GROUPS: [
@@ -119,24 +103,22 @@ const BusbarModule = {
             { id: '6-租户4-6', row: 12, col: 14 },
             { id: '5-租户1-3', row: 13, col: 2 },
             { id: '5-租户4-6', row: 13, col: 6 },
-            // 办公楼高区 (Rows 13-16) - 16~30层，每行4个设备，参考低区列布局
-            // Row13: 30层(I列) + 29层(M列) | Row14: 28-25层 | Row15: 23-20层 | Row16: 19-16层
-            // 设备在 B/F/J/N (col=1/5/9/13)，照片在 C/G/K/O (+1)，温度在 D/H/L/P (+2)
-            // 租户4-6 → B/F/J/N(col=1/5/9/13) → 照片+1列, 温度+2列
-            { id: '30-租户4-6', row: 13, col: 9 },   // I列=30层
-            { id: '29-租户4-6', row: 13, col: 13 },  // M列=29层
-            { id: '28-租户4-6', row: 14, col: 1 },    // B列=28层
-            { id: '27-租户4-6', row: 14, col: 5 },    // F列=27层
-            { id: '26-租户4-6', row: 14, col: 9 },   // J列=26层
-            { id: '25-租户4-6', row: 14, col: 13 },   // N列=25层
-            { id: '23-租户4-6', row: 15, col: 1 },    // B列=23层
-            { id: '22-租户4-6', row: 15, col: 5 },    // F列=22层
-            { id: '21-租户4-6', row: 15, col: 9 },    // J列=21层
-            { id: '20-租户4-6', row: 15, col: 13 },   // N列=20层
-            { id: '19-租户4-6', row: 16, col: 1 },    // B列=19层
-            { id: '18-租户4-6', row: 16, col: 5 },    // F列=18层
-            { id: '17-租户4-6', row: 16, col: 9 },   // J列=17层
-            { id: '16-租户4-6', row: 16, col: 13 }    // N列=16层
+            // 办公楼高区 (Rows 14-27) - 16~30层，每层只有租户4-6
+            { id: '16-租户4-6', row: 14, col: 10 },
+            { id: '17-租户4-6', row: 15, col: 10 },
+            { id: '18-租户4-6', row: 16, col: 10 },
+            { id: '19-租户4-6', row: 17, col: 10 },
+            { id: '20-租户4-6', row: 18, col: 10 },
+            { id: '21-租户4-6', row: 19, col: 10 },
+            { id: '22-租户4-6', row: 20, col: 10 },
+            { id: '23-租户4-6', row: 21, col: 10 },
+            // 24层跳过
+            { id: '25-租户4-6', row: 22, col: 10 },
+            { id: '26-租户4-6', row: 23, col: 10 },
+            { id: '27-租户4-6', row: 24, col: 10 },
+            { id: '28-租户4-6', row: 25, col: 10 },
+            { id: '29-租户4-6', row: 26, col: 10 },
+            { id: '30-租户4-6', row: 27, col: 10 }
         ];
         defs.forEach(function(d) { map[d.id] = d; });
         return map;
@@ -153,8 +135,92 @@ const BusbarModule = {
         document.getElementById('check-date').value = today;
     },
 
+    // OCR 识别温度
+    recognizeTemperature: function(photoData, callback) {
+        console.log('[Busbar] recognizeTemperature called, photoData type:', typeof photoData, photoData ? photoData.length : 'null');
+
+        if (typeof Tesseract === 'undefined') {
+            console.log('[Busbar] Tesseract not loaded');
+            callback(null);
+            return;
+        }
+
+        // 尝试反色预处理（热成像照片白底黑字，反色后更易识别）
+        var img = new Image();
+        img.onload = function() {
+            try {
+                var canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                var ctx = canvas.getContext('2d');
+                // 反色滤镜：白底黑字 -> 黑底白字
+                ctx.fillStyle = 'black';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.globalCompositeOperation = 'difference';
+                ctx.drawImage(img, 0, 0);
+                // 也可以加对比度增强
+                var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                ctx.putImageData(imageData, 0, 0);
+
+                var processedData = canvas.toDataURL('image/jpeg', 0.9);
+                console.log('[Busbar] Processed image size:', processedData.length);
+
+                Tesseract.recognize(processedData, 'eng').then(function(result) {
+                    var text = result.data.text;
+                    console.log('[Busbar] OCR raw text:', JSON.stringify(text));
+
+                    var maxMatch = text.match(/Max[:\s]*(\d+\.?\d*)/i);
+                    var minMatch = text.match(/Min[:\s]*(\d+\.?\d*)/i);
+                    var avgMatch = text.match(/Avg[:\s]*(\d+\.?\d*)/i);
+
+                    if (maxMatch || minMatch || avgMatch) {
+                        callback({
+                            max: maxMatch ? maxMatch[1] : '',
+                            min: minMatch ? minMatch[1] : '',
+                            avg: avgMatch ? avgMatch[1] : ''
+                        });
+                    } else {
+                        var temps = text.match(/(\d{2}\.\d)/g);
+                        if (temps && temps.length >= 3) {
+                            callback({ max: temps[0] || '', min: temps[1] || '', avg: temps[2] || '' });
+                        } else {
+                            var nums = text.match(/(\d+\.?\d*)/g);
+                            if (nums && nums.length >= 3) {
+                                callback({ max: nums[0] || '', min: nums[1] || '', avg: nums[2] || '' });
+                            } else {
+                                console.log('[Busbar] OCR could not extract temps, raw:', text);
+                                callback(null);
+                            }
+                        }
+                    }
+                }).catch(function(e) {
+                    console.log('[Busbar] OCR recognize error:', e);
+                    callback(null);
+                });
+            } catch(e2) {
+                console.log('[Busbar] Image preprocessing error:', e2);
+                // fallback: 直接用原图
+                Tesseract.recognize(photoData, 'eng').then(function(result) {
+                    console.log('[Busbar] OCR fallback text:', result.data.text);
+                    callback(null);
+                }).catch(function(e3) {
+                    console.log('[Busbar] OCR fallback error:', e3);
+                    callback(null);
+                });
+            }
+        };
+        img.onerror = function(e) {
+            console.log('[Busbar] Image load error:', e);
+            callback(null);
+        };
+        img.src = photoData;
+    },
+
     bindEvents: function() {
         var self = this;
+        document.getElementById('btn-new-group').addEventListener('click', function() {
+            self.showGroupSelector();
+        });
         document.getElementById('btn-new-group').addEventListener('click', function() {
             if (document.getElementById('group-selector-modal')) return;
             self.showGroupSelector();
@@ -348,32 +414,12 @@ const BusbarModule = {
         var device = this.testForms[formIdx].devices[devIdx];
         console.log('[Busbar] takePhoto:', { formIdx: formIdx, devIdx: devIdx, deviceId: device.id });
 
-        // 先显示"识别中..."让用户知道 OCR 即将开始
-        var btn = document.getElementById('photo-btn-' + formIdx + '-' + devIdx);
-        if (btn) {
-            btn.innerHTML = '🔄 识别中...';
-            btn.className = 'btn-photo has-photo';
-        }
-
-        var self = this;
-        var device = this.testForms[formIdx].devices[devIdx];
-        var callbackId = 'bb_cb_' + Date.now();
-        _busbarModuleCallbacks[callbackId] = function(extraData, base64) {
-            console.log('[Busbar] thermalCamera callback:', { extraData: extraData, base64Length: base64 ? base64.length : 0 });
+        window.parent.requestThermalCamera(null, device.id, function(deviceId, extraData, base64) {
+            console.log('[Busbar] requestFileChoose callback:', { deviceId: deviceId, extraData: extraData, base64Length: base64 ? base64.length : 0 });
             if (base64) {
                 self.processPhoto(formIdx, devIdx, base64);
-            } else {
-                if (btn) btn.innerHTML = '✅ 重新拍照';
             }
-        };
-        try {
-            window.parent.postMessage({ type: 'requestThermalCamera', extraData: device.id, callbackId: callbackId }, '*');
-        } catch(e) { console.error('postMessage requestThermalCamera error:', e); }
-
-        // 超时兜顶：5秒后如果没有收到回调，自动尝试处理（用于调试）
-        setTimeout(function() {
-            console.log('[Busbar] takePhoto timeout check - btn text:', btn ? btn.innerHTML : 'btn not found');
-        }, 5000);
+        });
     },
 
     // 处理照片：存内存 + 启动 OCR
@@ -385,10 +431,11 @@ const BusbarModule = {
         var photoWithPrefix = (base64.indexOf('data:') === 0) ? base64 : 'data:image/jpeg;base64,' + base64;
         device.photo = photoWithPrefix;
 
-        // 更新 UI（按钮在 takePhoto 已设为"识别中"，这里只更新状态）
+        // 更新 UI
         var btn = document.getElementById('photo-btn-' + formIdx + '-' + devIdx);
         if (btn) {
             btn.className = 'btn-photo has-photo';
+            btn.innerHTML = '✅ 重新拍照';
         }
         var item = btn ? btn.closest('.device-item') : null;
         if (item) item.classList.add('completed');
@@ -398,7 +445,6 @@ const BusbarModule = {
         this.renderRecords();
 
         // OCR 识别温度（异步）
-        // 注意：按钮文字已在 takePhoto 设为"识别中..."
         var pureBase64 = (base64.indexOf('data:') === 0) ? base64.split(',')[1] : base64;
         this.recognizeTemperature('data:image/jpeg;base64,' + pureBase64, function(tempObj) {
             console.log('[Busbar] OCR result:', tempObj);
@@ -408,8 +454,6 @@ const BusbarModule = {
                 self.updateDeviceTempDisplay(formIdx, devIdx, tempObj);
                 self.updateGroupCount(formIdx);
             }
-            // OCR 无论成功失败，都恢复按钮为"重新拍照"
-            if (btn) btn.innerHTML = '✅ 重新拍照';
         });
     },
 
@@ -470,7 +514,7 @@ const BusbarModule = {
         };
         console.log('[Busbar] Using local paths:', LOCAL);
 
-        // 尝试反色预处理 (热成像白底黑字 → 黑底白字)
+        // 尝试反色预处理（热成像照片白底黑字，反色后更易识别）
         var img = new Image();
         var self = this;
         img.onload = function() {
@@ -492,6 +536,7 @@ const BusbarModule = {
                     var text = result.data.text;
                     console.log('[Busbar] OCR raw text:', JSON.stringify(text));
 
+                    // 清理特殊字符（度符号、全角空白等）后再匹配
                     var cleaned = text.replace(/[°ºª⁰¹²³⁴⁵⁶⁷⁸⁹℃℉\u00A0\u2000-\u2009]/g, ' ').replace(/\s+/g, ' ').trim();
                     console.log('[Busbar] OCR cleaned text:', cleaned);
 
@@ -516,7 +561,7 @@ const BusbarModule = {
                         }
                     }
                 }).catch(function(e) {
-                    console.log('[Busbar] OCR recognize error:', String(e));
+                    console.log('[Busbar] OCR recognize error:', e);
                     callback(null);
                 });
             } catch(e2) {
@@ -525,7 +570,7 @@ const BusbarModule = {
                     console.log('[Busbar] OCR fallback text:', result.data.text);
                     callback(null);
                 }).catch(function(e3) {
-                    console.log('[Busbar] OCR fallback error:', String(e3));
+                    console.log('[Busbar] OCR fallback error:', e3);
                     callback(null);
                 });
             }
@@ -651,17 +696,14 @@ const BusbarModule = {
                     '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">';
 
                 photoList.forEach(function(photo, idx) {
-                    // 根据实际 MIME 类型确定文件扩展名
-                    var mimeType = photo.photoData.match(/^data:([^;]+)/);
-                    var ext = (mimeType && mimeType[1] === 'image/png') ? 'png' : 'jpg';
-                    var imgFileName = 'photo_' + photo.deviceId + '.' + ext;
+                    var imgFileName = 'photo_' + photo.deviceId + '.png';
                     var rid = 'rId' + (idx + 1);
 
                     // 写入图片文件
                     zip.file('xl/media/' + imgFileName, BusbarModule.base64ToUint8Array(photo.photoData));
 
-                    // drawing rels（相对路径不能用绝对路径 /xl/media/，Excel 不认）
-                    drawingRels += '<Relationship Id="' + rid + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/' + imgFileName + '"/>';
+                    // drawing rels
+                    drawingRels += '<Relationship Id="' + rid + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="/xl/media/' + imgFileName + '"/>';
 
                     // oneCellAnchor
                     wsDrContent += '<oneCellAnchor editAs="oneCell">' +
@@ -715,7 +757,7 @@ const BusbarModule = {
             var reader = new FileReader();
             await new Promise(function(resolve, reject) {
                 reader.onload = function() {
-                    try { window.parent.shareFile(fileName, reader.result); } catch(e) { console.error('shareFile error:', e); }
+                    window.parent.saveFile(fileName, reader.result);
                     resolve();
                 };
                 reader.onerror = function() { reject(new Error('读取文件失败')); };
@@ -723,6 +765,7 @@ const BusbarModule = {
             });
 
             this.hideLoading();
+            alert('报告已生成！\n保存到：' + fileName);
 
         } catch (error) {
             console.error('[Busbar] 导出失败:', error);
