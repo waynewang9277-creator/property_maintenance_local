@@ -1,8 +1,10 @@
 R_DEF: Internal format may change without notice
 local
-color colorAccent
-color colorPrimary
-color colorPrimaryDark
+color black
+color purple_dark
+color purple_light
+color purple_primary
+color white
 id webView
 layout activity_main
 mipmap ic_launcher

@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorAccent">#764ba2</color>
-    <color name="colorPrimary">#667eea</color>
-    <color name="colorPrimaryDark">#5568d6</color>
+    <color name="black">#000000</color>
+    <color name="purple_dark">#5568D6</color>
+    <color name="purple_light">#9179F0</color>
+    <color name="purple_primary">#667EEA</color>
+    <color name="white">#FFFFFF</color>
     <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
-        <item name="colorPrimary">#667eea</item>
-        <item name="colorPrimaryDark">#5568d6</item>
-        <item name="colorAccent">#764ba2</item>
-        <item name="android:windowTranslucentStatus">false</item>
-        <item name="android:statusBarColor">#5568d6</item>
+        <item name="colorPrimary">@color/purple_primary</item>
+        <item name="colorPrimaryDark">@color/purple_dark</item>
+        <item name="colorAccent">@color/purple_light</item>
+        <item name="android:statusBarColor">@color/purple_primary</item>
     </style>
 </resources>

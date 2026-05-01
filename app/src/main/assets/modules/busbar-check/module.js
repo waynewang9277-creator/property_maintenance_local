@@ -103,22 +103,24 @@ const BusbarModule = {
             { id: '6-租户4-6', row: 12, col: 14 },
             { id: '5-租户1-3', row: 13, col: 2 },
             { id: '5-租户4-6', row: 13, col: 6 },
-            // 办公楼高区 (Rows 14-27) - 16~30层，每层只有租户4-6
-            { id: '16-租户4-6', row: 14, col: 10 },
-            { id: '17-租户4-6', row: 15, col: 10 },
-            { id: '18-租户4-6', row: 16, col: 10 },
-            { id: '19-租户4-6', row: 17, col: 10 },
-            { id: '20-租户4-6', row: 18, col: 10 },
-            { id: '21-租户4-6', row: 19, col: 10 },
-            { id: '22-租户4-6', row: 20, col: 10 },
-            { id: '23-租户4-6', row: 21, col: 10 },
+            // 办公楼高区 (Rows 13-16) - 16~30层分布在4个列组，与新模板一致
+            // 30/29层在row13(高区起始行)，28~25层在row14，23~20层在row15，19~16层在row16
+            // 每行4个列组: A/B(col2) E/F(col6) I/J(col10) M/N(col14)
+            { id: '30-租户4-6', row: 13, col: 10 },  // I/J section3
+            { id: '29-租户4-6', row: 13, col: 14 },  // M/N section4
+            { id: '28-租户4-6', row: 14, col: 2 },   // A/B section1
+            { id: '27-租户4-6', row: 14, col: 6 },   // E/F section2
+            { id: '26-租户4-6', row: 14, col: 10 },  // I/J section3
+            { id: '25-租户4-6', row: 14, col: 14 }, // M/N section4
+            { id: '23-租户4-6', row: 15, col: 2 },   // A/B section1
+            { id: '22-租户4-6', row: 15, col: 6 },   // E/F section2
+            { id: '21-租户4-6', row: 15, col: 10 },  // I/J section3
+            { id: '20-租户4-6', row: 15, col: 14 },  // M/N section4
+            { id: '19-租户4-6', row: 16, col: 2 },   // A/B section1
+            { id: '18-租户4-6', row: 16, col: 6 },   // E/F section2
+            { id: '17-租户4-6', row: 16, col: 10 },  // I/J section3
+            { id: '16-租户4-6', row: 16, col: 14 },  // M/N section4
             // 24层跳过
-            { id: '25-租户4-6', row: 22, col: 10 },
-            { id: '26-租户4-6', row: 23, col: 10 },
-            { id: '27-租户4-6', row: 24, col: 10 },
-            { id: '28-租户4-6', row: 25, col: 10 },
-            { id: '29-租户4-6', row: 26, col: 10 },
-            { id: '30-租户4-6', row: 27, col: 10 }
         ];
         defs.forEach(function(d) { map[d.id] = d; });
         return map;

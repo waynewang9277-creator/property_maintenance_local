@@ -1,22 +1,6 @@
 // Battery Test Module - 电池测试模块逻辑
 // 支持多个测试表单，一次生成Excel报告
 
-// 存储拍照/选图回调
-var _batteryModuleCallbacks = {};
-
-// 监听来自父窗口的结果
-window.addEventListener('message', function(event) {
-    if (!event.data || !event.data.type) return;
-    if (event.data.type === 'fileChooseResult' || event.data.type === 'thermalCameraResult') {
-        var cid = event.data.callbackId;
-        var cb = _batteryModuleCallbacks[cid];
-        if (cb) {
-            try { cb(event.data.roomId || event.data.extraData, event.data.base64); } catch(e) {}
-            delete _batteryModuleCallbacks[cid];
-        }
-    }
-});
-
 const BatteryTestModule = {
     testForms: [],      // 存储所有测试表单的数据
 
@@ -271,17 +255,14 @@ const BatteryTestModule = {
     // 拍照/选择照片
     takePhoto(testIndex, recordIndex) {
         console.log('[Battery] takePhoto called:', { testIndex, recordIndex });
+        // 使用父窗口的文件选择器（因为 WebView 的 WebChromeClient 无法处理 iframe 内部的 input[type=file]）
         var self = this;
-        var callbackId = 'bt_cb_' + Date.now();
-        _batteryModuleCallbacks[callbackId] = function(extraData, base64) {
-            console.log('[Battery] requestFileChoose callback:', { extraData, base64Length: base64 ? base64.length : 0 });
+        window.parent.requestFileChoose(null, testIndex, function(deviceId, extraData, base64) {
+            console.log('[Battery] requestFileChoose callback:', { deviceId, extraData, base64Length: base64 ? base64.length : 0 });
             if (base64) {
                 self.processPhotoFromBase64(base64, extraData, recordIndex);
             }
-        };
-        try {
-            window.parent.postMessage({ type: 'requestFileChoose', roomId: null, callbackId: callbackId }, '*');
-        } catch(e) { console.error('postMessage requestFileChoose error:', e); }
+        });
     },
 
     // 处理 base64 照片（直接存储，不做resize，和电容模块保持一致）
@@ -479,8 +460,8 @@ const BatteryTestModule = {
                         // 写入图片文件
                         zip.file(`xl/media/${imgFileName}`, this.base64ToUint8Array(photo.photoData));
 
-                        // drawing rels（相对路径，Excel 标准要求）
-                        drawingRels += `<Relationship Id="${rid}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/${imgFileName}"/>`;
+                        // drawing rels（使用绝对路径 /xl/media/...）
+                        drawingRels += `<Relationship Id="${rid}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="/xl/media/${imgFileName}"/>`;
 
                         // oneCellAnchor（和电容模块一致）
                         const photoDescr = `放电${photo.idx + 1}记录照片`;
@@ -517,7 +498,7 @@ const BatteryTestModule = {
             const reader = new FileReader();
             await new Promise((resolve, reject) => {
                 reader.onload = function() {
-                    try { window.parent.shareFile(fileName, reader.result); } catch(e) { console.error('shareFile error:', e); }
+                    window.parent.saveFile(fileName, reader.result);
                     resolve();
                 };
                 reader.onerror = function() { reject(new Error('读取文件失败')); };
@@ -528,6 +509,7 @@ const BatteryTestModule = {
                 <div style="text-align:center;padding:30px;background:#f0f8ff;border-radius:8px;margin-bottom:15px;">
                     <div style="font-size:48px;margin-bottom:10px;">✅</div>
                     <div style="font-size:16px;font-weight:bold;color:#333;margin-bottom:5px;">报告生成完成！</div>
+                    <div style="font-size:13px;color:#666;">已保存到：${fileName}</div>
                     <div style="font-size:13px;color:#666;margin-top:5px;">共 ${this.testForms.length} 个测试地点，分 ${this.testForms.length} 个Sheet</div>
                 </div>
             `;
