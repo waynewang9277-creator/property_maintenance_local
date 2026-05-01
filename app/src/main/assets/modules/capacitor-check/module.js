@@ -113,7 +113,6 @@ const CapacitorModule = {
                     <div class="temp-display" id="temp-display-${locId}">${tempDisplay}</div>
                 </div>`;
             }
-            const isN = val === 'N';
             const problemVal = stored['problem' + (idx + 1)] || '';
             return `<div class="check-row">
                 <div class="check-num">${idx + 1}</div>
@@ -126,9 +125,9 @@ const CapacitorModule = {
                         <input type="radio" name="check${idx + 1}-${locId}" value="N" ${val === 'N' ? 'checked' : ''} onclick="CapacitorModule.setCheck(${locId}, ${idx + 1}, 'N')"><span>×</span>
                     </label>
                 </div>
-                ${isN ? `<div class="problem-input-wrap">
-                    <input type="text" class="problem-input" id="problem-${locId}-${idx + 1}" value="${problemVal}" placeholder="输入问题描述" oninput="CapacitorModule.setProblem(${locId}, ${idx + 1}, this.value)" onclick="event.stopPropagation()">
-                </div>` : ''}
+            </div>
+            <div class="problem-row" id="problem-row-${locId}-${idx + 1}" onclick="event.stopPropagation()">
+                <input type="text" class="problem-input" id="problem-input-${locId}-${idx + 1}" value="${problemVal}" placeholder="输入问题描述" oninput="CapacitorModule.setProblem(${locId}, ${idx + 1}, this.value)">
             </div>`;
         }).join('');
         
@@ -164,9 +163,14 @@ const CapacitorModule = {
     setCheck(locId, checkNum, value) {
         if (!this.locationChecks[locId]) this.locationChecks[locId] = {};
         this.locationChecks[locId]['check' + checkNum] = value;
-        // 选择×时重新渲染以显示问题输入框
-        if (value === 'N' || value === 'Y') {
-            this.renderCheckItems(locId);
+        // 直接操作DOM显示/隐藏问题输入框，不重新渲染
+        const probRow = document.getElementById('problem-row-' + locId + '-' + checkNum);
+        if (probRow) {
+            if (value === 'N') {
+                probRow.classList.add('visible');
+            } else {
+                probRow.classList.remove('visible');
+            }
         }
     },
 
