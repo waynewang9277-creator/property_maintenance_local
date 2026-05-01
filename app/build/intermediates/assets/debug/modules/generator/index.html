@@ -660,24 +660,27 @@
                     alert('JSZip加载失败: ' + e.message);
                     return;
                 }
+
+                console.log('[Generator] reading sheetXml...');
                 const sheetXml = await zip.file('xl/worksheets/sheet1.xml').async('string');
-                
+                console.log('[Generator] sheetXml length:', sheetXml.length);
+
                 let modifiedXml = sheetXml;
                 const setVal = (cellRef, value) => {
                     if (!value) return;
                     modifiedXml = updateCellValue(modifiedXml, cellRef, value);
                 };
-                
+
                 // Helper function to get radio button value
                 const getRadioValue = (name) => {
                     const radio = document.querySelector('input[name="' + name + '"]:checked');
                     return radio ? radio.value : '';
                 };
-                
+
                 // Basic info
                 const dateVal = document.getElementById('input-date')?.value;
                 if (dateVal) setVal('M4', '日期：' + dateVal);
-                
+
                 const tempVal = document.getElementById('input-temp')?.value;
                 if (tempVal) setVal('O4', '温度：' + tempVal + '°C');
                 
@@ -821,18 +824,23 @@
                 
                 // Signature - just value, no prefix
                 setVal('C29', document.getElementById('sig-operator')?.value || '');
-                
+
+                console.log('[Generator] writing modifiedXml to zip...');
                 zip.file('xl/worksheets/sheet1.xml', modifiedXml);
-                
+                console.log('[Generator] calling generateAsync...');
                 const newBuffer = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
-                
+                console.log('[Generator] generateAsync done, buffer size:', newBuffer.size);
+
                 const url = URL.createObjectURL(newBuffer);
                 const link = document.createElement('a');
-                link.download = '发电机组维护记录_' + new Date().toISOString().slice(0,10) + '.xlsx';
+                const fileName = '发电机组维护记录_' + new Date().toISOString().slice(0,10) + '.xlsx';
+                link.download = fileName;
                 link.href = url;
+                console.log('[Generator] triggering download for:', fileName);
                 link.click();
                 URL.revokeObjectURL(url);
-                
+                console.log('[Generator] download triggered, hiding overlay');
+
                 document.getElementById('loading-overlay').style.display = 'none';
                 
             } catch (error) {

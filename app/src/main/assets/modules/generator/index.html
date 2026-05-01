@@ -831,17 +831,21 @@
                 const newBuffer = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
                 console.log('[Generator] generateAsync done, buffer size:', newBuffer.size);
 
-                const url = URL.createObjectURL(newBuffer);
-                const link = document.createElement('a');
                 const fileName = '发电机组维护记录_' + new Date().toISOString().slice(0,10) + '.xlsx';
-                link.download = fileName;
-                link.href = url;
-                console.log('[Generator] triggering download for:', fileName);
-                link.click();
-                URL.revokeObjectURL(url);
-                console.log('[Generator] download triggered, hiding overlay');
-
-                document.getElementById('loading-overlay').style.display = 'none';
+                console.log('[Generator] converting blob to base64...');
+                const reader = new FileReader();
+                reader.onload = function() {
+                    console.log('[Generator] blob converted, calling shareFile...');
+                    window.androidBridge.shareFile(reader.result, fileName, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+                    console.log('[Generator] shareFile called');
+                    document.getElementById('loading-overlay').style.display = 'none';
+                };
+                reader.onerror = function() {
+                    console.error('[Generator] FileReader error');
+                    document.getElementById('loading-overlay').style.display = 'none';
+                    alert('生成失败: 读取文件失败');
+                };
+                reader.readAsDataURL(newBuffer);
                 
             } catch (error) {
                 console.error('[Generator] catch block, error:', error.message, error.stack);
