@@ -1,0 +1,71 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.example.propertymaintenance'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.example.propertymaintenance"
+        minSdk 21
+        targetSdk 34
+        versionCode 1
+        versionName "1.0.1"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    applicationVariants.all { variant ->
+        variant.outputs.all { output ->
+            def apkFile = output.outputFile
+            def timestamp = new java.text.SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date())
+            output.outputFileName = apkFile.name.replace('.apk', "_${timestamp}.apk")
+        }
+    }
+}
+
+import groovy.io.FileType
+task backupApk {
+    description = 'Copy built APK to backup directory with timestamp'
+    doLast {
+        def outputDir = new File("${projectDir}/build/outputs/apk/debug")
+        def apkFiles = []
+        outputDir.eachFile(FileType.FILES) { file ->
+            if (file.name.endsWith('.apk')) {
+                apkFiles << file
+            }
+        }
+        if (apkFiles) {
+            // 创建备份目录（桌面/APK备份）
+            def backupDir = new File("${System.getProperty('user.home')}/桌面/APK备份")
+            if (!backupDir.exists()) {
+                backupDir.mkdirs()
+            }
+            // 按修改时间排序，取最新的APK
+            def latestApk = apkFiles.sort { -it.lastModified() }[0]
+            def destFile = new File(backupDir, latestApk.name)
+            copy {
+                from latestApk
+                into backupDir
+            }
+            println "APK备份完成: ${destFile.absolutePath}"
+        }
+    }
+}
+
+// 每次 assembleDebug 后自动执行备份
+afterEvaluate {
+    tasks.named('assembleDebug') {
+        finalizedBy 'backupApk'
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+}

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>功能开发中</title>
+    <link rel="stylesheet" href="../../common/css/style.css">
+    <style>
+        body { background: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        .module-header { display: flex; align-items: center; padding: 15px 20px; background: white; border-bottom: 1px solid #eee; gap: 15px; }
+        .module-title { font-size: 16pt; font-weight: bold; color: #333; flex: 1; }
+        .module-main { padding: 40px 20px; text-align: center; }
+        .placeholder-icon { font-size: 64pt; margin-bottom: 20px; }
+        .placeholder-title { font-size: 18pt; font-weight: bold; color: #333; margin-bottom: 10px; }
+        .placeholder-desc { font-size: 13pt; color: #888; line-height: 1.6; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="module-header">
+            <button class="btn-back" onclick="parent.postMessage('goBackToCategory', '*')">← 返回分类</button>
+            <h2 class="module-title">🚧 功能开发中</h2>
+        </header>
+        <main class="module-main">
+            <div class="placeholder-icon">🔨</div>
+            <div class="placeholder-title">功能开发中</div>
+            <div class="placeholder-desc">此功能正在紧张开发中<br>敬请期待</div>
+        </main>
+    </div>
+</body>
+</html>
