@@ -120,10 +120,10 @@ const CapacitorModule = {
                 <div class="check-text">${text}</div>
                 <div class="check-options">
                     <label onclick="event.stopPropagation()">
-                        <input type="radio" name="check${idx + 1}-${locId}" value="Y" ${val === 'Y' ? 'checked' : ''} onchange="CapacitorModule.setCheck(${locId}, ${idx + 1}, 'Y')"><span>√</span>
+                        <input type="radio" name="check${idx + 1}-${locId}" value="Y" ${val === 'Y' ? 'checked' : ''} onclick="CapacitorModule.setCheck(${locId}, ${idx + 1}, 'Y')"><span>√</span>
                     </label>
                     <label onclick="event.stopPropagation()">
-                        <input type="radio" name="check${idx + 1}-${locId}" value="N" ${val === 'N' ? 'checked' : ''} onchange="CapacitorModule.setCheck(${locId}, ${idx + 1}, 'N')"><span>×</span>
+                        <input type="radio" name="check${idx + 1}-${locId}" value="N" ${val === 'N' ? 'checked' : ''} onclick="CapacitorModule.setCheck(${locId}, ${idx + 1}, 'N')"><span>×</span>
                     </label>
                 </div>
                 ${isN ? `<div class="problem-input-wrap">
