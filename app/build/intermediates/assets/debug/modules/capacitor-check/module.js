@@ -105,9 +105,11 @@ const CapacitorModule = {
             if (idx === 6) {
                 const temp = this.locationTemps[locId];
                 const tempDisplay = temp ? `Max:${temp.max} Min:${temp.min} Avg:${temp.avg}` : '—';
-                return `<div class="check-row check-row-temp">
-                    <div class="check-num">7</div>
-                    <div class="check-text">${text}</div>
+                return `<div class="check-row-temp">
+                    <div class="check-row-inner">
+                        <div class="check-num">7</div>
+                        <div class="check-text">${text}</div>
+                    </div>
                     <div class="temp-display" id="temp-display-${locId}">${tempDisplay}</div>
                 </div>`;
             }

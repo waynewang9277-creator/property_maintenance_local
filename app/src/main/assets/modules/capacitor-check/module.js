@@ -113,6 +113,8 @@ const CapacitorModule = {
                     <div class="temp-display" id="temp-display-${locId}">${tempDisplay}</div>
                 </div>`;
             }
+            const isN = val === 'N';
+            const problemVal = stored['problem' + (idx + 1)] || '';
             return `<div class="check-row">
                 <div class="check-num">${idx + 1}</div>
                 <div class="check-text">${text}</div>
@@ -124,6 +126,9 @@ const CapacitorModule = {
                         <input type="radio" name="check${idx + 1}-${locId}" value="N" ${val === 'N' ? 'checked' : ''} onchange="CapacitorModule.setCheck(${locId}, ${idx + 1}, 'N')"><span>×</span>
                     </label>
                 </div>
+                ${isN ? `<div class="problem-input-wrap">
+                    <input type="text" class="problem-input" id="problem-${locId}-${idx + 1}" value="${problemVal}" placeholder="输入问题描述" oninput="CapacitorModule.setProblem(${locId}, ${idx + 1}, this.value)" onclick="event.stopPropagation()">
+                </div>` : ''}
             </div>`;
         }).join('');
         
@@ -159,6 +164,15 @@ const CapacitorModule = {
     setCheck(locId, checkNum, value) {
         if (!this.locationChecks[locId]) this.locationChecks[locId] = {};
         this.locationChecks[locId]['check' + checkNum] = value;
+        // 选择×时重新渲染以显示问题输入框
+        if (value === 'N' || value === 'Y') {
+            this.renderCheckItems(locId);
+        }
+    },
+
+    setProblem(locId, checkNum, text) {
+        if (!this.locationChecks[locId]) this.locationChecks[locId] = {};
+        this.locationChecks[locId]['problem' + checkNum] = text;
     },
 
     triggerPhotoUpload(event, locId) {
@@ -416,7 +430,12 @@ const CapacitorModule = {
                         continue;
                     }
                     const val = checks['check' + i] || 'Y';
-                    setCellValue(xmlDoc, `${checkCols[i - 1]}${row}`, val === 'Y' ? '√' : '×');
+                    if (i <= 6 && val === 'N') {
+                        const prob = checks['problem' + i] || '';
+                        setCellValue(xmlDoc, `${checkCols[i - 1]}${row}`, prob ? `× ${prob}` : '×');
+                    } else {
+                        setCellValue(xmlDoc, `${checkCols[i - 1]}${row}`, val === 'Y' ? '√' : '×');
+                    }
                 }
                 // J=检查人, K=日期 (Sheet1的K3已有日期标签)
                 setCellValue(xmlDoc, `J${row}`, inspector);
