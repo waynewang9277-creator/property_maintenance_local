@@ -122,79 +122,33 @@ window.addEventListener('message', (event) => {
         const iframe = document.getElementById('module-iframe');
         if (iframe) { iframe.src = ''; iframe.style.display = 'none'; }
     } else if (event.data && event.data.type === 'requestFileChoose') {
-        // 来自 iframe 的文件选择请求（拍照）
-        // event.data = { type: 'requestFileChoose', roomId: xxx, callbackId: xxx }
-        var roomId = event.data.roomId;
-        var callbackId = event.data.callbackId;
-        console.log('[App] postMessage requestFileChoose, roomId:', roomId, 'callbackId:', callbackId);
+        // 来自 iframe 的文件选择请求
+        const callbackId = event.data.callbackId;
+        const deviceId = event.data.deviceId;
+        const fileInput = document.getElementById('parent-file-input');
 
-        // 存储回调上下文，用于 onCameraResult 后通过 postMessage 通知 iframe
-        window._fileChooseCallbacks = window._fileChooseCallbacks || {};
-        window._fileChooseCallbacks[callbackId] = {
-            deviceId: roomId,
-            extraData: null,
-            callback: function(deviceId, extraData, base64) {
-                // 通过 postMessage 发送结果回 iframe
-                try {
-                    var resultMsg = { type: 'fileChooseResult', callbackId: callbackId, roomId: deviceId, base64: base64 || null };
-                    window.frames['module-iframe'].postMessage(resultMsg, '*');
-                } catch(e) {
-                    console.error('[App] postMessage to iframe error:', e);
-                }
+        // 先清除之前的事件
+        fileInput.onchange = null;
+
+        fileInput.onchange = function(e) {
+            const file = e.target.files[0];
+            if (!file) {
+                window.frames['module-iframe'].postMessage({ type: 'fileChooseResult', callbackId: callbackId, deviceId: deviceId, file: null }, '*');
+                return;
             }
+
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                const base64 = ev.target.result;
+                window.frames['module-iframe'].postMessage({ type: 'fileChooseResult', callbackId: callbackId, deviceId: deviceId, file: base64 }, '*');
+            };
+            reader.readAsDataURL(file);
+
+            // 重置 input 以便下次选择
+            fileInput.value = '';
         };
 
-        // 调用 native 桥
-        console.log('[App] calling androidBridge.openCamera:', callbackId);
-        try {
-            window.androidBridge.openCamera(callbackId);
-        } catch(e) {
-            console.error('[App] androidBridge.openCamera error:', e);
-        }
-    } else if (event.data && event.data.type === 'requestThermalCamera') {
-        // 来自 iframe 的相册选图请求
-        var extraData = event.data.extraData;
-        var callbackId = event.data.callbackId;
-        console.log('[App] postMessage requestThermalCamera, extraData:', extraData, 'callbackId:', callbackId);
-
-        window._fileChooseCallbacks = window._fileChooseCallbacks || {};
-        window._fileChooseCallbacks[callbackId] = {
-            deviceId: extraData,
-            extraData: null,
-            callback: function(deviceId, extraData, base64) {
-                try {
-                    var resultMsg = { type: 'thermalCameraResult', callbackId: callbackId, extraData: deviceId, base64: base64 || null };
-                    window.frames['module-iframe'].postMessage(resultMsg, '*');
-                } catch(e) {
-                    console.error('[App] postMessage to iframe error:', e);
-                }
-            }
-        };
-
-        console.log('[App] calling androidBridge.openGallery:', callbackId);
-        try {
-            window.androidBridge.openGallery(callbackId);
-        } catch(e) {
-            console.error('[App] androidBridge.openGallery error:', e);
-        }
-    } else if (event.data && event.data.type === 'fileChooseResult') {
-        // 此分支已废弃，结果通过 iframe 内部的 message 事件处理
-    } else if (event.data && event.data.type === 'shareFile') {
-        // 来自 iframe 的分享请求
-        console.log('[App] postMessage shareFile, fileName:', event.data.fileName);
-        try {
-            window.androidBridge.shareFile(event.data.base64Data, event.data.fileName);
-        } catch(e) {
-            console.error('[App] androidBridge.shareFile error:', e);
-        }
-    } else if (event.data && event.data.type === 'saveFile') {
-        // 来自 iframe 的保存文件请求
-        console.log('[App] postMessage saveFile, fileName:', event.data.fileName);
-        try {
-            window.androidBridge.saveFile(event.data.base64Data, event.data.fileName);
-        } catch(e) {
-            console.error('[App] androidBridge.saveFile error:', e);
-        }
+        fileInput.click();
     }
 });
 
@@ -267,11 +221,8 @@ window.onCameraResult = function(callbackId, base64, error) {
                 stored.callback(stored.deviceId, null);
             }
         } else {
-            // 确保 base64 有 data:image 前缀，canvas.toDataURL 需要正确格式才能画出图像
+            // base64 可能带有 data:image/...;base64, 前缀，需要去掉
             var cleanBase64 = base64;
-            if (!cleanBase64.match(/^data:image\//)) {
-                cleanBase64 = 'data:image/jpeg;base64,' + cleanBase64;
-            }
             if (stored.extraData !== undefined) {
                 stored.callback(stored.deviceId, stored.extraData, cleanBase64);
             } else {
@@ -283,21 +234,7 @@ window.onCameraResult = function(callbackId, base64, error) {
     }
 };
 
-// 供 iframe 通过 postMessage 调用的文件选择函数（替代 window.parent.requestFileChoose 跨 frame 调用）
-// 模块通过 postMessage({ type: 'requestFileChoose', roomId: xxx, callback: xxx }) 调用
+// 保存文件到 Downloads 文件夹（Android WebView blob 下载）
 window.saveFile = function(fileName, base64Data) {
-    try {
-        window.androidBridge.saveFile(base64Data, fileName);
-    } catch(e) {
-        console.error('saveFile error:', e);
-    }
-};
-
-// 分享文件到其他应用（Android 分享面板）
-window.shareFile = function(fileName, base64Data) {
-    try {
-        window.androidBridge.shareFile(base64Data, fileName);
-    } catch(e) {
-        console.error('shareFile error:', e);
-    }
+    window.parent.androidBridge.saveFile(base64Data, fileName);
 };
