@@ -1,10 +1,20 @@
 // Main App - 主入口/路由
 const app = {
+    // 一级菜单配置（4大模块）
+    TOP_CATEGORIES: [
+        { id: 'qingkuang', name: '请款', icon: '💰' },
+        { id: 'weibao', name: '维保', icon: '🔧' },
+        { id: 'nenghao', name: '能耗', icon: '📊' },
+        { id: 'developing', name: '待开发', icon: '🚧' }
+    ],
+
+    // 二级菜单配置（各分类下的项目）
     CATEGORY_CONFIG: [
         {
             id: 'strong-power',
             name: '强电维保',
             icon: '⚡',
+            topId: 'weibao',  // 属于维保一级分类
             items: [
                 { id: 'battery-test', name: '应急装置电池放电测试', icon: '🔋' },
                 { id: 'generator', name: '发电机组维护性运转记录', icon: '⚙️' },
@@ -20,49 +30,92 @@ const app = {
             id: 'comprehensive',
             name: '综合维修维保',
             icon: '🔧',
+            topId: 'weibao',
             items: []
         },
         {
             id: 'weak-power',
             name: '弱电维保',
             icon: '📡',
+            topId: 'weibao',
             items: []
         },
         {
             id: 'air-condition',
             name: '空调维保',
             icon: '❄️',
+            topId: 'weibao',
             items: []
         },
         {
             id: 'water-drainage',
             name: '给排水维保',
             icon: '💧',
+            topId: 'weibao',
             items: []
-        },
-        {
-            id: 'developing',
-            name: '开发中',
-            icon: '🚧',
-            items: [
-                { id: 'placeholder', name: '功能开发中', icon: '🔨' }
-            ]
         }
     ],
     currentView: 'main',
     currentCategory: null,
+    currentTopCategory: 'weibao',  // 默认显示维保
     init() {
+        this.renderTopTabBar();
         this.renderMainMenu();
+    },
+    // 渲染顶部Tab栏
+    renderTopTabBar() {
+        const nav = document.getElementById('top-tab-bar');
+        if (!nav) return;
+        let html = '';
+        this.TOP_CATEGORIES.forEach((tab) => {
+            const active = tab.id === this.currentTopCategory ? ' active' : '';
+            html += `<div class="top-tab${active}" onclick="app.switchTopTab('${tab.id}')">${tab.icon}<span>${tab.name}</span></div>`;
+        });
+        nav.innerHTML = html;
+    },
+    // 切换一级菜单Tab
+    switchTopTab(topId) {
+        this.currentTopCategory = topId;
+        this.currentCategory = null;
+        this.renderTopTabBar();
+        // 非维保分类显示占位页面
+        if (topId !== 'weibao') {
+            this.showPlaceholder(topId);
+        } else {
+            this.renderMainMenu();
+        }
+    },
+    // 显示占位页面（请款/能耗/待开发）
+    showPlaceholder(topId) {
+        const top = this.TOP_CATEGORIES.find(t => t.id === topId);
+        const mainMenu = document.getElementById('main-menu');
+        mainMenu.innerHTML = `
+            <div class="placeholder-page">
+                <div class="placeholder-icon">${top ? top.icon : '🚧'}</div>
+                <div class="placeholder-title">${top ? top.name : ''}模块</div>
+                <div class="placeholder-text">敬请期待</div>
+                <div class="placeholder-sub">功能正在开发中，稍后上线</div>
+            </div>
+        `;
+        mainMenu.classList.remove('hidden');
+        document.getElementById('category-page').classList.add('hidden');
+        document.getElementById('module-container').classList.add('hidden');
     },
     renderMainMenu() {
         const mainMenu = document.getElementById('main-menu');
         if (!mainMenu) return;
-        let html = '';
-        this.CATEGORY_CONFIG.forEach((category) => {
-            html += `<div class="category-card" onclick="app.goToCategory('${category.id}')"><div class="category-icon">${category.icon}</div><div class="category-name">${category.name}</div></div>`;
+        // 渲染维保分类卡片
+        const weibaoCategories = this.CATEGORY_CONFIG.filter(c => c.topId === 'weibao');
+        let html = '<h2>📋 维保模块</h2><div class="category-grid">';
+        weibaoCategories.forEach((category) => {
+            const hasItems = category.items && category.items.length > 0;
+            html += `<div class="category-card${hasItems ? '' : ' disabled'}" ${hasItems ? `onclick="app.goToCategory('${category.id}')"` : ''}><div class="category-icon">${category.icon}</div><div class="category-name">${category.name}</div>${!hasItems ? '<div style="font-size:10pt;color:#999">暂无模块</div>' : ''}</div>`;
         });
-        mainMenu.querySelector('.category-grid').innerHTML = html;
-        this.showView('main');
+        html += '</div>';
+        mainMenu.innerHTML = html;
+        mainMenu.classList.remove('hidden');
+        document.getElementById('category-page').classList.add('hidden');
+        document.getElementById('module-container').classList.add('hidden');
     },
     goToCategory(categoryId) {
         const category = this.CATEGORY_CONFIG.find(c => c.id === categoryId);
