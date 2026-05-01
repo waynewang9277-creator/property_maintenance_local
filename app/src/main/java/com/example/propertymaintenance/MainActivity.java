@@ -44,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
     private String pendingCameraCallbackId;
     private Uri pendingCameraUri;
     private String pendingThermalCallbackId;
+    private boolean pendingCameraNoCompress = false;
     private Uri pendingThermalUri;
     private Object pendingThermalObserver;
 
@@ -200,11 +201,18 @@ public class MainActivity extends AppCompatActivity {
                             is.read(originalBytes);
                         }
                         Log.d("MainActivity", "Camera photo read, original size: " + originalBytes.length);
-                        
-                        // 压缩图片：缩小尺寸 + JPEG压缩到1MB左右
-                        byte[] compressedBytes = compressImage(originalBytes, 2000, 1024 * 1024);
-                        String base64 = Base64.encodeToString(compressedBytes, Base64.NO_WRAP);
-                        Log.d("MainActivity", "Camera photo compressed, final size: " + compressedBytes.length + ", base64 length: " + base64.length());
+
+                        String base64;
+                        if (pendingCameraNoCompress) {
+                            // 不压缩：直接返回原图 PNG/JPEG
+                            base64 = Base64.encodeToString(originalBytes, Base64.NO_WRAP);
+                            Log.d("MainActivity", "Camera photo RAW (no compression), size: " + originalBytes.length);
+                        } else {
+                            // 压缩图片：缩小尺寸 + JPEG压缩到1MB左右
+                            byte[] compressedBytes = compressImage(originalBytes, 2000, 1024 * 1024);
+                            base64 = Base64.encodeToString(compressedBytes, Base64.NO_WRAP);
+                            Log.d("MainActivity", "Camera photo compressed, final size: " + compressedBytes.length + ", base64 length: " + base64.length());
+                        }
                         notifyCameraResult(pendingCameraCallbackId, base64, null);
                     } catch (Exception e) {
                         Log.e("MainActivity", "Camera photo read error: " + e.getMessage());
@@ -215,6 +223,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 pendingCameraCallbackId = null;
                 pendingCameraUri = null;
+                pendingCameraNoCompress = false;
             }
         } else if (requestCode == 102) {
             // 热成像相机返回结果（仅处理通过Intent直接返回的情况）
@@ -397,10 +406,26 @@ public class MainActivity extends AppCompatActivity {
         public void openCamera(String callbackId) {
             Log.d("MainActivity", "openCamera called, callbackId: " + callbackId);
             runOnUiThread(() -> {
+                pendingCameraNoCompress = false;
                 // 检查相机权限
                 if (ContextCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
                     pendingCameraCallbackId = callbackId;
                     // 请求相机权限
+                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{android.Manifest.permission.CAMERA}, 200);
+                    return;
+                }
+                launchCamera(callbackId);
+            });
+        }
+
+        @JavascriptInterface
+        public void openCameraNoCompress(String callbackId) {
+            Log.d("MainActivity", "openCameraNoCompress called, callbackId: " + callbackId);
+            runOnUiThread(() -> {
+                pendingCameraNoCompress = true;
+                // 检查相机权限
+                if (ContextCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                    pendingCameraCallbackId = callbackId;
                     ActivityCompat.requestPermissions(MainActivity.this, new String[]{android.Manifest.permission.CAMERA}, 200);
                     return;
                 }

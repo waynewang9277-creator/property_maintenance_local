@@ -181,6 +181,28 @@ window.requestFileChoose = function() {
     console.log('androidBridge.openCamera called with callbackId:', callbackId);
 };
 
+// 供 iframe 调用的文件选择函数（不压缩，适用于电池等需要原图的场景）
+window.requestFileChooseRaw = function() {
+    console.log('requestFileChooseRaw called, arguments:', arguments);
+    var deviceId, extraData, callback;
+    if (arguments.length >= 3) {
+        deviceId = arguments[0];
+        extraData = arguments[1];
+        callback = arguments[2];
+    } else {
+        deviceId = arguments[0];
+        callback = arguments[1];
+    }
+
+    var callbackId = 'raw_' + Date.now();
+    window._fileChooseCallbacks = window._fileChooseCallbacks || {};
+    window._fileChooseCallbacks[callbackId] = { deviceId: deviceId, extraData: extraData, callback: callback };
+
+    console.log('Calling androidBridge.openCameraNoCompress...');
+    window.androidBridge.openCameraNoCompress(callbackId);
+    console.log('androidBridge.openCameraNoCompress called with callbackId:', callbackId);
+};
+
 // 供 iframe 调用的相册选图函数（上传热成像照片）
 window.requestThermalCamera = function() {
     console.log('requestThermalCamera called, arguments:', arguments);
