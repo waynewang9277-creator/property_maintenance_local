@@ -46,6 +46,7 @@ const CapacitorModule = {
     completedLocations: [],
     locationChecks: {},
     locationPhotos: {},
+    locationTemps: {},  // { locId: { max, min, avg } }
 
     init() {
         this.bindEvents();
@@ -100,6 +101,16 @@ const CapacitorModule = {
         
         let html = checks.map((text, idx) => {
             const val = stored['check' + (idx + 1)] || 'Y';
+            // Item 7: 红外线成像检查 - 显示温度，不显示选择按钮
+            if (idx === 6) {
+                const temp = this.locationTemps[locId];
+                const tempDisplay = temp ? `Max:${temp.max} Min:${temp.min} Avg:${temp.avg}` : '—';
+                return `<div class="check-row check-row-temp">
+                    <div class="check-num">7</div>
+                    <div class="check-text">${text}</div>
+                    <div class="temp-display" id="temp-display-${locId}">${tempDisplay}</div>
+                </div>`;
+            }
             return `<div class="check-row">
                 <div class="check-num">${idx + 1}</div>
                 <div class="check-text">${text}</div>
@@ -158,11 +169,102 @@ const CapacitorModule = {
             if (base64) {
                 self.locationPhotos[locId] = base64;
                 console.log('[Capacitor] locationPhotos updated for locId:', locId, 'total photos:', Object.keys(self.locationPhotos).length);
-                self.renderLocationGrid();
+
+                // 拍照后自动OCR识别温度
+                var pureBase64 = base64.indexOf('data:') === 0 ? base64.split(',')[1] : base64;
+                self.recognizeTemperature('data:image/jpeg;base64,' + pureBase64, function(tempObj) {
+                    if (tempObj) {
+                        self.locationTemps[locId] = tempObj;
+                        console.log('[Capacitor] OCR temp result:', tempObj);
+                    } else {
+                        console.log('[Capacitor] OCR failed to recognize temperature');
+                    }
+                    self.renderLocationGrid();
+                });
             } else {
                 console.log('[Capacitor] fileChoose callback: base64 is null or falsy');
             }
         });
+    },
+
+    recognizeTemperature(photoData, callback) {
+        console.log('[Capacitor] recognizeTemperature called');
+        if (typeof Tesseract === 'undefined') {
+            console.log('[Capacitor] Tesseract not loaded');
+            callback(null);
+            return;
+        }
+
+        var assetServerUrl = (typeof androidBridge !== 'undefined' && androidBridge.getAssetServerUrl)
+            ? androidBridge.getAssetServerUrl()
+            : '';
+        var BASE = assetServerUrl
+            ? assetServerUrl + '/tesseract/'
+            : (typeof android !== 'undefined' && android.appInfo && android.appInfo.assetBaseUrl)
+                ? android.appInfo.assetBaseUrl + 'tesseract/'
+                : '../../tesseract/';
+        var LOCAL = {
+            workerPath: BASE + 'worker.min.js',
+            corePath:   BASE + 'tesseract-core.wasm.js',
+            langPath:   BASE
+        };
+        console.log('[Capacitor] Using local paths:', LOCAL);
+
+        var img = new Image();
+        var self = this;
+        img.onload = function() {
+            try {
+                var canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                var ctx = canvas.getContext('2d');
+                ctx.fillStyle = 'black';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.globalCompositeOperation = 'difference';
+                ctx.drawImage(img, 0, 0);
+                var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                ctx.putImageData(imageData, 0, 0);
+                var processedData = canvas.toDataURL('image/jpeg', 0.9);
+
+                Tesseract.recognize(processedData, 'eng', LOCAL).then(function(result) {
+                    var text = result.data.text;
+                    var cleaned = text.replace(/[°ºª⁰¹²³⁴⁵⁶⁷⁸⁹℃℉\u00A0\u2000-\u2009]/g, ' ').replace(/\s+/g, ' ').trim();
+                    console.log('[Capacitor] OCR cleaned text:', cleaned);
+
+                    var maxMatch = cleaned.match(/Max\D*(\d+\.?\d*)/i);
+                    var minMatch = cleaned.match(/Min\D*(\d+\.?\d*)/i);
+                    var avgMatch = cleaned.match(/Avg\D*(\d+\.?\d*)/i);
+
+                    if (maxMatch || minMatch || avgMatch) {
+                        callback({ max: maxMatch ? maxMatch[1] : '', min: minMatch ? minMatch[1] : '', avg: avgMatch ? avgMatch[1] : '' });
+                    } else {
+                        var temps = cleaned.match(/(\d{2}\.\d)/g);
+                        if (temps && temps.length >= 3) {
+                            callback({ max: temps[0] || '', min: temps[1] || '', avg: temps[2] || '' });
+                        } else {
+                            var nums = cleaned.match(/(\d+\.?\d*)/g);
+                            if (nums && nums.length >= 3) {
+                                callback({ max: nums[0] || '', min: nums[1] || '', avg: nums[2] || '' });
+                            } else {
+                                console.log('[Capacitor] OCR could not extract temps');
+                                callback(null);
+                            }
+                        }
+                    }
+                }).catch(function(e) {
+                    console.log('[Capacitor] OCR recognize error:', e);
+                    callback(null);
+                });
+            } catch(e2) {
+                console.error('[Capacitor] OCR processing error:', e2);
+                callback(null);
+            }
+        };
+        img.onerror = function() {
+            console.error('[Capacitor] img load error');
+            callback(null);
+        };
+        img.src = photoData;
     },
 
     handlePhoto(input, locId) {
@@ -301,6 +403,16 @@ const CapacitorModule = {
                 const row = loc.row;
                 const checks = this.locationChecks[id] || {};
                 for (let i = 1; i <= 7; i++) {
+                    // Item 7 (col I): 写入OCR识别的温度值
+                    if (i === 7) {
+                        const temp = this.locationTemps[id];
+                        if (temp) {
+                            setCellValue(xmlDoc, `I${row}`, `${temp.max}°C`);
+                        } else {
+                            setCellValue(xmlDoc, `I${row}`, '—');
+                        }
+                        continue;
+                    }
                     const val = checks['check' + i] || 'Y';
                     setCellValue(xmlDoc, `${checkCols[i - 1]}${row}`, val === 'Y' ? '√' : '×');
                 }
