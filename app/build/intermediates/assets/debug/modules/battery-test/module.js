@@ -257,7 +257,7 @@ const BatteryTestModule = {
         console.log('[Battery] takePhoto called:', { testIndex, recordIndex });
         // 使用父窗口的文件选择器（因为 WebView 的 WebChromeClient 无法处理 iframe 内部的 input[type=file]）
         var self = this;
-        window.parent.requestFileChoose(null, testIndex, function(deviceId, extraData, base64) {
+        window.parent.requestFileChooseRaw(null, testIndex, function(deviceId, extraData, base64) {
             console.log('[Battery] requestFileChoose callback:', { deviceId, extraData, base64Length: base64 ? base64.length : 0 });
             if (base64) {
                 self.processPhotoFromBase64(base64, extraData, recordIndex);
