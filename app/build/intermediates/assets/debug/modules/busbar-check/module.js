@@ -760,6 +760,7 @@ const BusbarModule = {
             await new Promise(function(resolve, reject) {
                 reader.onload = function() {
                     window.parent.saveFile(fileName, reader.result);
+                    window.androidBridge.shareFile(reader.result, fileName, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
                     resolve();
                 };
                 reader.onerror = function() { reject(new Error('读取文件失败')); };

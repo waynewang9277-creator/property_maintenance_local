@@ -553,6 +553,7 @@ const FaultModule = {
 
             // 直接调用 saveFile，用超时兜底关闭 loading（Java 回调机制在部分 WebView 版本不通）
             window.androidBridge.saveFile(base64, fileName);
+            window.androidBridge.shareFile(base64, fileName, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
             var savedCallbackFired = false;
             var origOnFileSaved = window.onFileSaved;
             window.onFileSaved = function(success, errorMsg) {
@@ -1001,6 +1002,7 @@ const FaultModule = {
                 var statFileName = '电梯月度故障统计_' + month.split('-')[1] + '月.xlsx';
                 // 直接调用 saveFile，用超时兜底关闭 loading
                 window.androidBridge.saveFile(base64, statFileName);
+                window.androidBridge.shareFile(base64, statFileName, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
                 var savedCallbackFired = false;
                 var origOnFileSaved = window.onFileSaved;
                 window.onFileSaved = function(success, errorMsg) {
