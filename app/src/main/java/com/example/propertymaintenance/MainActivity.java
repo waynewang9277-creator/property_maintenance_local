@@ -3,6 +3,7 @@ package com.example.propertymaintenance;
 import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
@@ -10,10 +11,11 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.MediaStore;
 import android.util.Base64;
 import android.util.Log;
-import android.widget.Toast;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -21,7 +23,8 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-import androidx.activity.OnBackPressedCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -30,41 +33,29 @@ import androidx.core.content.ContextCompat;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
-import java.util.HashMap;
-import java.util.Map;
+import java.net.URLDecoder;
 
 public class MainActivity extends AppCompatActivity {
-    private static final int REQUEST_FILECHOOSER = 100;
-    private static final int REQUEST_CAMERA = 101;
-    private static final int REQUEST_THERMAL_CAMERA = 102;
-    private static final int REQUEST_GALLERY = 103;
-
     private WebView webView;
     private ValueCallback<Uri[]> filePathCallback;
-    private Uri pendingCameraUri;
-    // 相机/相册请求表：callbackId → 请求上下文
-    private Map<String, CameraRequest> pendingRequests = new HashMap<>();
-    // Android requestCode → callbackId 映射（用于 onActivityResult 找到对应请求）
-    private Map<Integer, String> requestCodeToCallbackId = new HashMap<>();
-    // 权限请求期间临时保存的 callbackId（用于 onRequestPermissionsResult）
-    private String pendingPermissionCallbackId;
+    private Handler mainHandler;
     private AssetServer assetServer;
-
-    // 相机/相册请求上下文，每请求一份独立存储
-    private static class CameraRequest {
-        String callbackId;
-        String extraData; // roomId 或 extraData
-        Uri uri;
-        CameraRequest(String callbackId, String extraData) {
-            this.callbackId = callbackId;
-            this.extraData = extraData;
-        }
-    }
+    private String pendingCameraCallbackId;
+    private Uri pendingCameraUri;
+    private String pendingThermalCallbackId;
+    private Uri pendingThermalUri;
+    private Object pendingThermalObserver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mainHandler = new Handler(Looper.getMainLooper());
+
+        // 启动 AssetServer（提供 Tesseract.js 字库等资源）
+        assetServer = new AssetServer(getAssets());
+        assetServer.start();
 
         webView = findViewById(R.id.webView);
         WebSettings webSettings = webView.getSettings();
@@ -74,15 +65,11 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setDomStorageEnabled(true);
         webSettings.setDatabaseEnabled(true);
         webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
-        webSettings.setAllowFileAccessFromFileURLs(false);
-        webSettings.setAllowUniversalAccessFromFileURLs(false);
+        webSettings.setAllowFileAccessFromFileURLs(true);
+        webSettings.setAllowUniversalAccessFromFileURLs(true);
         webSettings.setMediaPlaybackRequiresUserGesture(false);
 
         webView.addJavascriptInterface(new JsInterface(), "androidBridge");
-
-        // 启动本地 HTTP 服务器（提供 asset 文件给 WebView Worker）
-        assetServer = new AssetServer(getAssets());
-        assetServer.start();
 
         // WebChromeClient 支持 <input type="file"> 唤起相机/相册 + 捕获 console.log
         webView.setWebChromeClient(new WebChromeClient() {
@@ -121,7 +108,7 @@ public class MainActivity extends AppCompatActivity {
                     chooser.putExtra(android.content.Intent.EXTRA_INITIAL_INTENTS, intents);
                 }
 
-                startActivityForResult(chooser, REQUEST_FILECHOOSER);
+                startActivityForResult(chooser, 100);
                 return true;
             }
 
@@ -139,7 +126,7 @@ public class MainActivity extends AppCompatActivity {
                 android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_GET_CONTENT);
                 intent.addCategory(android.content.Intent.CATEGORY_OPENABLE);
                 intent.setType("image/*");
-                startActivityForResult(android.content.Intent.createChooser(intent, "选择照片"), REQUEST_FILECHOOSER);
+                startActivityForResult(android.content.Intent.createChooser(intent, "选择照片"), 100);
             }
 
             // Android 3.0
@@ -162,27 +149,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // 使用 OnBackPressedCallback 替代废弃的 onBackPressed()
-        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
-            @Override
-            public void handleOnBackPressed() {
-                webView.evaluateJavascript(
-                    "if (typeof handleBack === 'function') { handleBack(); } else if (window.history.length > 1) { window.history.back(); } else if (typeof app !== 'undefined') { app.backToCategory(); }",
-                    value -> {
-                        if ("null".equals(value) || value == null) {
-                            if (webView.canGoBack()) {
-                                webView.goBack();
-                            } else {
-                                // 最后才真正退出
-                                setEnabled(false);
-                                getOnBackPressedDispatcher().onBackPressed();
-                            }
-                        }
-                    }
-                );
-            }
-        });
-
         webView.loadUrl("file:///android_asset/index.html");
     }
 
@@ -202,7 +168,7 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         Log.d("MainActivity", "onActivityResult requestCode=" + requestCode + " resultCode=" + resultCode);
 
-        if (requestCode == REQUEST_FILECHOOSER) {
+        if (requestCode == 100) {
             if (filePathCallback == null) {
                 return;
             }
@@ -220,41 +186,46 @@ public class MainActivity extends AppCompatActivity {
 
             filePathCallback.onReceiveValue(results);
             filePathCallback = null;
-        } else if (requestCode == REQUEST_CAMERA) {
+        } else if (requestCode == 101) {
             Log.d("MainActivity", "Camera result: resultCode=" + resultCode + " pendingUri=" + pendingCameraUri);
-            // 相机拍照结果：通过 requestCode 找到 callbackId，再从 pendingRequests 找到完整上下文
-            String callbackId = requestCodeToCallbackId.get(requestCode);
-            CameraRequest req = callbackId != null ? pendingRequests.get(callbackId) : null;
-            if (req != null) {
+            // 相机拍照结果 (直接拍照模式)
+            if (pendingCameraCallbackId != null) {
                 if (resultCode == RESULT_OK && pendingCameraUri != null) {
                     try {
+                        // 读取原始图片
                         byte[] originalBytes;
                         try (java.io.InputStream is = getContentResolver().openInputStream(pendingCameraUri)) {
                             originalBytes = new byte[is.available()];
                             is.read(originalBytes);
                         }
                         Log.d("MainActivity", "Camera photo read, original size: " + originalBytes.length);
+                        
+                        // 压缩图片：缩小尺寸 + JPEG压缩到1MB左右
                         byte[] compressedBytes = compressImage(originalBytes, 2000, 1024 * 1024);
                         String base64 = Base64.encodeToString(compressedBytes, Base64.NO_WRAP);
                         Log.d("MainActivity", "Camera photo compressed, final size: " + compressedBytes.length + ", base64 length: " + base64.length());
-                        notifyCameraResult(req.callbackId, req.extraData, base64, null);
+                        notifyCameraResult(pendingCameraCallbackId, base64, null);
                     } catch (Exception e) {
                         Log.e("MainActivity", "Camera photo read error: " + e.getMessage());
-                        notifyCameraResult(req.callbackId, req.extraData, null, e.getMessage());
+                        notifyCameraResult(pendingCameraCallbackId, null, e.getMessage());
                     }
                 } else {
-                    notifyCameraResult(req.callbackId, req.extraData, null, "Camera cancelled or failed");
+                    notifyCameraResult(pendingCameraCallbackId, null, "Camera cancelled or failed");
                 }
-                pendingRequests.remove(callbackId);
-                requestCodeToCallbackId.remove(requestCode);
+                pendingCameraCallbackId = null;
                 pendingCameraUri = null;
             }
-        } else if (requestCode == REQUEST_THERMAL_CAMERA) {
-            String callbackId = requestCodeToCallbackId.get(requestCode);
-            CameraRequest req = callbackId != null ? pendingRequests.get(callbackId) : null;
-            if (req != null && resultCode == RESULT_OK) {
+        } else if (requestCode == 102) {
+            // 热成像相机返回结果（仅处理通过Intent直接返回的情况）
+            // 其他情况（RESULT_CANCELED等）由ContentObserver异步监听MediaStore处理
+            if (pendingThermalCallbackId != null && resultCode == RESULT_OK) {
                 Log.d("MainActivity", "Thermal camera result via Intent: resultCode=" + resultCode);
-                Uri thermalUri = data != null && data.getData() != null ? data.getData() : req.uri;
+                Uri thermalUri = null;
+                if (data != null && data.getData() != null) {
+                    thermalUri = data.getData();
+                } else if (pendingThermalUri != null) {
+                    thermalUri = pendingThermalUri;
+                }
                 if (thermalUri != null) {
                     try {
                         byte[] bytes;
@@ -263,21 +234,19 @@ public class MainActivity extends AppCompatActivity {
                         }
                         String base64 = Base64.encodeToString(bytes, Base64.NO_WRAP);
                         Log.d("MainActivity", "Thermal photo via Intent, size: " + bytes.length);
-                        notifyCameraResult(req.callbackId, req.extraData, base64, null);
+                        notifyCameraResult(pendingThermalCallbackId, base64, null);
                     } catch (Exception e) {
                         Log.e("MainActivity", "Thermal photo via Intent error: " + e.getMessage());
-                        notifyCameraResult(req.callbackId, req.extraData, null, e.getMessage());
+                        notifyCameraResult(pendingThermalCallbackId, null, e.getMessage());
                     }
                 }
-                pendingRequests.remove(callbackId);
-                requestCodeToCallbackId.remove(requestCode);
+                pendingThermalCallbackId = null;
+                pendingThermalUri = null;
             }
-        } else if (requestCode == REQUEST_GALLERY) {
+        } else if (requestCode == 103) {
             // 相册选择图片结果
             Log.d("MainActivity", "Gallery result: resultCode=" + resultCode + " data=" + data);
-            String callbackId = requestCodeToCallbackId.get(requestCode);
-            CameraRequest req = callbackId != null ? pendingRequests.get(callbackId) : null;
-            if (req != null) {
+            if (pendingThermalCallbackId != null) {
                 if (resultCode == RESULT_OK && data != null && data.getData() != null) {
                     Uri galleryUri = data.getData();
                     try {
@@ -287,16 +256,15 @@ public class MainActivity extends AppCompatActivity {
                         }
                         String base64 = Base64.encodeToString(bytes, Base64.NO_WRAP);
                         Log.d("MainActivity", "Gallery photo, size: " + bytes.length);
-                        notifyCameraResult(req.callbackId, req.extraData, base64, null);
+                        notifyCameraResult(pendingThermalCallbackId, base64, null);
                     } catch (Exception e) {
                         Log.e("MainActivity", "Gallery photo error: " + e.getMessage());
-                        notifyCameraResult(req.callbackId, req.extraData, null, e.getMessage());
+                        notifyCameraResult(pendingThermalCallbackId, null, e.getMessage());
                     }
                 } else {
-                    notifyCameraResult(req.callbackId, req.extraData, null, "Cancelled");
+                    notifyCameraResult(pendingThermalCallbackId, null, "Cancelled");
                 }
-                pendingRequests.remove(callbackId);
-                requestCodeToCallbackId.remove(requestCode);
+                pendingThermalCallbackId = null;
             }
         }
     }
@@ -373,50 +341,6 @@ public class MainActivity extends AppCompatActivity {
             });
         }
 
-        @JavascriptInterface
-        public void shareFile(String base64Data, String fileName) {
-            Log.d("MainActivity", "shareFile called: " + fileName);
-            runOnUiThread(() -> {
-                try {
-                    String cleanBase64 = base64Data;
-                    if (cleanBase64.contains(",")) {
-                        cleanBase64 = cleanBase64.substring(cleanBase64.indexOf(",") + 1);
-                    }
-                    byte[] fileBytes = Base64.decode(cleanBase64, Base64.DEFAULT);
-                    Log.d("MainActivity", "shareFile: decoded " + fileBytes.length + " bytes");
-
-                    String mimeType = fileName.toLowerCase().endsWith(".pdf") ? "application/pdf" : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-
-                    // 保存到 cache 目录（FileProvider 可访问）
-                    File cacheDir = getCacheDir();
-                    File file = new File(cacheDir, fileName);
-                    try (FileOutputStream fos = new FileOutputStream(file)) {
-                        fos.write(fileBytes);
-                        fos.flush();
-                    }
-
-                    // 通过 FileProvider 获取 content URI
-                    Uri contentUri = androidx.core.content.FileProvider.getUriForFile(
-                            MainActivity.this, getPackageName() + ".fileprovider", file);
-
-                    // 构建分享 Intent
-                    android.content.Intent shareIntent = new android.content.Intent(android.content.Intent.ACTION_SEND);
-                    shareIntent.setType(mimeType);
-                    shareIntent.putExtra(android.content.Intent.EXTRA_STREAM, contentUri);
-                    shareIntent.addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-                    // 使用 chooser 让用户选择目标应用
-                    android.content.Intent chooser = android.content.Intent.createChooser(shareIntent, "分享文件");
-                    startActivity(chooser);
-
-                    Log.d("MainActivity", "Share intent launched");
-                } catch (Exception e) {
-                    Log.e("MainActivity", "shareFile error: " + e.getMessage(), e);
-                    Toast.makeText(MainActivity.this, "分享失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                }
-            });
-        }
-
         private void notifyFileSaved(boolean success, String errorMsg) {
             String escapedError = errorMsg != null ? errorMsg.replace("'", "\\'") : "";
             String js = "if(typeof window.onFileSaved==='function'){window.onFileSaved(" + success + ",'" + escapedError + "');}else{console.log('notifyFileSaved: no callback');}";
@@ -428,14 +352,27 @@ public class MainActivity extends AppCompatActivity {
         public void openCamera(String callbackId) {
             Log.d("MainActivity", "openCamera called, callbackId: " + callbackId);
             runOnUiThread(() -> {
-                CameraRequest req = new CameraRequest(callbackId, null);
-                pendingRequests.put(callbackId, req);
+                // 检查相机权限
                 if (ContextCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                    pendingPermissionCallbackId = callbackId;
+                    pendingCameraCallbackId = callbackId;
+                    // 请求相机权限
                     ActivityCompat.requestPermissions(MainActivity.this, new String[]{android.Manifest.permission.CAMERA}, 200);
                     return;
                 }
                 launchCamera(callbackId);
+            });
+        }
+
+        @JavascriptInterface
+        public void openGallery(String callbackId) {
+            Log.d("MainActivity", "openGallery called, callbackId: " + callbackId);
+            runOnUiThread(() -> {
+                pendingThermalCallbackId = callbackId;
+
+                android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_GET_CONTENT);
+                intent.addCategory(android.content.Intent.CATEGORY_OPENABLE);
+                intent.setType("image/*");
+                startActivityForResult(intent, 103);
             });
         }
 
@@ -443,73 +380,23 @@ public class MainActivity extends AppCompatActivity {
         public String getAssetServerUrl() {
             return assetServer != null ? assetServer.getUrl() : "";
         }
-
-        @JavascriptInterface
-        public void requestFileChoose(String roomId, String callbackId) {
-            Log.d("MainActivity", "requestFileChoose called, roomId=" + roomId + ", callbackId=" + callbackId);
-            CameraRequest req = new CameraRequest(callbackId, roomId);
-            pendingRequests.put(callbackId, req);
-            pendingPermissionCallbackId = callbackId;
-            runOnUiThread(() -> {
-                if (ContextCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{android.Manifest.permission.CAMERA}, 200);
-                    return;
-                }
-                pendingPermissionCallbackId = null;
-                launchCamera(callbackId);
-            });
-        }
-
-        @JavascriptInterface
-        public void requestThermalCamera(String extraData, String callbackId) {
-            Log.d("MainActivity", "requestThermalCamera called, extraData=" + extraData + ", callbackId=" + callbackId);
-            CameraRequest req = new CameraRequest(callbackId, extraData);
-            pendingRequests.put(callbackId, req);
-            requestCodeToCallbackId.put(REQUEST_GALLERY, callbackId);
-            runOnUiThread(() -> {
-                android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_GET_CONTENT);
-                intent.addCategory(android.content.Intent.CATEGORY_OPENABLE);
-                intent.setType("image/*");
-                startActivityForResult(intent, REQUEST_GALLERY);
-            });
-        }
-
-        @JavascriptInterface
-        public void openGallery(String callbackId) {
-            Log.d("MainActivity", "openGallery called, callbackId: " + callbackId);
-            CameraRequest req = new CameraRequest(callbackId, null);
-            pendingRequests.put(callbackId, req);
-            requestCodeToCallbackId.put(REQUEST_GALLERY, callbackId);
-            android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_GET_CONTENT);
-            intent.addCategory(android.content.Intent.CATEGORY_OPENABLE);
-            intent.setType("image/*");
-            startActivityForResult(intent, REQUEST_GALLERY);
-        }
     }
 
     private void launchCamera(String callbackId) {
-        CameraRequest req = pendingRequests.get(callbackId);
-        if (req == null) {
-            Log.e("MainActivity", "launchCamera: request not found for callbackId: " + callbackId);
-            notifyCameraResult(callbackId, null, null, "Request not found");
-            return;
-        }
         try {
             File photoFile = createImageFile();
             if (photoFile != null) {
+                pendingCameraCallbackId = callbackId;
                 pendingCameraUri = androidx.core.content.FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", photoFile);
-                requestCodeToCallbackId.put(REQUEST_CAMERA, callbackId);
                 android.content.Intent cameraIntent = new android.content.Intent(MediaStore.ACTION_IMAGE_CAPTURE);
                 cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, pendingCameraUri);
-                startActivityForResult(cameraIntent, REQUEST_CAMERA);
+                startActivityForResult(cameraIntent, 101);
             } else {
-                notifyCameraResult(callbackId, req.extraData, null, "Failed to create image file");
-                pendingRequests.remove(callbackId);
+                notifyCameraResult(callbackId, null, "Failed to create image file");
             }
         } catch (Exception e) {
             Log.e("MainActivity", "openCamera error: " + e.getMessage(), e);
-            notifyCameraResult(callbackId, req.extraData, null, e.getMessage());
-            pendingRequests.remove(callbackId);
+            notifyCameraResult(callbackId, null, e.getMessage());
         }
     }
 
@@ -517,20 +404,17 @@ public class MainActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == 200) {
-            String callbackId = pendingPermissionCallbackId;
-            pendingPermissionCallbackId = null;
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Log.d("MainActivity", "Camera permission granted, launching camera");
-                if (callbackId != null) {
-                    launchCamera(callbackId);
+                // 权限授予后，启动相机
+                if (pendingCameraCallbackId != null) {
+                    launchCamera(pendingCameraCallbackId);
                 }
             } else {
                 Log.d("MainActivity", "Camera permission denied");
-                if (callbackId != null) {
-                    CameraRequest req = pendingRequests.get(callbackId);
-                    String extraData = req != null ? req.extraData : null;
-                    notifyCameraResult(callbackId, extraData, null, "Camera permission denied");
-                    pendingRequests.remove(callbackId);
+                if (pendingCameraCallbackId != null) {
+                    notifyCameraResult(pendingCameraCallbackId, null, "Camera permission denied");
+                    pendingCameraCallbackId = null;
                 }
             }
         }
@@ -609,13 +493,12 @@ public class MainActivity extends AppCompatActivity {
         return result;
     }
 
-    private void notifyCameraResult(String callbackId, String extraData, String base64, String error) {
-        // 使用 evaluateJavascript 传 base64 和 extraData
+    private void notifyCameraResult(String callbackId, String base64, String error) {
+        // 使用 evaluateJavascript 传 base64
         String escapedError = error != null ? error.replace("'", "\\'") : "";
         String escapedBase64 = base64 != null ? base64.replace("'", "\\'") : "";
-        String escapedExtra = extraData != null ? extraData.replace("'", "\\'") : "";
-        Log.d("MainActivity", "notifyCameraResult: callbackId=" + callbackId + " extraData=" + extraData + " base64Len=" + (base64 != null ? base64.length() : 0) + " error=" + error);
-        String js = "if(typeof window.onCameraResult==='function'){window.onCameraResult('" + callbackId + "','" + escapedExtra + "',String('" + escapedBase64 + "'),'" + escapedError + "');}else{console.log('notifyCameraResult: no callback');}";
+        Log.d("MainActivity", "notifyCameraResult: callbackId=" + callbackId + " base64Len=" + (base64 != null ? base64.length() : 0) + " error=" + error);
+        String js = "if(typeof window.onCameraResult==='function'){window.onCameraResult('" + callbackId + "',String('" + escapedBase64 + "'),'" + escapedError + "');}else{console.log('notifyCameraResult: no callback');}";
         Log.d("MainActivity", "notifyCameraResult evaluating, base64 length: " + (base64 != null ? base64.length() : 0));
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
             webView.evaluateJavascript(js, value -> {
@@ -625,5 +508,23 @@ public class MainActivity extends AppCompatActivity {
         } else {
             webView.loadUrl("javascript:" + js);
         }
+        // 触发GC释放native引用
+        System.gc();
+    }
+
+    @Override
+    public void onBackPressed() {
+        webView.evaluateJavascript(
+            "if (typeof handleBack === 'function') { handleBack(); } else if (window.history.length > 1) { window.history.back(); } else if (typeof app !== 'undefined') { app.backToCategory(); }",
+            value -> {
+                if ("null".equals(value) || value == null) {
+                    if (webView.canGoBack()) {
+                        webView.goBack();
+                    } else {
+                        MainActivity.super.onBackPressed();
+                    }
+                }
+            }
+        );
     }
 }

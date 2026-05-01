@@ -1,22 +1,6 @@
 ﻿// Capacitor Check Module - 电容检查及测温记录
 // Uses NEW combined template: Sheet1=数据工作记录, Sheet2=数据工作图片记录
 
-// 存储拍照/选图回调
-var _capacitorModuleCallbacks = {};
-
-// 监听来自父窗口的结果
-window.addEventListener('message', function(event) {
-    if (!event.data || !event.data.type) return;
-    if (event.data.type === 'fileChooseResult' || event.data.type === 'thermalCameraResult') {
-        var cid = event.data.callbackId;
-        var cb = _capacitorModuleCallbacks[cid];
-        if (cb) {
-            try { cb(event.data.roomId || event.data.extraData, event.data.base64); } catch(e) {}
-            delete _capacitorModuleCallbacks[cid];
-        }
-    }
-});
-
 const CapacitorModule = {
     // All 36 locations
     LOCATIONS: [
@@ -73,6 +57,7 @@ const CapacitorModule = {
     bindEvents() {
         document.getElementById('btn-generate').addEventListener('click', () => this.generateExcel());
         document.getElementById('btn-clear').addEventListener('click', () => this.clearForm());
+        document.getElementById('btn-back').addEventListener('click', () => this.goBack());
     },
 
     renderLocationGrid() {
@@ -167,8 +152,8 @@ const CapacitorModule = {
         event.stopPropagation();
         var self = this;
         console.log('[Capacitor] triggerPhotoUpload called, locId:', locId);
-        var callbackId = 'cap_cb_' + Date.now();
-        _capacitorModuleCallbacks[callbackId] = function(extraData, base64) {
+        // 使用父窗口的 requestThermalCamera 调用相册选图
+        window.parent.requestThermalCamera(null, locId, function(deviceId, extraData, base64) {
             console.log('[Capacitor] fileChoose callback, locId:', locId, 'base64 length:', base64 ? base64.length : 'null');
             if (base64) {
                 self.locationPhotos[locId] = base64;
@@ -177,10 +162,7 @@ const CapacitorModule = {
             } else {
                 console.log('[Capacitor] fileChoose callback: base64 is null or falsy');
             }
-        };
-        try {
-            window.parent.postMessage({ type: 'requestThermalCamera', extraData: locId, callbackId: callbackId }, '*');
-        } catch(e) { console.error('postMessage requestThermalCamera error:', e); }
+        });
     },
 
     handlePhoto(input, locId) {
@@ -196,7 +178,7 @@ const CapacitorModule = {
             this.completedLocations.push(locId);
         }
         // 完成后自动折叠起标签
-        this.expandedLocations = this.expandedLocations.filter(id => id !== locId);
+        this.expandedLocations = this.expandedLocations.filter(function(id) { return id !== locId; });
         this.renderLocationGrid();
         this.updateCompletedSummary();
     },
@@ -339,11 +321,11 @@ const CapacitorModule = {
             for (const locId of this.completedLocations) {
                 const photoData = this.locationPhotos[locId];
                 if (!photoData) continue;
+                photoCount++;
                 // 根据实际 MIME 类型确定文件扩展名
                 const mimeMatch = photoData.match(/^data:([^;]+)/);
                 const ext = (mimeMatch && mimeMatch[1] === 'image/png') ? 'png' : 'jpg';
-                photoCount++;
-                zip.file(`xl/media/photo_${locId}.${ext}`, this.base64ToUint8Array(photoData));
+                zip.file('xl/media/photo_' + locId + '.' + ext, this.base64ToUint8Array(photoData));
             }
 
             if (photoCount > 0) {
@@ -362,11 +344,12 @@ const CapacitorModule = {
                     const row = 4 + Math.floor(pos0Based / 5);
                     const colIdx = pos0Based % 5;
                     const col = photoColMap[colIdx];
-                    const mimeMatch = photoData.match(/^data:([^;]+)/);
-                    const ext = (mimeMatch && mimeMatch[1] === 'image/png') ? 'png' : 'jpg';
+                    // 根据实际 MIME 类型确定文件扩展名
+                    const mimeMatch2 = photoData.match(/^data:([^;]+)/);
+                    const ext2 = (mimeMatch2 && mimeMatch2[1] === 'image/png') ? 'png' : 'jpg';
 
                     // 相对路径 ../media/（不能用绝对路径 /xl/media/）
-                    drawingRels += `<Relationship Id="rId${imgIdx}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/photo_${locId}.${ext}"/>`;
+                    drawingRels += '<Relationship Id="rId' + imgIdx + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/photo_' + locId + '.' + ext2 + '"/>';
 
                     // oneCellAnchor + editAs=oneCell tells Excel to keep image within cell
                     // Fixed size: 3.2cm wide × 3.4cm tall (1 cm = 914400 EMU)
@@ -414,15 +397,15 @@ const CapacitorModule = {
                 zip.file('xl/worksheets/sheet2.xml', sheet2WithDrawing);
             }
 
-            // 生成并下载（使用 androidBridge.shareFile 分享到其他应用）
+            // 生成并下载（使用 androidBridge.saveFile 保存到 Downloads）
             const excelBuffer = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
             const fileName = `电容检查记录_${checkDate}.xlsx`;
-
+            
             // 把 blob 转成 base64 再传给 Android
             const reader = new FileReader();
             await new Promise((resolve, reject) => {
                 reader.onload = function() {
-                    try { window.parent.shareFile(fileName, reader.result); } catch(e) { console.error('shareFile error:', e); }
+                    window.parent.saveFile(fileName, reader.result);
                     resolve();
                 };
                 reader.onerror = function() {
@@ -432,6 +415,7 @@ const CapacitorModule = {
             });
 
             document.getElementById('loading-overlay').style.display = 'none';
+            alert(`报告生成完成！\n已保存到：${fileName}`);
 
         } catch (error) {
             console.error('生成失败:', error);
@@ -449,6 +433,10 @@ const CapacitorModule = {
         this.updateCompletedSummary();
         document.getElementById('inspector').value = '';
         document.getElementById('check-date').value = new Date().toISOString().slice(0, 10);
+    },
+
+    goBack() {
+        parent.postMessage('goBackToCategory', '*');
     }
 };
 
