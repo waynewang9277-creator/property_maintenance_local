@@ -636,10 +636,10 @@
                         if (xhr.status === 200 || xhr.status === 0) {
                             resolve(xhr.response);
                         } else {
-                            reject(new Error('Failed to load template: ' + xhr.status));
+                            reject(new Error('加载模板失败: ' + xhr.status + ' (' + xhr.statusText + ')'));
                         }
                     };
-                    xhr.onerror = function() { reject(new Error('Network error')); };
+                    xhr.onerror = function() { reject(new Error('Network error loading template')); };
                     xhr.send();
                 });
                 const arrayBuffer = buffer;
