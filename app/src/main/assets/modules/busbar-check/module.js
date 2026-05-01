@@ -124,9 +124,6 @@ const BusbarModule = {
         return map;
     })(),
 
-    // AssetServer HTTP 服务器路径（供 Tesseract OCR 使用）
-    BASE: 'http://localhost:8765/tesseract/',
-
     // 所有测试表单（内存中）
     testForms: [],
 
@@ -168,7 +165,7 @@ const BusbarModule = {
                 var processedData = canvas.toDataURL('image/jpeg', 0.9);
                 console.log('[Busbar] Processed image size:', processedData.length);
 
-                Tesseract.recognize(processedData, 'eng', BusbarModule.BASE).then(function(result) {
+                Tesseract.recognize(processedData, 'eng').then(function(result) {
                     var text = result.data.text;
                     console.log('[Busbar] OCR raw text:', JSON.stringify(text));
 
@@ -203,7 +200,7 @@ const BusbarModule = {
             } catch(e2) {
                 console.log('[Busbar] Image preprocessing error:', e2);
                 // fallback: 直接用原图
-                Tesseract.recognize(photoData, 'eng', BusbarModule.BASE).then(function(result) {
+                Tesseract.recognize(photoData, 'eng').then(function(result) {
                     console.log('[Busbar] OCR fallback text:', result.data.text);
                     callback(null);
                 }).catch(function(e3) {
@@ -487,15 +484,35 @@ const BusbarModule = {
         this.renderRecords();
     },
 
-    // OCR 识别温度
+    // OCR 识别温度（离线模式）
     recognizeTemperature: function(photoData, callback) {
-        console.log('[Busbar] recognizeTemperature called, photoData len:', photoData ? photoData.length : 'null');
+        console.log('[Busbar] recognizeTemperature called');
 
         if (typeof Tesseract === 'undefined') {
             console.log('[Busbar] Tesseract not loaded');
             callback(null);
             return;
         }
+
+        // 本地资源路径：通过本地 HTTP 服务器提供（解决 Worker 无法使用 file:// 的问题）
+        // androidBridge 是 JsInterface 的注册名称
+        // 注意：Android build 会自动解压 .gz 文件，所以实际请求未压缩的 .traineddata
+        var assetServerUrl = (typeof androidBridge !== 'undefined' && androidBridge.getAssetServerUrl)
+            ? androidBridge.getAssetServerUrl()
+            : '';
+        console.log('[Busbar] getAssetServerUrl =', JSON.stringify(assetServerUrl));
+        var BASE = assetServerUrl
+            ? assetServerUrl + '/tesseract/'
+            : (typeof android !== 'undefined' && android.appInfo && android.appInfo.assetBaseUrl)
+                ? android.appInfo.assetBaseUrl + 'tesseract/'
+                : '../../tesseract/';
+        console.log('[Busbar] BASE =', BASE);
+        var LOCAL = {
+            workerPath: BASE + 'worker.min.js',
+            corePath:   BASE + 'tesseract-core.wasm.js',
+            langPath:   BASE  // 指向 tesseract/ 目录，Tesseract 自动拼接 eng.traineddata.gz
+        };
+        console.log('[Busbar] Using local paths:', LOCAL);
 
         // 尝试反色预处理（热成像照片白底黑字，反色后更易识别）
         var img = new Image();
@@ -515,7 +532,7 @@ const BusbarModule = {
                 var processedData = canvas.toDataURL('image/jpeg', 0.9);
                 console.log('[Busbar] Processed image size:', processedData.length);
 
-                Tesseract.recognize(processedData, 'eng', BusbarModule.BASE).then(function(result) {
+                Tesseract.recognize(processedData, 'eng', LOCAL).then(function(result) {
                     var text = result.data.text;
                     console.log('[Busbar] OCR raw text:', JSON.stringify(text));
 
@@ -549,7 +566,7 @@ const BusbarModule = {
                 });
             } catch(e2) {
                 console.log('[Busbar] Image preprocessing error:', e2);
-                Tesseract.recognize(photoData, 'eng', BusbarModule.BASE).then(function(result) {
+                Tesseract.recognize(photoData, 'eng', LOCAL).then(function(result) {
                     console.log('[Busbar] OCR fallback text:', result.data.text);
                     callback(null);
                 }).catch(function(e3) {
