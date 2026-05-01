@@ -2,6 +2,7 @@ package com.example.propertymaintenance;
 
 import android.annotation.SuppressLint;
 import android.content.ContentValues;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -337,6 +338,50 @@ public class MainActivity extends AppCompatActivity {
                 } catch (Exception e) {
                     Log.e("MainActivity", "saveFile error: " + e.getMessage(), e);
                     notifyFileSaved(false, e.getMessage());
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void shareFile(String base64Data, String fileName, String mimeType) {
+            Log.d("MainActivity", "shareFile called: " + fileName + " mime:" + mimeType);
+            runOnUiThread(() -> {
+                try {
+                    String cleanBase64 = base64Data;
+                    if (cleanBase64.contains(",")) {
+                        cleanBase64 = cleanBase64.substring(cleanBase64.indexOf(",") + 1);
+                    }
+                    byte[] fileBytes = Base64.decode(cleanBase64, Base64.DEFAULT);
+                    Log.d("MainActivity", "shareFile decoded " + fileBytes.length + " bytes");
+
+                    // 保存到 cache 目录
+                    File cacheDir = getCacheDir();
+                    File shareFile = new File(cacheDir, fileName);
+                    try (FileOutputStream fos = new FileOutputStream(shareFile)) {
+                        fos.write(fileBytes);
+                        fos.flush();
+                    }
+
+                    // 通过 FileProvider 获取 content URI
+                    android.content.Context ctx = MainActivity.this;
+                    Uri contentUri = androidx.core.content.FileProvider.getUriForFile(
+                            ctx,
+                            ctx.getPackageName() + ".fileprovider",
+                            shareFile);
+
+                    // 构建 ACTION_SEND intent
+                    Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                    shareIntent.setType(mimeType.isEmpty() ? "*/*" : mimeType);
+                    shareIntent.putExtra(Intent.EXTRA_STREAM, contentUri);
+                    shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                    // 启动分享选择器
+                    Intent chooser = Intent.createChooser(shareIntent, "分享报告");
+                    startActivity(chooser);
+
+                    Log.d("MainActivity", "shareFile: share intent launched for " + fileName);
+                } catch (Exception e) {
+                    Log.e("MainActivity", "shareFile error: " + e.getMessage(), e);
                 }
             });
         }
