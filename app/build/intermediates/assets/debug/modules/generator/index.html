@@ -630,7 +630,7 @@
                 
                 const buffer = await new Promise(function(resolve, reject) {
                     var xhr = new XMLHttpRequest();
-                    xhr.open('GET', templateUrl, true);
+                    xhr.open('GET', '../../templates/generator_template.xlsx', true);
                     xhr.responseType = 'arraybuffer';
                     xhr.onload = function() {
                         if (xhr.status === 200 || xhr.status === 0) {
