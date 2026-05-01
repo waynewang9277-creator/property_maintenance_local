@@ -648,8 +648,18 @@
                 });
                 console.log('[Generator] template loaded, buffer size:', buffer.byteLength);
                 const arrayBuffer = buffer;
-                
-                const zip = await JSZip.loadAsync(arrayBuffer);
+
+                console.log('[Generator] calling JSZip.loadAsync...');
+                let zip;
+                try {
+                    zip = await JSZip.loadAsync(arrayBuffer);
+                    console.log('[Generator] zip loaded');
+                } catch(e) {
+                    console.error('[Generator] JSZip.loadAsync failed:', e.message, e.stack);
+                    document.getElementById('loading-overlay').style.display = 'none';
+                    alert('JSZip加载失败: ' + e.message);
+                    return;
+                }
                 const sheetXml = await zip.file('xl/worksheets/sheet1.xml').async('string');
                 
                 let modifiedXml = sheetXml;
