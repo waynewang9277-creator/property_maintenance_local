@@ -495,29 +495,54 @@ const BatteryTestModule = {
             const excelBuffer = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
             const fileName = `应急电池放电测试_${dateStr}.xlsx`;
 
+            // 显示loading
+            document.getElementById('pdf-container').innerHTML = `
+                <div style="text-align:center;padding:30px;background:#f0f8ff;border-radius:8px;margin-bottom:15px;">
+                    <div style="font-size:48px;margin-bottom:10px;">⏳</div>
+                    <div style="font-size:16px;font-weight:bold;color:#333;margin-bottom:5px;">正在保存报告...</div>
+                    <div style="font-size:13px;color:#666;">${fileName}</div>
+                </div>
+            `;
+
             const reader = new FileReader();
             await new Promise((resolve, reject) => {
                 reader.onload = function() {
-                    window.parent.saveFile(fileName, reader.result);
-                    window.androidBridge.shareFile(reader.result, fileName, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-                    resolve();
+                    resolve(reader.result);
                 };
                 reader.onerror = function() { reject(new Error('读取文件失败')); };
                 reader.readAsDataURL(excelBuffer);
             });
 
-            document.getElementById('pdf-container').innerHTML = `
-                <div style="text-align:center;padding:30px;background:#f0f8ff;border-radius:8px;margin-bottom:15px;">
-                    <div style="font-size:48px;margin-bottom:10px;">✅</div>
-                    <div style="font-size:16px;font-weight:bold;color:#333;margin-bottom:5px;">报告生成完成！</div>
-                    <div style="font-size:13px;color:#666;">已保存到：${fileName}</div>
-                    <div style="font-size:13px;color:#666;margin-top:5px;">共 ${this.testForms.length} 个测试地点，分 ${this.testForms.length} 个Sheet</div>
-                </div>
-            `;
-
-            this.testForms = [];
-            this.renderAllForms();
-            this.renderTestList();
+            // 保存文件（通过androidBridge）
+            var base64 = reader.result;
+            var self = this;
+            var origOnFileSaved = window.onFileSaved;
+            window.onFileSaved = function(success, errorMsg) {
+                window.onFileSaved = origOnFileSaved;
+                if (success) {
+                    document.getElementById('pdf-container').innerHTML = `
+                        <div style="text-align:center;padding:30px;background:#f0f8ff;border-radius:8px;margin-bottom:15px;">
+                            <div style="font-size:48px;margin-bottom:10px;">✅</div>
+                            <div style="font-size:16px;font-weight:bold;color:#333;margin-bottom:5px;">报告生成完成！</div>
+                            <div style="font-size:13px;color:#666;">已保存到：${fileName}</div>
+                            <div style="font-size:13px;color:#666;margin-top:5px;">共 ${self.testForms.length} 个测试地点，分 ${self.testForms.length} 个Sheet</div>
+                        </div>
+                    `;
+                    self.testForms = [];
+                    self.renderAllForms();
+                    self.renderTestList();
+                } else {
+                    document.getElementById('pdf-container').innerHTML = `
+                        <div style="text-align:center;padding:30px;background:#fff0f0;border-radius:8px;margin-bottom:15px;">
+                            <div style="font-size:48px;margin-bottom:10px;">❌</div>
+                            <div style="font-size:16px;font-weight:bold;color:#333;margin-bottom:5px;">保存失败</div>
+                            <div style="font-size:13px;color:#666;">${errorMsg || '未知错误'}</div>
+                        </div>
+                    `;
+                }
+            };
+            window.androidBridge.saveFile(base64, fileName);
+            window.androidBridge.shareFile(base64, fileName, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 
         } catch (error) {
             console.error('生成失败:', error);
