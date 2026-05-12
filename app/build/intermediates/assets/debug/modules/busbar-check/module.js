@@ -698,7 +698,13 @@ const BusbarModule = {
                     '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">';
 
                 photoList.forEach(function(photo, idx) {
-                    var imgFileName = 'photo_' + photo.deviceId + '.png';
+                    // 设备ID可能含中文，直接用作文件名会导致ZIP编码错误
+                    // 将设备ID转换为安全的hex字符串用作文件名
+                    var deviceIdSafe = '';
+                    for (var ci = 0; ci < photo.deviceId.length; ci++) {
+                        deviceIdSafe += photo.deviceId.charCodeAt(ci).toString(16);
+                    }
+                    var imgFileName = 'photo_' + deviceIdSafe + '.png';
                     var rid = 'rId' + (idx + 1);
 
                     // 写入图片文件
