@@ -285,11 +285,14 @@
             var html = '';
             for (var i = 0; i < MODS.length; i++) {
                 var m = MODS[i];
-                var plans = getTaskPlans(m.id);
+                var allPlans = getTaskPlans(m.id);
+                var monthPlans = allPlans.filter(function(p) {
+                    var d = new Date(p.date);
+                    return d.getFullYear() === calYear && d.getMonth() === calMonth;
+                });
                 html += '<div class="task-item">' +
                     '<div class="task-info"><span class="task-icon">' + m.icon + '</span>' +
-                    '<div><div class="task-name">' + m.name + '</div>' +
-                    '<div class="task-count">已安排 ' + plans.length + ' 个日期</div></div></div>' +
+                    '<div><div class="task-name">' + m.name + '</div></div></div>' +
                     '<button class="btn-assign" onclick="openAssignModal(\'' + m.id + '\')">📅 分配日期</button></div>';
             }
             list.innerHTML = html;
