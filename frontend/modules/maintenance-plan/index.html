@@ -9,10 +9,14 @@
         .container { padding: 15px; max-width: 500px; margin: 0 auto; }
         h1 { text-align: center; font-size: 20px; margin-bottom: 15px; }
         
-        /* 返回按钮 */
         .back { background: #667eea; color: #fff; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; margin-bottom: 15px; font-size: 14px; }
         
-        /* 日历 */
+        /* 切换视图 */
+        .view-tabs { display: flex; gap: 5px; margin-bottom: 15px; }
+        .tab { flex: 1; padding: 12px; text-align: center; background: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; }
+        .tab.active { background: #667eea; color: #fff; }
+        
+        /* 日历视图 */
         .cal { background: #fff; border-radius: 8px; padding: 15px; margin-bottom: 15px; }
         .cal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .cal-title { font-size: 18px; font-weight: bold; }
@@ -21,37 +25,63 @@
         .week { display: flex; background: #f0f0f0; border-radius: 4px; margin-bottom: 5px; }
         .wd { flex: 1; text-align: center; padding: 8px; font-weight: bold; font-size: 12px; color: #666; }
         .days { display: flex; flex-wrap: wrap; }
-        .day { width: 14.28%; height: 45px; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; }
+        .day { width: 14.28%; height: 45px; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; position: relative; }
         .day:hover { background: #f0f0f0; }
         .day.today { background: #667eea; color: #fff; border-radius: 50%; }
         .day.selected { background: #52c41a; color: #fff; border-radius: 50%; }
-        .day.has-plan::after { content: ''; position: absolute; bottom: 3px; width: 6px; height: 6px; background: #ff4d4f; border-radius: 50%; }
-        .day.has-plan { position: relative; }
+        .day.has-plan::after { content: ''; position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%); width: 6px; height: 6px; background: #ff4d4f; border-radius: 50%; }
         .day.empty { cursor: default; }
+        .day.selected-day { background: #fff3bf; border: 2px solid #faad14; border-radius: 8px; }
         
-        /* 计划列表 */
-        .plans { background: #fff; border-radius: 8px; padding: 15px; }
-        .plans-title { font-size: 16px; font-weight: bold; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+        /* 当日计划 */
+        .day-plans { background: #fff; border-radius: 8px; padding: 15px; margin-bottom: 15px; }
+        .day-plans-title { font-size: 16px; font-weight: bold; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
         .plan-item { display: flex; align-items: center; justify-content: space-between; padding: 10px; background: #f9f9f9; border-radius: 8px; margin-bottom: 8px; }
         .plan-item.checked { background: #f6ffed; border: 1px solid #b7eb8f; }
         .plan-info { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; }
         .plan-del { background: #ff4d4f; color: #fff; border: none; border-radius: 50%; width: 22px; height: 22px; font-size: 14px; cursor: pointer; }
         .no-plan { text-align: center; padding: 25px; color: #999; }
-        .btn-add { background: #52c41a; color: #fff; border: none; border-radius: 8px; padding: 14px; font-size: 15px; cursor: pointer; width: 100%; margin-top: 10px; }
+        
+        /* 任务列表视图 */
+        .task-list { background: #fff; border-radius: 8px; padding: 15px; }
+        .task-item { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f9f9f9; border-radius: 8px; margin-bottom: 10px; }
+        .task-info { display: flex; align-items: center; gap: 10px; }
+        .task-icon { font-size: 24px; }
+        .task-name { font-size: 14px; font-weight: bold; }
+        .task-count { font-size: 12px; color: #666; margin-top: 2px; }
+        .btn-assign { background: #667eea; color: #fff; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 13px; }
         
         /* 弹窗 */
         .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
         .modal.show { display: flex; }
-        .modal-body { background: #fff; border-radius: 12px; padding: 20px; width: 90%; max-height: 70vh; overflow-y: auto; }
+        .modal-body { background: #fff; border-radius: 12px; padding: 20px; width: 95%; max-height: 85vh; overflow-y: auto; }
         .modal-title { font-size: 18px; font-weight: bold; text-align: center; margin-bottom: 8px; }
-        .modal-date { text-align: center; color: #666; margin-bottom: 15px; font-size: 14px; }
-        .opt { display: flex; align-items: center; padding: 12px; background: #f9f9f9; border-radius: 8px; margin-bottom: 8px; cursor: pointer; }
-        .opt.selected { background: #e6f7ff; border: 1px solid #667eea; }
-        .opt-name { font-size: 14px; }
-        .opt-check { margin-left: auto; color: #667eea; }
+        .modal-subtitle { text-align: center; color: #666; margin-bottom: 15px; font-size: 14px; }
+        
+        /* 分配日期弹窗 - 日历多选 */
+        .assign-cal { background: #fff; border-radius: 8px; padding: 15px; margin-bottom: 15px; }
+        .assign-info { text-align: center; margin-bottom: 15px; padding: 10px; background: #e6f7ff; border-radius: 8px; }
+        .assign-info .icon { font-size: 24px; }
+        .assign-info .name { font-size: 16px; font-weight: bold; margin-top: 5px; }
+        .assign-cal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .assign-cal-nav button { background: #667eea; color: #fff; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .assign-week { display: flex; background: #f0f0f0; border-radius: 4px; margin-bottom: 3px; }
+        .assign-wd { flex: 1; text-align: center; padding: 6px; font-weight: bold; font-size: 11px; color: #666; }
+        .assign-days { display: flex; flex-wrap: wrap; }
+        .assign-day { width: 14.28%; height: 38px; display: flex; align-items: center; justify-content: center; font-size: 13px; cursor: pointer; }
+        .assign-day:hover { background: #f0f0f0; }
+        .assign-day.selected { background: #667eea; color: #fff; border-radius: 50%; }
+        .assign-day.empty { cursor: default; }
+        .assign-day.has-task { background: #fff3bf; border: 1px solid #faad14; }
+        
+        .selected-dates { margin-top: 15px; padding: 10px; background: #f9f9f9; border-radius: 8px; }
+        .selected-dates-title { font-size: 14px; font-weight: bold; margin-bottom: 8px; color: #666; }
+        .selected-date-tag { display: inline-block; padding: 4px 10px; background: #667eea; color: #fff; border-radius: 4px; margin: 2px; font-size: 12px; cursor: pointer; }
+        .selected-date-tag:hover { background: #5a6fd6; }
+        
         .modal-btns { display: flex; gap: 10px; margin-top: 15px; }
         .btn-cancel { flex: 1; padding: 12px; background: #f0f0f0; color: #333; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
-        .btn-confirm { flex: 1; padding: 12px; background: #667eea; color: #fff; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
+        .btn-confirm { flex: 1; padding: 12px; background: #52c41a; color: #fff; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -59,34 +89,65 @@
         <button class="back" id="btnBack">← 返回</button>
         <h1>📅 维保计划</h1>
         
-        <div class="cal">
-            <div class="cal-head">
-                <button class="cal-nav" id="btnPrev">◀ 上月</button>
-                <span class="cal-title" id="calTitle">2026年5月</span>
-                <button class="cal-nav" id="btnNext">下月 ▶</button>
-            </div>
-            <div class="week">
-                <div class="wd">日</div><div class="wd">一</div><div class="wd">二</div>
-                <div class="wd">三</div><div class="wd">四</div><div class="wd">五</div><div class="wd">六</div>
-            </div>
-            <div class="days" id="days"></div>
+        <!-- 视图切换 -->
+        <div class="view-tabs">
+            <button class="tab active" id="tabCal" onclick="showView('calendar')">📅 日历视图</button>
+            <button class="tab" id="tabList" onclick="showView('tasklist')">📋 任务列表</button>
         </div>
         
-        <div class="plans">
-            <div class="plans-title" id="plansTitle">5月16日 计划</div>
-            <div id="plansList"></div>
+        <!-- 日历视图 -->
+        <div id="viewCalendar">
+            <div class="cal">
+                <div class="cal-head">
+                    <button class="cal-nav" id="btnPrev">◀</button>
+                    <span class="cal-title" id="calTitle">2026年5月</span>
+                    <button class="cal-nav" id="btnNext">▶</button>
+                </div>
+                <div class="week">
+                    <div class="wd">日</div><div class="wd">一</div><div class="wd">二</div>
+                    <div class="wd">三</div><div class="wd">四</div><div class="wd">五</div><div class="wd">六</div>
+                </div>
+                <div class="days" id="calDays"></div>
+            </div>
+            
+            <div class="day-plans">
+                <div class="day-plans-title" id="dayPlansTitle">5月16日 计划</div>
+                <div id="dayPlansList"></div>
+            </div>
+        </div>
+        
+        <!-- 任务列表视图 -->
+        <div id="viewTaskList" style="display:none;">
+            <div class="task-list" id="taskList"></div>
         </div>
     </div>
 
-    <!-- 弹窗 -->
-    <div class="modal" id="modal">
+    <!-- 分配日期弹窗 -->
+    <div class="modal" id="modalAssign">
         <div class="modal-body">
-            <div class="modal-title">添加维保项目</div>
-            <div class="modal-date" id="modalDate"></div>
-            <div id="modalOpts"></div>
+            <div class="modal-title">分配执行日期</div>
+            <div class="modal-subtitle">点击日历选择执行日期（可多选）</div>
+            
+            <div class="assign-info" id="assignInfo"></div>
+            
+            <div class="assign-cal">
+                <div class="assign-cal-head">
+                    <button class="assign-cal-nav" onclick="assignChangeMonth(-1)">◀</button>
+                    <span class="cal-title" id="assignCalTitle">2026年5月</span>
+                    <button class="assign-cal-nav" onclick="assignChangeMonth(1)">▶</button>
+                </div>
+                <div class="assign-week">
+                    <div class="assign-wd">日</div><div class="assign-wd">一</div><div class="assign-wd">二</div>
+                    <div class="assign-wd">三</div><div class="assign-wd">四</div><div class="assign-wd">五</div><div class="assign-wd">六</div>
+                </div>
+                <div class="assign-days" id="assignCalDays"></div>
+            </div>
+            
+            <div class="selected-dates" id="selectedDates"></div>
+            
             <div class="modal-btns">
-                <button class="btn-cancel" id="btnCancel">取消</button>
-                <button class="btn-confirm" id="btnConfirm">确定添加</button>
+                <button class="btn-cancel" onclick="closeAssignModal()">取消</button>
+                <button class="btn-confirm" onclick="confirmAssign()">确认分配</button>
             </div>
         </div>
     </div>
@@ -103,20 +164,24 @@
             { id: 'elevator-escape', name: '电梯逃生门检查', icon: '🚪' },
             { id: 'elevator-handrail-fault', name: '电梯扶手梯故障报告', icon: '🛗' }
         ];
-        const KEY = 'maintenance_plan_v2';
+        const KEY = 'maintenance_plan_v3';
 
         // 状态
-        var year = new Date().getFullYear();
-        var month = new Date().getMonth();
+        var calYear = new Date().getFullYear();
+        var calMonth = new Date().getMonth();
         var selDate = formatDate(new Date());
-        var selOpts = [];
+        var currentView = 'calendar';
+        
+        // 分配弹窗状态
+        var assignModuleId = null;
+        var assignYear = new Date().getFullYear();
+        var assignMonth = new Date().getMonth();
+        var selectedDates = [];
 
-        // DOM
+        // DOM初始化
         document.getElementById('btnBack').onclick = goBack;
         document.getElementById('btnPrev').onclick = function() { changeMonth(-1); };
         document.getElementById('btnNext').onclick = function() { changeMonth(1); };
-        document.getElementById('btnCancel').onclick = closeModal;
-        document.getElementById('btnConfirm').onclick = confirmAdd;
 
         // 工具函数
         function formatDate(d) {
@@ -133,41 +198,85 @@
         function setData(d) {
             localStorage.setItem(KEY, JSON.stringify(d));
         }
-        function getPlans(ds) {
-            return getData()[ds] || [];
+        
+        // 获取某任务在某日期的计划
+        function getTaskPlans(moduleId) {
+            var data = getData();
+            var result = [];
+            for (var ds in data) {
+                var plans = data[ds];
+                for (var i = 0; i < plans.length; i++) {
+                    if (plans[i].moduleId === moduleId) {
+                        result.push({ date: ds, checked: plans[i].checked });
+                    }
+                }
+            }
+            return result;
         }
-        function savePlans(ds, ps) {
-            var d = getData();
-            if (ps.length === 0) delete d[ds]; else d[ds] = ps;
-            setData(d);
+        
+        // 获取某日期的所有任务
+        function getDatePlans(ds) {
+            var data = getData();
+            return data[ds] || [];
+        }
+        
+        // 为任务分配日期
+        function assignDates(moduleId, dates) {
+            var data = getData();
+            // 清除该任务之前的所有日期
+            for (var ds in data) {
+                data[ds] = data[ds].filter(function(p) { return p.moduleId !== moduleId; });
+                if (data[ds].length === 0) delete data[ds];
+            }
+            // 添加新日期
+            for (var i = 0; i < dates.length; i++) {
+                var ds = dates[i];
+                if (!data[ds]) data[ds] = [];
+                data[ds].push({ moduleId: moduleId, checked: false });
+            }
+            setData(data);
+        }
+
+        // 切换视图
+        function showView(v) {
+            currentView = v;
+            document.getElementById('tabCal').classList.toggle('active', v === 'calendar');
+            document.getElementById('tabList').classList.toggle('active', v === 'tasklist');
+            document.getElementById('viewCalendar').style.display = v === 'calendar' ? 'block' : 'none';
+            document.getElementById('viewTaskList').style.display = v === 'tasklist' ? 'block' : 'none';
+            
+            if (v === 'calendar') {
+                renderCal();
+                renderDayPlans();
+            } else {
+                renderTaskList();
+            }
         }
 
         // 切换月份
         function changeMonth(n) {
-            month += n;
-            if (month > 11) { month = 0; year++; }
-            if (month < 0) { month = 11; year--; }
+            calMonth += n;
+            if (calMonth > 11) { calMonth = 0; calYear++; }
+            if (calMonth < 0) { calMonth = 11; calYear--; }
             renderCal();
         }
 
         // 渲染日历
         function renderCal() {
-            document.getElementById('calTitle').textContent = year + '年' + (month + 1) + '月';
-            var grid = document.getElementById('days');
+            document.getElementById('calTitle').textContent = calYear + '年' + (calMonth + 1) + '月';
+            var grid = document.getElementById('calDays');
             var data = getData();
             var today = formatDate(new Date());
-            var first = getFirst(year, month);
-            var total = getDays(year, month);
+            var first = getFirst(calYear, calMonth);
+            var total = getDays(calYear, calMonth);
             var html = '';
 
-            // 空格子
             for (var i = 0; i < first; i++) {
                 html += '<div class="day empty"></div>';
             }
 
-            // 日期
             for (var d = 1; d <= total; d++) {
-                var ds = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+                var ds = calYear + '-' + String(calMonth + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
                 var cls = 'day';
                 if (ds === today) cls += ' today';
                 if (ds === selDate) cls += ' selected';
@@ -182,18 +291,18 @@
         function selectDate(ds) {
             selDate = ds;
             renderCal();
-            renderPlans();
+            renderDayPlans();
         }
 
-        // 渲染计划
-        function renderPlans() {
+        // 渲染当日计划
+        function renderDayPlans() {
             var d = new Date(selDate);
-            document.getElementById('plansTitle').textContent = (d.getMonth() + 1) + '月' + d.getDate() + '日 周' + ['日','一','二','三','四','五','六'][d.getDay()] + ' 计划';
-            var list = document.getElementById('plansList');
-            var plans = getPlans(selDate);
+            document.getElementById('dayPlansTitle').textContent = (d.getMonth() + 1) + '月' + d.getDate() + '日 周' + ['日','一','二','三','四','五','六'][d.getDay()] + ' 计划';
+            var list = document.getElementById('dayPlansList');
+            var plans = getDatePlans(selDate);
 
             if (plans.length === 0) {
-                list.innerHTML = '<div class="no-plan">暂无计划</div><button class="btn-add" onclick="openModal()">➕ 添加维保项目</button>';
+                list.innerHTML = '<div class="no-plan">暂无计划</div>';
                 return;
             }
 
@@ -206,83 +315,166 @@
                 }
                 if (!m) m = { icon: '📋', name: p.moduleId };
                 html += '<div class="plan-item' + (p.checked ? ' checked' : '') + '">' +
-                    '<div class="plan-info" onclick="togglePlan(' + i + ')">' +
+                    '<div class="plan-info" onclick="togglePlan(\'' + selDate + '\', ' + i + ')">' +
                     '<span>' + (p.checked ? '✅' : '⬜') + '</span>' +
                     '<span>' + m.icon + ' ' + m.name + '</span></div>' +
-                    '<button class="plan-del" onclick="deletePlan(' + i + ')">×</button></div>';
+                    '<button class="plan-del" onclick="deletePlan(\'' + selDate + '\', ' + i + ')">×</button></div>';
             }
-            list.innerHTML = html + '<button class="btn-add" onclick="openModal()">➕ 添加更多项目</button>';
+            list.innerHTML = html;
         }
 
-        // 弹窗
-        function openModal() {
-            document.getElementById('modalDate').textContent = selDate;
-            var opts = document.getElementById('modalOpts');
-            var cur = getPlans(selDate);
-            var existing = [];
-            for (var i = 0; i < cur.length; i++) existing.push(cur[i].moduleId);
-            selOpts = existing.slice();
-
+        // 渲染任务列表
+        function renderTaskList() {
+            var list = document.getElementById('taskList');
+            var data = getData();
             var html = '';
+            
             for (var i = 0; i < MODS.length; i++) {
                 var m = MODS[i];
-                var sel = existing.indexOf(m.id) > -1;
-                html += '<div class="opt' + (sel ? ' selected' : '') + '" onclick="toggleOpt(\'' + m.id + '\', this)">' +
-                    '<span>' + m.icon + '</span>' +
-                    '<span class="opt-name">' + m.name + '</span>' +
-                    '<span class="opt-check">' + (sel ? '✓' : '') + '</span></div>';
+                var plans = getTaskPlans(m.id);
+                html += '<div class="task-item">' +
+                    '<div class="task-info">' +
+                    '<span class="task-icon">' + m.icon + '</span>' +
+                    '<div>' +
+                    '<div class="task-name">' + m.name + '</div>' +
+                    '<div class="task-count">已安排 ' + plans.length + ' 个日期</div>' +
+                    '</div></div>' +
+                    '<button class="btn-assign" onclick="openAssignModal(\'' + m.id + '\')">📅 分配日期</button></div>';
             }
-            opts.innerHTML = html;
-            document.getElementById('modal').classList.add('show');
+            
+            list.innerHTML = html;
         }
 
-        function toggleOpt(id, el) {
-            var idx = selOpts.indexOf(id);
+        // 打开分配弹窗
+        function openAssignModal(moduleId) {
+            assignModuleId = moduleId;
+            assignYear = new Date().getFullYear();
+            assignMonth = new Date().getMonth();
+            
+            // 获取该任务已有的日期
+            var plans = getTaskPlans(moduleId);
+            selectedDates = plans.map(function(p) { return p.date; });
+            
+            // 显示任务信息
+            var m = null;
+            for (var i = 0; i < MODS.length; i++) {
+                if (MODS[i].id === moduleId) { m = MODS[i]; break; }
+            }
+            document.getElementById('assignInfo').innerHTML = 
+                '<div class="icon">' + (m ? m.icon : '📋') + '</div>' +
+                '<div class="name">' + (m ? m.name : moduleId) + '</div>';
+            
+            renderAssignCal();
+            document.getElementById('modalAssign').classList.add('show');
+        }
+
+        // 关闭分配弹窗
+        function closeAssignModal() {
+            document.getElementById('modalAssign').classList.remove('show');
+            assignModuleId = null;
+            selectedDates = [];
+        }
+
+        // 分配日历 - 切换月份
+        function assignChangeMonth(n) {
+            assignMonth += n;
+            if (assignMonth > 11) { assignMonth = 0; assignYear++; }
+            if (assignMonth < 0) { assignMonth = 11; assignYear--; }
+            renderAssignCal();
+        }
+
+        // 渲染分配日历
+        function renderAssignCal() {
+            document.getElementById('assignCalTitle').textContent = assignYear + '年' + (assignMonth + 1) + '月';
+            var grid = document.getElementById('assignCalDays');
+            var first = getFirst(assignYear, assignMonth);
+            var total = getDays(assignYear, assignMonth);
+            var data = getData();
+            var html = '';
+
+            for (var i = 0; i < first; i++) {
+                html += '<div class="assign-day empty"></div>';
+            }
+
+            for (var d = 1; d <= total; d++) {
+                var ds = assignYear + '-' + String(assignMonth + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+                var cls = 'assign-day';
+                if (selectedDates.indexOf(ds) > -1) cls += ' selected';
+                if (data[ds] && data[ds].length > 0 && selectedDates.indexOf(ds) === -1) cls += ' has-task';
+                html += '<div class="' + cls + '" onclick="toggleAssignDate(\'' + ds + '\')">' + d + '</div>';
+            }
+
+            grid.innerHTML = html;
+            renderSelectedDates();
+        }
+
+        // 切换分配日期
+        function toggleAssignDate(ds) {
+            var idx = selectedDates.indexOf(ds);
             if (idx > -1) {
-                selOpts.splice(idx, 1);
-                el.classList.remove('selected');
-                el.querySelector('.opt-check').textContent = '';
+                selectedDates.splice(idx, 1);
             } else {
-                selOpts.push(id);
-                el.classList.add('selected');
-                el.querySelector('.opt-check').textContent = '✓';
+                selectedDates.push(ds);
+            }
+            selectedDates.sort();
+            renderAssignCal();
+        }
+
+        // 渲染已选日期标签
+        function renderSelectedDates() {
+            var el = document.getElementById('selectedDates');
+            if (selectedDates.length === 0) {
+                el.innerHTML = '<div class="selected-dates-title">未选择日期</div>';
+                return;
+            }
+            var html = '<div class="selected-dates-title">已选择 ' + selectedDates.length + ' 个日期：</div>';
+            for (var i = 0; i < selectedDates.length; i++) {
+                var ds = selectedDates[i];
+                var d = new Date(ds);
+                var label = (d.getMonth() + 1) + '月' + d.getDate() + '日';
+                html += '<span class="selected-date-tag" onclick="removeAssignDate(\'' + ds + '\')">' + label + ' ×</span>';
+            }
+            el.innerHTML = html;
+        }
+
+        // 移除单个日期
+        function removeAssignDate(ds) {
+            var idx = selectedDates.indexOf(ds);
+            if (idx > -1) selectedDates.splice(idx, 1);
+            renderAssignCal();
+        }
+
+        // 确认分配
+        function confirmAssign() {
+            if (selectedDates.length === 0) {
+                alert('请至少选择一个日期');
+                return;
+            }
+            assignDates(assignModuleId, selectedDates);
+            closeAssignModal();
+            showView('tasklist');
+        }
+
+        // 切换计划完成状态
+        function togglePlan(ds, idx) {
+            var data = getData();
+            if (data[ds] && data[ds][idx]) {
+                data[ds][idx].checked = !data[ds][idx].checked;
+                setData(data);
+                renderDayPlans();
             }
         }
 
-        function closeModal() {
-            document.getElementById('modal').classList.remove('show');
-            selOpts = [];
-        }
-
-        function confirmAdd() {
-            if (selOpts.length === 0) { alert('请选择维保项目'); return; }
-            var cur = getPlans(selDate);
-            var ids = [];
-            for (var i = 0; i < cur.length; i++) ids.push(cur[i].moduleId);
-            for (var i = 0; i < selOpts.length; i++) {
-                if (ids.indexOf(selOpts[i]) === -1) {
-                    cur.push({ moduleId: selOpts[i], checked: false });
-                }
+        // 删除计划
+        function deletePlan(ds, idx) {
+            var data = getData();
+            if (data[ds]) {
+                data[ds].splice(idx, 1);
+                if (data[ds].length === 0) delete data[ds];
+                setData(data);
+                renderCal();
+                renderDayPlans();
             }
-            savePlans(selDate, cur);
-            closeModal();
-            renderCal();
-            renderPlans();
-        }
-
-        function deletePlan(idx) {
-            var ps = getPlans(selDate);
-            ps.splice(idx, 1);
-            savePlans(selDate, ps);
-            renderCal();
-            renderPlans();
-        }
-
-        function togglePlan(idx) {
-            var ps = getPlans(selDate);
-            ps[idx].checked = !ps[idx].checked;
-            savePlans(selDate, ps);
-            renderPlans();
         }
 
         function goBack() {
@@ -292,7 +484,7 @@
 
         // 初始化
         renderCal();
-        renderPlans();
+        renderDayPlans();
     </script>
 </body>
 </html>
