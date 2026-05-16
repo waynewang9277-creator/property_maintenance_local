@@ -4,184 +4,382 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>维保计划</title>
-    <link rel="stylesheet" href="../../common/css/style.css">
     <style>
-        .plan-container { padding: 15px; }
-        .calendar-header {
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif; background: #f5f5f5; color: #333; }
+        .mp-container { padding: 15px; }
+        
+        /* 日历头部 */
+        .mp-calendar-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 15px;
-            padding: 10px;
+            padding: 15px;
             background: #fff;
             border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-        .calendar-title { font-size: 18px; font-weight: bold; color: #333; }
-        .calendar-nav { display: flex; gap: 10px; }
-        .calendar-nav button {
-            background: #f0f0f0;
+        .mp-calendar-title { font-size: 18px; font-weight: bold; color: #333; }
+        .mp-calendar-nav { display: flex; gap: 10px; }
+        .mp-calendar-nav button {
+            background: #667eea;
+            color: #fff;
             border: none;
             padding: 8px 15px;
             border-radius: 5px;
             cursor: pointer;
+            font-size: 14px;
         }
-        .calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 5px;
-            margin-bottom: 15px;
-            min-height: 200px;
-        }
-        .calendar-weekday {
-            text-align: center;
-            padding: 10px 5px;
-            font-weight: bold;
-            color: #666;
-            font-size: 12px;
-            background: #f5f5f5;
-        }
-        .calendar-day {
+        
+        /* 日历网格 */
+        .mp-calendar-wrap { background: #fff; border-radius: 8px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .mp-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-bottom: 8px; }
+        .mp-weekday { text-align: center; padding: 8px; font-weight: bold; color: #666; font-size: 12px; background: #f0f0f0; border-radius: 4px; }
+        .mp-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+        .mp-day {
             aspect-ratio: 1;
             display: flex;
             align-items: center;
             justify-content: center;
             background: #fff;
+            border: 1px solid #e0e0e0;
             border-radius: 50%;
             cursor: pointer;
             font-size: 14px;
-            position: relative;
-            min-width: 30px;
-            min-height: 30px;
+            transition: all 0.2s;
         }
-        .calendar-day.today { background: #1890ff; color: #fff; }
-        .calendar-day.has-plan::after {
+        .mp-day:active { background: #f0f0f0; }
+        .mp-day.today { background: #667eea; color: #fff; border-color: #667eea; }
+        .mp-day.has-plan { position: relative; }
+        .mp-day.has-plan::after {
             content: '';
             position: absolute;
-            bottom: 3px;
-            width: 5px;
-            height: 5px;
+            bottom: 2px;
+            width: 6px;
+            height: 6px;
             background: #ff4d4f;
             border-radius: 50%;
         }
-        .calendar-day.selected { background: #52c41a; color: #fff; }
-        .plan-list { background: #fff; border-radius: 8px; padding: 15px; margin-top: 15px; }
-        .plan-list-title { font-size: 16px; font-weight: bold; color: #333; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
-        .plan-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px;
-            background: #f9f9f9;
-            border-radius: 8px;
-            margin-bottom: 10px;
-        }
-        .plan-item.checked { background: #f6ffed; border: 1px solid #b7eb8f; }
-        .plan-item-left { display: flex; align-items: center; gap: 10px; }
-        .plan-icon { font-size: 20px; }
-        .plan-name { font-size: 14px; color: #333; }
-        .btn-delete-plan {
-            background: #ff4d4f;
-            color: #fff;
-            border: none;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            font-size: 14px;
-            cursor: pointer;
-        }
-        .btn-add-plan {
-            background: #52c41a;
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            padding: 12px 20px;
-            font-size: 14px;
-            cursor: pointer;
-            margin-top: 10px;
-            width: 100%;
-        }
-        .btn-add-plan:active { background: #73d13d; }
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.5);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .modal-overlay.show { display: flex; }
-        .modal-content {
-            background: #fff;
-            border-radius: 12px;
-            padding: 20px;
-            width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-        .modal-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; text-align: center; }
-        .modal-date { text-align: center; color: #666; margin-bottom: 15px; font-size: 14px; }
-        .module-option {
-            display: flex;
-            align-items: center;
-            padding: 12px;
-            background: #f9f9f9;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            cursor: pointer;
-        }
-        .module-option:active { background: #e6f7ff; }
-        .module-option.selected { background: #e6f7ff; border: 1px solid #1890ff; }
-        .module-option-icon { font-size: 20px; margin-right: 10px; }
-        .module-option-name { font-size: 14px; color: #333; }
-        .modal-actions { display: flex; gap: 10px; margin-top: 15px; }
-        .btn-modal { flex: 1; padding: 12px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
-        .btn-modal-cancel { background: #f0f0f0; color: #333; }
-        .btn-modal-confirm { background: #1890ff; color: #fff; }
-        .no-plan { text-align: center; padding: 30px; color: #999; }
+        .mp-day.selected { background: #52c41a; color: #fff; border-color: #52c41a; }
+        .mp-day.empty { background: transparent; border: none; cursor: default; }
+        
+        /* 计划列表 */
+        .mp-plan-list { background: #fff; border-radius: 8px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .mp-plan-title { font-size: 16px; font-weight: bold; color: #333; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+        .mp-plan-item { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f9f9f9; border-radius: 8px; margin-bottom: 10px; }
+        .mp-plan-item.checked { background: #f6ffed; border: 1px solid #b7eb8f; }
+        .mp-plan-info { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+        .mp-plan-icon { font-size: 20px; }
+        .mp-plan-name { font-size: 14px; color: #333; }
+        .mp-btn-delete { background: #ff4d4f; color: #fff; border: none; border-radius: 50%; width: 24px; height: 24px; font-size: 14px; cursor: pointer; }
+        .mp-no-plan { text-align: center; padding: 30px; color: #999; }
+        .mp-btn-add { background: #52c41a; color: #fff; border: none; border-radius: 8px; padding: 15px; font-size: 16px; cursor: pointer; width: 100%; margin-top: 10px; }
+        .mp-btn-add:active { background: #73d13d; }
+        
+        /* 弹窗 */
+        .mp-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .mp-modal.show { display: flex; }
+        .mp-modal-content { background: #fff; border-radius: 12px; padding: 20px; width: 90%; max-height: 80vh; overflow-y: auto; }
+        .mp-modal-title { font-size: 18px; font-weight: bold; margin-bottom: 10px; text-align: center; }
+        .mp-modal-date { text-align: center; color: #666; margin-bottom: 15px; font-size: 14px; }
+        .mp-option { display: flex; align-items: center; padding: 12px; background: #f9f9f9; border-radius: 8px; margin-bottom: 8px; cursor: pointer; }
+        .mp-option:active { background: #e6f7ff; }
+        .mp-option.selected { background: #e6f7ff; border: 1px solid #667eea; }
+        .mp-option-icon { font-size: 20px; margin-right: 10px; }
+        .mp-option-name { font-size: 14px; color: #333; }
+        .mp-option-check { margin-left: auto; color: #667eea; }
+        .mp-modal-actions { display: flex; gap: 10px; margin-top: 15px; }
+        .mp-btn-cancel { flex: 1; padding: 12px; background: #f0f0f0; color: #333; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
+        .mp-btn-confirm { flex: 1; padding: 12px; background: #667eea; color: #fff; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
+        
+        /* 返回按钮 */
+        .mp-back { background: #667eea; color: #fff; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-size: 14px; margin-bottom: 15px; }
+        .mp-title { font-size: 20px; font-weight: bold; text-align: center; margin-bottom: 15px; color: #333; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header class="module-header">
-            <button class="btn-back" onclick="if(parent.app && parent.app.backToCategory){parent.app.backToCategory();}else{window.location.href='../../index.html';}">← 返回分类</button>
-            <h2 class="module-title">📅 维保计划</h2>
-        </header>
-        <main class="module-main">
-            <div class="plan-container">
-                <!-- 日历头部 -->
-                <div class="calendar-header">
-                    <button class="calendar-nav-btn" onclick="plan.changeMonth(-1)">◀ 上月</button>
-                    <span class="calendar-title" id="calendar-title">2026年5月</span>
-                    <button class="calendar-nav-btn" onclick="plan.changeMonth(1)">下月 ▶</button>
-                </div>
-                
-                <!-- 日历网格 -->
-                <div class="calendar-grid" id="calendar-grid"></div>
-                
-                <!-- 当日计划列表 -->
-                <div class="plan-list">
-                    <div class="plan-list-title" id="plan-list-title">5月16日 计划</div>
-                    <div id="plan-items"></div>
-                </div>
+    <div class="mp-container">
+        <button class="mp-back" onclick="goBack()">← 返回分类</button>
+        <div class="mp-title">📅 维保计划</div>
+        
+        <!-- 日历头部 -->
+        <div class="mp-calendar-header">
+            <button class="mp-calendar-nav-btn" id="btn-prev" onclick="changeMonth(-1)">◀ 上月</button>
+            <span class="mp-calendar-title" id="calendar-title">2026年5月</span>
+            <button class="mp-calendar-nav-btn" id="btn-next" onclick="changeMonth(1)">下月 ▶</button>
+        </div>
+        
+        <!-- 日历网格 -->
+        <div class="mp-calendar-wrap">
+            <div class="mp-weekdays">
+                <div class="mp-weekday">日</div>
+                <div class="mp-weekday">一</div>
+                <div class="mp-weekday">二</div>
+                <div class="mp-weekday">三</div>
+                <div class="mp-weekday">四</div>
+                <div class="mp-weekday">五</div>
+                <div class="mp-weekday">六</div>
             </div>
-        </main>
+            <div class="mp-days" id="mp-days"></div>
+        </div>
+        
+        <!-- 当日计划列表 -->
+        <div class="mp-plan-list">
+            <div class="mp-plan-title" id="plan-title">5月16日 计划</div>
+            <div id="plan-items"></div>
+        </div>
     </div>
 
     <!-- 新增计划弹窗 -->
-    <div class="modal-overlay" id="modal-add-plan">
-        <div class="modal-content">
-            <div class="modal-title">添加维保项目</div>
-            <div class="modal-date" id="modal-date"></div>
-            <div id="module-options"></div>
-            <div class="modal-actions">
-                <button class="btn-modal btn-modal-cancel" onclick="plan.closeModal()">取消</button>
-                <button class="btn-modal btn-modal-confirm" onclick="plan.addPlan()">确定添加</button>
+    <div class="mp-modal" id="modal-add">
+        <div class="mp-modal-content">
+            <div class="mp-modal-title">添加维保项目</div>
+            <div class="mp-modal-date" id="modal-date"></div>
+            <div id="modal-options"></div>
+            <div class="mp-modal-actions">
+                <button class="mp-btn-cancel" onclick="closeModal()">取消</button>
+                <button class="mp-btn-confirm" onclick="confirmAdd()">确定添加</button>
             </div>
         </div>
     </div>
 
     <script src="../../common/js/data-manager.js"></script>
-    <script src="module.js"></script>
+    <script>
+        // 维保计划模块
+        const plan = {
+            currentYear: new Date().getFullYear(),
+            currentMonth: new Date().getMonth(),
+            selectedDate: null,
+            selectedOptions: []
+        };
+
+        const MODULE_OPTIONS = [
+            { id: 'battery-test', name: '应急电池放电测试', icon: '🔋' },
+            { id: 'generator', name: '发电机组维护性运转记录', icon: '⚙️' },
+            { id: 'ats', name: 'ATS维护保养记录', icon: '🔌' },
+            { id: 'capacitor-check', name: '电容检查及测温', icon: '🔌' },
+            { id: 'busbar-check', name: '供电母排检查及测温', icon: '⚡' },
+            { id: 'power-room-monthly', name: '强电间月度巡检', icon: '📋' },
+            { id: 'elevator-escape', name: '电梯逃生门检查', icon: '🚪' },
+            { id: 'elevator-handrail-fault', name: '电梯扶手梯故障报告', icon: '🛗' }
+        ];
+
+        const STORAGE_KEY = 'maintenance_plan';
+
+        function init() {
+            plan.selectedDate = formatDate(new Date());
+            renderCalendar();
+            renderPlanList();
+        }
+
+        function formatDate(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function getDaysInMonth(year, month) {
+            return new Date(year, month + 1, 0).getDate();
+        }
+
+        function getFirstDay(year, month) {
+            return new Date(year, month, 1).getDay();
+        }
+
+        function getPlans(dateStr) {
+            const data = DataManager.get(STORAGE_KEY) || {};
+            return data[dateStr] || [];
+        }
+
+        function savePlans(dateStr, plans) {
+            const data = DataManager.get(STORAGE_KEY) || {};
+            if (plans.length === 0) {
+                delete data[dateStr];
+            } else {
+                data[dateStr] = plans;
+            }
+            DataManager.set(STORAGE_KEY, data);
+        }
+
+        function changeMonth(delta) {
+            plan.currentMonth += delta;
+            if (plan.currentMonth > 11) {
+                plan.currentMonth = 0;
+                plan.currentYear++;
+            } else if (plan.currentMonth < 0) {
+                plan.currentMonth = 11;
+                plan.currentYear--;
+            }
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            const title = document.getElementById('calendar-title');
+            const daysEl = document.getElementById('mp-days');
+            
+            title.textContent = `${plan.currentYear}年${plan.currentMonth + 1}月`;
+            
+            const data = DataManager.get(STORAGE_KEY) || {};
+            const today = formatDate(new Date());
+            
+            let html = '';
+            
+            // 空格子
+            const firstDay = getFirstDay(plan.currentYear, plan.currentMonth);
+            for (let i = 0; i < firstDay; i++) {
+                html += '<div class="mp-day empty"></div>';
+            }
+            
+            // 日期
+            const daysInMonth = getDaysInMonth(plan.currentYear, plan.currentMonth);
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateStr = `${plan.currentYear}-${String(plan.currentMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const isToday = dateStr === today;
+                const hasPlan = data[dateStr] && data[dateStr].length > 0;
+                const isSelected = dateStr === plan.selectedDate;
+                
+                let cls = 'mp-day';
+                if (isToday) cls += ' today';
+                if (hasPlan) cls += ' has-plan';
+                if (isSelected) cls += ' selected';
+                
+                html += `<div class="${cls}" onclick="selectDate('${dateStr}')">${d}</div>`;
+            }
+            
+            daysEl.innerHTML = html;
+        }
+
+        function selectDate(dateStr) {
+            plan.selectedDate = dateStr;
+            renderCalendar();
+            renderPlanList();
+        }
+
+        function renderPlanList() {
+            const title = document.getElementById('plan-title');
+            const container = document.getElementById('plan-items');
+            
+            const date = new Date(plan.selectedDate);
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            const weekday = ['日', '一', '二', '三', '四', '五', '六'][date.getDay()];
+            
+            title.textContent = `${month}月${day}日 周${weekday} 计划`;
+            
+            const plans = getPlans(plan.selectedDate);
+            
+            if (plans.length === 0) {
+                container.innerHTML = '<div class="mp-no-plan">暂无计划</div><button class="mp-btn-add" onclick="openModal()">➕ 添加维保项目</button>';
+                return;
+            }
+            
+            let html = '';
+            plans.forEach((p, idx) => {
+                const mod = MODULE_OPTIONS.find(m => m.id === p.moduleId) || { icon: '📋', name: p.moduleId };
+                html += `
+                    <div class="mp-plan-item ${p.checked ? 'checked' : ''}">
+                        <div class="mp-plan-info" onclick="togglePlan(${idx})">
+                            <span class="mp-plan-icon">${p.checked ? '✅' : '⬜'}</span>
+                            <span class="mp-plan-name">${mod.icon} ${mod.name}</span>
+                        </div>
+                        <button class="mp-btn-delete" onclick="deletePlan(${idx})">×</button>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html + '<button class="mp-btn-add" onclick="openModal()">➕ 添加更多项目</button>';
+        }
+
+        function openModal() {
+            document.getElementById('modal-date').textContent = plan.selectedDate;
+            
+            const container = document.getElementById('modal-options');
+            const currentPlans = getPlans(plan.selectedDate);
+            const existingIds = currentPlans.map(p => p.moduleId);
+            
+            plan.selectedOptions = [...existingIds];
+            
+            let html = '';
+            MODULE_OPTIONS.forEach(m => {
+                const isSelected = existingIds.includes(m.id);
+                html += `
+                    <div class="mp-option ${isSelected ? 'selected' : ''}" onclick="toggleOption('${m.id}', this)">
+                        <span class="mp-option-icon">${m.icon}</span>
+                        <span class="mp-option-name">${m.name}</span>
+                        <span class="mp-option-check">${isSelected ? '✓' : ''}</span>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+            document.getElementById('modal-add').classList.add('show');
+        }
+
+        function toggleOption(moduleId, el) {
+            const idx = plan.selectedOptions.indexOf(moduleId);
+            if (idx > -1) {
+                plan.selectedOptions.splice(idx, 1);
+                el.classList.remove('selected');
+                el.querySelector('.mp-option-check').textContent = '';
+            } else {
+                plan.selectedOptions.push(moduleId);
+                el.classList.add('selected');
+                el.querySelector('.mp-option-check').textContent = '✓';
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('modal-add').classList.remove('show');
+            plan.selectedOptions = [];
+        }
+
+        function confirmAdd() {
+            if (plan.selectedOptions.length === 0) {
+                alert('请选择要添加的维保项目');
+                return;
+            }
+            
+            const currentPlans = getPlans(plan.selectedDate);
+            const existingIds = currentPlans.map(p => p.moduleId);
+            
+            plan.selectedOptions.forEach(moduleId => {
+                if (!existingIds.includes(moduleId)) {
+                    currentPlans.push({ moduleId, checked: false });
+                }
+            });
+            
+            savePlans(plan.selectedDate, currentPlans);
+            closeModal();
+            renderCalendar();
+            renderPlanList();
+        }
+
+        function deletePlan(index) {
+            const plans = getPlans(plan.selectedDate);
+            plans.splice(index, 1);
+            savePlans(plan.selectedDate, plans);
+            renderCalendar();
+            renderPlanList();
+        }
+
+        function togglePlan(index) {
+            const plans = getPlans(plan.selectedDate);
+            plans[index].checked = !plans[index].checked;
+            savePlans(plan.selectedDate, plans);
+            renderPlanList();
+        }
+
+        function goBack() {
+            if (parent.app && parent.app.backToCategory) {
+                parent.app.backToCategory();
+            } else {
+                window.location.href = '../../index.html';
+            }
+        }
+
+        init();
+    </script>
 </body>
 </html>
