@@ -3,7 +3,28 @@ const DataManager = {
     STORAGE_KEY: 'modules_battery_test_records',
     OPERATOR_KEY: 'modules_battery_test_operator',
 
-    // 获取所有记录
+    // ========== 通用数据存取 ==========
+    get(key) {
+        try {
+            const data = localStorage.getItem(key);
+            return data ? JSON.parse(data) : null;
+        } catch (e) {
+            console.error('DataManager.get error:', e);
+            return null;
+        }
+    },
+
+    set(key, value) {
+        try {
+            localStorage.setItem(key, JSON.stringify(value));
+            return true;
+        } catch (e) {
+            console.error('DataManager.set error:', e);
+            return false;
+        }
+    },
+
+    // ========== 电池测试记录 ==========
     getAllRecords() {
         try {
             const data = localStorage.getItem(this.STORAGE_KEY);
