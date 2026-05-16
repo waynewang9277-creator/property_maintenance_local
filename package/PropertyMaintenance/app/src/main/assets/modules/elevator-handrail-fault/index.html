@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>电梯扶手梯故障报告</title>
+    <link rel="stylesheet" href="../../common/css/style.css">
+    <style>
+        body { background: #f0f0f0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        .module-header { display: flex; align-items: center; padding: 15px 20px; background: white; border-bottom: 1px solid #eee; gap: 15px; }
+        .btn-back { padding: 8px 16px; background: #666; color: white; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; }
+        .module-title { font-size: 16pt; font-weight: bold; color: #333; flex: 1; }
+        .module-main { padding: 15px; }
+        .tab-bar { display: flex; gap: 0; margin-bottom: 15px; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+        .tab-btn { flex: 1; padding: 12px 8px; text-align: center; font-size: 13pt; font-weight: bold; color: #666; background: white; border: none; cursor: pointer; border-bottom: 3px solid transparent; }
+        .tab-btn.active { color: #1565C0; border-bottom-color: #1565C0; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .card { background: white; border-radius: 10px; padding: 15px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+        .card-title { font-size: 13pt; font-weight: bold; color: #333; margin-bottom: 12px; }
+
+        /* Month picker */
+        .month-picker { margin-bottom: 15px; }
+        .month-picker-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 5px; }
+        .month-picker-btn { background: white; border: 2px solid #e0e0e0; border-radius: 8px; width: 40px; height: 40px; font-size: 16pt; cursor: pointer; color: #666; }
+        .month-picker-btn:active { background: #f0f0f0; }
+        .month-picker-year { font-size: 14pt; font-weight: bold; color: #333; }
+        .month-picker-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .month-picker-cell { padding: 10px 5px; text-align: center; border: 2px solid #e0e0e0; border-radius: 8px; background: white; font-size: 12pt; color: #333; cursor: pointer; transition: all 0.2s; }
+        .month-picker-cell:active { background: #f0f0f0; }
+        .month-picker-cell.selected { border-color: #1565C0; background: #E3F2FD; color: #1565C0; font-weight: bold; }
+        .month-picker-cell.disabled { color: #ccc; cursor: default; }
+
+        .building-tabs { display: flex; gap: 10px; margin-bottom: 15px; }
+        .building-btn { flex: 1; padding: 12px; background: white; border: 2px solid #ddd; border-radius: 8px; font-size: 12pt; font-weight: bold; cursor: pointer; color: #666; transition: all 0.2s; }
+        .building-btn.active { border-color: #1565C0; background: #E3F2FD; color: #1565C0; }
+
+        .date-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 15px; }
+        .date-cell { height: 44px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: white; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; font-size: 13pt; color: #333; transition: all 0.2s; }
+        .date-cell.expanded { border-color: #1565C0; background: #E3F2FD; }
+        .date-cell.has-record { background: #FFF3E0; border-color: #FF9800; }
+        .date-cell.has-record.expanded { background: #FFE0B2; }
+        .date-num { font-weight: bold; }
+        .date-dot { font-size: 8pt; color: #FF9800; margin-top: 2px; }
+
+        .device-section { margin-top: 15px; }
+        .device-section-title { font-size: 12pt; font-weight: bold; color: #666; margin-bottom: 10px; padding: 8px 0; border-bottom: 1px solid #eee; }
+        .device-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+        .device-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 44px; padding: 8px 10px; background: white; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+        .device-btn:active { background: #f0f0f0; }
+        .device-btn.selected { border-color: #1565C0; background: #E3F2FD; }
+        .device-btn.has-fault { border-color: #F44336; background: #FFEBEE; }
+        .device-btn-name { font-size: 11pt; font-weight: bold; color: #333; }
+        .device-btn-code { font-size: 9pt; color: #F44336; font-weight: bold; margin-top: 3px; }
+        .device-btn-ok { font-size: 9pt; color: #4CAF50; margin-top: 3px; }
+
+        .fault-panel { background: #fafafa; border: 2px solid #1565C0; border-radius: 8px; padding: 15px; margin-top: 10px; }
+        .fault-panel-title { font-size: 12pt; font-weight: bold; color: #1565C0; margin-bottom: 12px; }
+        .fault-buttons { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+        .fault-btn { padding: 8px 10px; border: 2px solid #e0e0e0; border-radius: 6px; background: white; font-size: 11pt; font-weight: bold; color: #666; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+        .fault-btn.selected { background: #1565C0; border-color: #1565C0; color: white; }
+                .remark-row { margin-top: 8px; }
+        .remark-input { width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 11pt; box-sizing: border-box; }
+        .fault-desc-panel { margin-top: 12px; border-top: 1px solid #ddd; padding-top: 10px; }
+        .fault-desc-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; opacity: 0.4; pointer-events: none; flex-wrap: wrap; }
+        .fault-desc-row.active { opacity: 1; pointer-events: auto; }
+        .fault-desc-label { font-size: 11pt; color: #666; min-width: 60px; white-space: nowrap; }
+        .fault-desc-input { flex: 1; min-width: 0; padding: 6px 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 11pt; }
+        .fault-item-header { display: flex; align-items: center; gap: 8px; padding: 8px 0; cursor: pointer; }
+        .fault-detail-toggle { font-size: 10pt; color: #1565C0; margin-left: auto; }
+        .fault-detail-form { padding: 8px; background: #f5f5f5; border-radius: 6px; }
+        .fault-time-row { display: flex; align-items: center; gap: 4px; margin-bottom: 6px; flex-wrap: wrap; }
+        .time-label { font-size: 11pt; color: #666; min-width: 60px; white-space: nowrap; }
+        .time-input { flex: 1; min-width: 0; padding: 6px 4px; border: 1px solid #ccc; border-radius: 4px; font-size: 11pt; text-align: center; }
+        .time-sep { font-size: 12pt; color: #666; white-space: nowrap; }
+        .not-trapped-label { font-size: 10pt; color: #666; margin-left: 8px; display: flex; align-items: center; gap: 3px; }
+        .fault-desc-row-inline { display: flex; align-items: center; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+
+        /* Statistics Tab */
+        .stat-item { background: white; border: 2px solid #e0e0e0; border-radius: 8px; margin-bottom: 10px; overflow: hidden; }
+        .stat-item.expanded { border-color: #1565C0; }
+        .stat-item-header { display: flex; align-items: center; padding: 10px 12px; gap: 10px; cursor: pointer; background: #fafafa; }
+        .stat-item-header:active { background: #f0f0f0; }
+        .stat-date { font-size: 11pt; font-weight: bold; color: #333; min-width: 80px; }
+        .stat-device { font-size: 11pt; font-weight: bold; color: #1565C0; min-width: 45px; }
+        .stat-fault-code { font-size: 10pt; color: #F44336; flex: 1; }
+        .stat-expand-icon { font-size: 10pt; color: #999; }
+        .stat-item-detail { padding: 12px; background: white; border-top: 1px solid #eee; }
+        .stat-time-grid { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 10px; }
+        .stat-time-field { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+        .stat-time-field label { font-size: 10pt; color: #666; white-space: nowrap; }
+        .time-input-group { display: flex; align-items: center; gap: 2px; flex: 1; min-width: 0; }
+        .stat-desc-field { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+        .stat-desc-field label { font-size: 10pt; color: #666; white-space: nowrap; }
+        .stat-desc-field .fault-desc-input { flex: 1; min-width: 0; }
+        .stat-auto-field { display: flex; align-items: center; gap: 8px; padding-top: 8px; border-top: 1px dashed #eee; flex-wrap: wrap; }
+        .stat-auto-field label { font-size: 10pt; color: #666; white-space: nowrap; }
+        .stat-desc-auto { font-size: 11pt; color: #333; background: #f5f5f5; padding: 4px 8px; border-radius: 4px; }
+
+        .summary-bar { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: #E3F2FD; border-radius: 8px; margin-bottom: 12px; font-size: 12pt; color: #1565C0; }
+        .btn-row { display: flex; gap: 10px; margin-top: 15px; }
+        .btn-generate { flex: 1; padding: 14px; background: #1565C0; color: white; border: none; border-radius: 10px; font-size: 14pt; font-weight: bold; cursor: pointer; }
+        .btn-generate:active { background: #0D47A1; }
+        .btn-clear { padding: 14px 20px; background: #FF9800; color: white; border: none; border-radius: 10px; font-size: 14pt; font-weight: bold; cursor: pointer; }
+        .btn-clear:active { background: #F57C00; }
+        .legend { font-size: 10pt; color: #888; margin-top: 15px; text-align: center; }
+        #loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 9999; }
+        .loading-box { background: white; padding: 30px 50px; border-radius: 12px; text-align: center; }
+        .loading-box p { margin-top: 15px; color: #333; font-size: 13pt; }
+        .placeholder { text-align: center; padding: 60px 20px; color: #999; font-size: 14pt; }
+        .placeholder-icon { font-size: 48pt; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="module-header">
+            <button class="btn-back" onclick="parent.postMessage('goBackToCategory', '*')">← 返回</button>
+            <h2 class="module-title">🛗 电梯扶手梯故障报告</h2>
+        </header>
+
+        <main class="module-main">
+            <div class="tab-bar">
+                <button class="tab-btn active" id="tab-report" onclick="FaultModule.switchTab('report')">月度故障报告</button>
+                <button class="tab-btn" id="tab-stat" onclick="FaultModule.switchTab('stat')">月度故障统计表</button>
+            </div>
+
+            <div class="tab-content active" id="content-report">
+                <div class="card">
+                    <div class="card-title">选择月份</div>
+                    <div class="month-picker">
+                        <div class="month-picker-header">
+                            <button class="month-picker-btn" id="btn-prev-year" onclick="FaultModule.prevYear()">◀</button>
+                            <span class="month-picker-year" id="picker-year">2026年</span>
+                            <button class="month-picker-btn" id="btn-next-year" onclick="FaultModule.nextYear()">▶</button>
+                        </div>
+                        <div class="month-picker-grid" id="month-grid"></div>
+                    </div>
+                    <div class="building-tabs">
+                        <button class="building-btn active" onclick="FaultModule.switchBuilding('office')">办公楼电梯</button>
+                        <button class="building-btn" onclick="FaultModule.switchBuilding('mall')">商场电梯</button>
+                    </div>
+                    <div id="date-grid"></div>
+                </div>
+                <div class="summary-bar">
+                    <span id="record-count">已记录 0 条故障</span>
+                    <span id="record-devices">涉及 0 台设备</span>
+                </div>
+                <div class="btn-row">
+                    <button class="btn-generate" onclick="FaultModule.generateExcel()">📥 生成 Excel 报告</button>
+                    <button class="btn-clear" onclick="FaultModule.clearAll()">🗑 清空</button>
+                </div>
+                <div class="legend">提示：点击日期展开设备列表，再点击设备按钮选择故障类型</div>
+            </div>
+
+            <div class="tab-content" id="content-stat">
+                <div id="stat-content">
+                <div class="placeholder">
+                    <div class="placeholder-icon">📊</div>
+                    <p>请先在"月度故障报告"中选择月份并记录故障</p>
+                </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="loading-overlay">
+        <div class="loading-box">
+            <div style="font-size:24px;">⏳</div>
+            <p>正在生成Excel报告...</p>
+        </div>
+    </div>
+
+    <script src="../../common/js/lib/jszip.min.js"></script>
+    <script src="../../common/js/lib/xlsx.full.min.js"></script>
+    <script src="module.js"></script>
+</body>
+</html>

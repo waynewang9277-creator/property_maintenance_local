@@ -1,0 +1,64 @@
+# 忽略 APK 安装包
+*.apk
+
+# 忽略临时调试脚本
+fix_*.js
+fix_*.py
+analyze_*.py
+check_*.py
+verify*.py
+*.pyc
+__pycache__/
+
+# 忽略临时测试页面
+debug.html
+test*.html
+
+# 忽略临时文件
+*.bak
+*.tmp
+*.log
+
+# 忽略大型二进制文件
+logo_full.txt
+logo_b64.txt
+logo_b64_clean.txt
+logo_clean.txt
+logo_correct.txt
+logo_datauri.txt
+logo_final.txt
+logo_fixed.txt
+
+# 忽略 IDE 配置
+.vscode/
+.idea/
+
+# ============ Android Build 产物 ============
+# 忽略 build 目录
+package/PropertyMaintenance/app/build/
+
+# 忽略 build 中间产物
+package/PropertyMaintenance/app/build/
+
+# 忽略 gradle 构建缓存
+.gradle/
+package/PropertyMaintenance/.gradle/
+
+# 忽略中间文件（.dex, .class, .jar 等）
+*.dex
+*.class
+*.jar
+
+# 忽略压缩资源（.jar）
+*.jar
+
+# 忽略 R.txt、mapping 等生成文件
+R.txt
+package-aware-r.txt
+graph.bin
+
+# 忽略资源合并报告
+manifest-merger-*.txt
+
+# 忽略 zip-cache
+zip-cache/

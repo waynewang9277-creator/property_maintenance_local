@@ -1,0 +1,43 @@
+{
+  "name": "应急装置电池放电测试",
+  "appid": "__UNI__BATTERY_TEST",
+  "description": "物业维保工具 - 应急装置电池放电测试及PDF报告生成",
+  "versionName": "1.0.0",
+  "versionCode": "100",
+  "transformPx": false,
+  "app-plus": {
+    "usingComponents": true,
+    "nvueStyle": "uni-nvue",
+    "splashscreen": {
+      "alwaysTopBeforeReady": true,
+      "autoclose": true,
+      "waiting": true,
+      "delay": 0
+    },
+    "modules": {},
+    "distribute": {
+      "android": {
+        "permissions": [
+          "<uses-permission android:name=\"android.permission.CAMERA\"/>",
+          "<uses-permission android:name=\"android.permission.READ_EXTERNAL_STORAGE\"/>",
+          "<uses-permission android:name=\"android.permission.WRITE_EXTERNAL_STORAGE\"/>"
+        ],
+        "minSdkVersion": 21
+      }
+    }
+  },
+  "quickapp": {},
+  "mp-weixin": {
+    "appid": "",
+    "setting": {
+      "urlCheck": false
+    },
+    "usingComponents": true
+  },
+  "h5": {
+    "router": {
+      "mode": "hash",
+      "base": "./"
+    }
+  }
+}

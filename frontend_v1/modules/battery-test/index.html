@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>应急电池放电测试</title>
+    <link rel="stylesheet" href="../../common/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="module-header">
+            <button class="btn-back" onclick="parent.app.backToMain()">← 返回主页</button>
+            <h2 class="module-title">🔋 应急电池放电测试</h2>
+        </header>
+
+        <main class="module-main">
+            <button class="btn btn-primary" id="btn-new-test" style="margin-bottom:15px;">➕ 新建测试</button>
+            
+            <div id="records-container"></div>
+            
+            <div id="test-form" style="display:none;">
+                <div class="form-group">
+                    <label>📍 安装地点</label>
+                    <input type="text" id="location" placeholder="如：1号楼配电室">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>📅 测试日期</label>
+                        <input type="date" id="test-date">
+                    </div>
+                    <div class="form-group">
+                        <label>🕐 测试时间</label>
+                        <input type="time" id="test-time">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>📊 放电测试记录</label>
+                    <div class="records-table">
+                        <div class="table-header">
+                            <span>序号</span>
+                            <span>剩余电量%</span>
+                            <span>照片</span>
+                        </div>
+                        <div id="records-input"></div>
+                    </div>
+                    <button class="btn btn-secondary" id="btn-add-record">➕ 添加记录</button>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-success" id="btn-generate-pdf">📄 生成PDF报告</button>
+                    <button class="btn btn-outline" id="btn-cancel">取消</button>
+                </div>
+            </div>
+
+            <div id="pdf-container"></div>
+        </main>
+    </div>
+
+    <script src="../../common/js/lib/html2canvas.min.js"></script>
+    <script src="../../common/js/lib/jspdf.min.js"></script>
+    <script src="../../common/js/data-manager.js"></script>
+    <script src="module.js"></script>
+</body>
+</html>
