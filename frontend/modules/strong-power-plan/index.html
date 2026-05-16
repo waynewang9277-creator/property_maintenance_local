@@ -292,7 +292,8 @@
                 });
                 html += '<div class="task-item">' +
                     '<div class="task-info"><span class="task-icon">' + m.icon + '</span>' +
-                    '<div><div class="task-name">' + m.name + '</div></div></div>' +
+                    '<div><div class="task-name">' + m.name + '</div>' +
+                    '<div class="task-count">当月已安排 ' + monthPlans.length + ' 个日期</div></div></div>' +
                     '<button class="btn-assign" onclick="openAssignModal(\'' + m.id + '\')">📅 分配日期</button></div>';
             }
             list.innerHTML = html;
