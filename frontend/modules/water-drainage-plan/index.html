@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>综合维修维保计划</title>
+    <title>给排水维保计划</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Microsoft YaHei', Arial; background: #f5f5f5; color: #333; }
@@ -15,7 +15,6 @@
         .cal { background: #fff; border-radius: 8px; padding: 15px; margin-bottom: 15px; }
         .cal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .cal-title { font-size: 18px; font-weight: bold; }
-        .cal-nav { display: flex; gap: 8px; }
         .cal-nav button { background: #667eea; color: #fff; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 12px; }
         .week { display: flex; background: #f0f0f0; border-radius: 4px; margin-bottom: 5px; }
         .wd { flex: 1; text-align: center; padding: 8px; font-weight: bold; font-size: 12px; color: #666; }
@@ -40,6 +39,7 @@
         .task-name { font-size: 14px; font-weight: bold; }
         .task-count { font-size: 12px; color: #666; margin-top: 2px; }
         .btn-assign { background: #667eea; color: #fff; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 13px; }
+        .no-task { text-align: center; padding: 40px; color: #999; }
         .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
         .modal.show { display: flex; }
         .modal-body { background: #fff; border-radius: 12px; padding: 20px; width: 95%; max-height: 85vh; overflow-y: auto; }
@@ -65,13 +65,12 @@
         .modal-btns { display: flex; gap: 10px; margin-top: 15px; }
         .btn-cancel { flex: 1; padding: 12px; background: #f0f0f0; color: #333; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
         .btn-confirm { flex: 1; padding: 12px; background: #52c41a; color: #fff; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
-        .no-task { text-align: center; padding: 40px; color: #999; }
     </style>
 </head>
 <body>
     <div class="container">
-        <button class="back" id="btnBack">�?返回</button>
-        <h1>🔧 综合维修维保计划</h1>
+        <button class="back" id="btnBack">← 返回</button>
+        <h1>💧 给排水维保计划</h1>
         
         <div class="view-tabs">
             <button class="tab active" id="tabCal" onclick="showView('calendar')">📅 日历视图</button>
@@ -82,17 +81,17 @@
             <div class="cal">
                 <div class="cal-head">
                     <button class="cal-nav" id="btnPrev">◀</button>
-                    <span class="cal-title" id="calTitle">2026�?�?/span>
-                    <button class="cal-nav" id="btnNext">�?/button>
+                    <span class="cal-title" id="calTitle">2026年5月</span>
+                    <button class="cal-nav" id="btnNext">▶</button>
                 </div>
                 <div class="week">
-                    <div class="wd">�?/div><div class="wd">一</div><div class="wd">�?/div>
-                    <div class="wd">�?/div><div class="wd">�?/div><div class="wd">�?/div><div class="wd">�?/div>
+                    <div class="wd">日</div><div class="wd">一</div><div class="wd">二</div>
+                    <div class="wd">三</div><div class="wd">四</div><div class="wd">五</div><div class="wd">六</div>
                 </div>
                 <div class="days" id="calDays"></div>
             </div>
             <div class="day-plans">
-                <div class="day-plans-title" id="dayPlansTitle">5�?6�?计划</div>
+                <div class="day-plans-title" id="dayPlansTitle">5月16日 计划</div>
                 <div id="dayPlansList"></div>
             </div>
         </div>
@@ -110,12 +109,12 @@
             <div class="assign-cal">
                 <div class="assign-cal-head">
                     <button class="assign-cal-nav" onclick="assignChangeMonth(-1)">◀</button>
-                    <span class="cal-title" id="assignCalTitle">2026�?�?/span>
-                    <button class="assign-cal-nav" onclick="assignChangeMonth(1)">�?/button>
+                    <span class="cal-title" id="assignCalTitle">2026年5月</span>
+                    <button class="assign-cal-nav" onclick="assignChangeMonth(1)">▶</button>
                 </div>
                 <div class="assign-week">
-                    <div class="assign-wd">�?/div><div class="assign-wd">一</div><div class="assign-wd">�?/div>
-                    <div class="assign-wd">�?/div><div class="assign-wd">�?/div><div class="assign-wd">�?/div><div class="assign-wd">�?/div>
+                    <div class="assign-wd">日</div><div class="assign-wd">一</div><div class="assign-wd">二</div>
+                    <div class="assign-wd">三</div><div class="assign-wd">四</div><div class="assign-wd">五</div><div class="assign-wd">六</div>
                 </div>
                 <div class="assign-days" id="assignCalDays"></div>
             </div>
@@ -128,10 +127,9 @@
     </div>
 
     <script>
-        // 综合维修维保任务配置
         const MODS = [
-            { id: 'water-1', name: '综合维修任务1', icon: '🔧' },
-            { id: 'water-2', name: '综合维修任务2', icon: '🔩' }
+            { id: 'water-1', name: '给排水任务1', icon: '💧' },
+            { id: 'water-2', name: '给排水任务2', icon: '🚿' }
         ];
         const KEY = 'plan_water_drainage';
 
@@ -158,9 +156,8 @@
             var data = getData();
             var result = [];
             for (var ds in data) {
-                var plans = data[ds];
-                for (var i = 0; i < plans.length; i++) {
-                    if (plans[i].moduleId === moduleId) result.push({ date: ds, checked: plans[i].checked });
+                for (var i = 0; i < data[ds].length; i++) {
+                    if (data[ds][i].moduleId === moduleId) result.push({ date: ds, checked: data[ds][i].checked });
                 }
             }
             return result;
@@ -198,7 +195,7 @@
         }
 
         function renderCal() {
-            document.getElementById('calTitle').textContent = calYear + '�? + (calMonth + 1) + '�?;
+            document.getElementById('calTitle').textContent = calYear + '年' + (calMonth + 1) + '月';
             var grid = document.getElementById('calDays');
             var data = getData();
             var today = formatDate(new Date());
@@ -221,7 +218,7 @@
 
         function renderDayPlans() {
             var d = new Date(selDate);
-            document.getElementById('dayPlansTitle').textContent = (d.getMonth() + 1) + '�? + d.getDate() + '�?�? + ['�?,'一','�?,'�?,'�?,'�?,'�?][d.getDay()] + ' 计划';
+            document.getElementById('dayPlansTitle').textContent = (d.getMonth() + 1) + '月' + d.getDate() + '日 周' + ['日','一','二','三','四','五','六'][d.getDay()] + ' 计划';
             var list = document.getElementById('dayPlansList');
             var plans = getDatePlans(selDate);
             if (plans.length === 0) { list.innerHTML = '<div class="no-plan">暂无计划</div>'; return; }
@@ -233,7 +230,7 @@
                 if (!m) m = { icon: '📋', name: p.moduleId };
                 html += '<div class="plan-item' + (p.checked ? ' checked' : '') + '">' +
                     '<div class="plan-info" onclick="togglePlan(\'' + selDate + '\', ' + i + ')">' +
-                    '<span>' + (p.checked ? '�? : '�?) + '</span>' +
+                    '<span>' + (p.checked ? '✅' : '⬜') + '</span>' +
                     '<span>' + m.icon + ' ' + m.name + '</span></div>' +
                     '<button class="plan-del" onclick="deletePlan(\'' + selDate + '\', ' + i + ')">×</button></div>';
             }
@@ -242,7 +239,7 @@
 
         function renderTaskList() {
             var list = document.getElementById('taskList');
-            if (MODS.length === 0) { list.innerHTML = '<div class="no-task">该分类暂无维保任�?/div>'; return; }
+            if (MODS.length === 0) { list.innerHTML = '<div class="no-task">该分类暂无维保任务</div>'; return; }
             var html = '';
             for (var i = 0; i < MODS.length; i++) {
                 var m = MODS[i];
@@ -250,7 +247,7 @@
                 html += '<div class="task-item">' +
                     '<div class="task-info"><span class="task-icon">' + m.icon + '</span>' +
                     '<div><div class="task-name">' + m.name + '</div>' +
-                    '<div class="task-count">已安�?' + plans.length + ' 个日�?/div></div></div>' +
+                    '<div class="task-count">已安排 ' + plans.length + ' 个日期</div></div></div>' +
                     '<button class="btn-assign" onclick="openAssignModal(\'' + m.id + '\')">📅 分配日期</button></div>';
             }
             list.innerHTML = html;
@@ -279,7 +276,7 @@
         }
 
         function renderAssignCal() {
-            document.getElementById('assignCalTitle').textContent = assignYear + '�? + (assignMonth + 1) + '�?;
+            document.getElementById('assignCalTitle').textContent = assignYear + '年' + (assignMonth + 1) + '月';
             var grid = document.getElementById('assignCalDays');
             var first = getFirst(assignYear, assignMonth);
             var total = getDays(assignYear, assignMonth);
@@ -311,7 +308,7 @@
             for (var i = 0; i < selectedDates.length; i++) {
                 var ds = selectedDates[i];
                 var d = new Date(ds);
-                html += '<span class="selected-date-tag" onclick="removeAssignDate(\'' + ds + '\')">' + (d.getMonth() + 1) + '�? + d.getDate() + '�?×</span>';
+                html += '<span class="selected-date-tag" onclick="removeAssignDate(\'' + ds + '\')">' + (d.getMonth() + 1) + '月' + d.getDate() + '日 ×</span>';
             }
             el.innerHTML = html;
         }
@@ -319,7 +316,7 @@
         function removeAssignDate(ds) { var idx = selectedDates.indexOf(ds); if (idx > -1) selectedDates.splice(idx, 1); renderAssignCal(); }
 
         function confirmAssign() {
-            if (selectedDates.length === 0) { alert('请至少选择一个日�?); return; }
+            if (selectedDates.length === 0) { alert('请至少选择一个日期'); return; }
             assignDates(assignModuleId, selectedDates);
             closeAssignModal();
             showView('tasklist');
@@ -345,4 +342,3 @@
     </script>
 </body>
 </html>
-
