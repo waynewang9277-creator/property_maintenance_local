@@ -7,155 +7,121 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif; background: #f5f5f5; color: #333; }
-        .mp-container { padding: 15px; }
+        .container { padding: 15px; }
+        .title { font-size: 20px; font-weight: bold; text-align: center; margin-bottom: 15px; }
+        .back-btn {
+            background: #667eea; color: #fff; border: none; padding: 10px 15px;
+            border-radius: 5px; cursor: pointer; font-size: 14px; margin-bottom: 15px;
+        }
         
         /* 日历头部 */
-        .mp-calendar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding: 15px;
-            background: #fff;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        .cal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #fff; padding: 15px; border-radius: 8px; margin-bottom: 10px;
         }
-        .mp-calendar-title { font-size: 18px; font-weight: bold; color: #333; }
-        .mp-calendar-nav { display: flex; gap: 10px; }
-        .mp-calendar-nav button {
-            background: #667eea;
-            color: #fff;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
+        .cal-title { font-size: 18px; font-weight: bold; }
+        .cal-nav { display: flex; gap: 8px; }
+        .cal-nav button {
+            background: #667eea; color: #fff; border: none;
+            padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 12px;
         }
         
-        /* 日历网格 */
-        .mp-calendar-wrap { background: #fff; border-radius: 8px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .mp-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-bottom: 8px; }
-        .mp-weekday { text-align: center; padding: 8px; font-weight: bold; color: #666; font-size: 12px; background: #f0f0f0; border-radius: 4px; }
-        .mp-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; width: 100%; }
-        .mp-day {
-            width: 100%;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #fff;
-            border: 1px solid #e0e0e0;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.2s;
+        /* 日历主体 - 表格形式 */
+        .cal-wrap { background: #fff; border-radius: 8px; padding: 10px; margin-bottom: 15px; }
+        .cal-week { display: flex; background: #f0f0f0; border-radius: 4px; margin-bottom: 5px; }
+        .cal-weekday { flex: 1; text-align: center; padding: 8px 0; font-weight: bold; font-size: 12px; color: #666; }
+        .cal-grid { display: flex; flex-wrap: wrap; }
+        .cal-cell {
+            width: 14.28%; height: 45px; display: flex; align-items: center; justify-content: center;
+            font-size: 14px; cursor: pointer;
         }
-        .mp-day:active { background: #f0f0f0; }
-        .mp-day.today { background: #667eea; color: #fff; border-color: #667eea; }
-        .mp-day.has-plan { position: relative; }
-        .mp-day.has-plan::after {
-            content: '';
-            position: absolute;
-            bottom: 2px;
-            width: 6px;
-            height: 6px;
-            background: #ff4d4f;
-            border-radius: 50%;
+        .cal-cell.empty { cursor: default; }
+        .cal-cell .day-num {
+            width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+            border-radius: 50%; transition: all 0.2s;
         }
-        .mp-day.selected { background: #52c41a; color: #fff; border-color: #52c41a; }
-        .mp-day.empty { background: transparent; border: none; cursor: default; }
+        .cal-cell:active .day-num { background: #e0e0e0; }
+        .cal-cell.today .day-num { background: #667eea; color: #fff; }
+        .cal-cell.selected .day-num { background: #52c41a; color: #fff; }
+        .cal-cell.has-plan .day-num { position: relative; }
+        .cal-cell.has-plan .day-num::after {
+            content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%);
+            width: 6px; height: 6px; background: #ff4d4f; border-radius: 50%;
+        }
         
         /* 计划列表 */
-        .mp-plan-list { background: #fff; border-radius: 8px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .mp-plan-title { font-size: 16px; font-weight: bold; color: #333; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
-        .mp-plan-item { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f9f9f9; border-radius: 8px; margin-bottom: 10px; }
-        .mp-plan-item.checked { background: #f6ffed; border: 1px solid #b7eb8f; }
-        .mp-plan-info { display: flex; align-items: center; gap: 10px; cursor: pointer; }
-        .mp-plan-icon { font-size: 20px; }
-        .mp-plan-name { font-size: 14px; color: #333; }
-        .mp-btn-delete { background: #ff4d4f; color: #fff; border: none; border-radius: 50%; width: 24px; height: 24px; font-size: 14px; cursor: pointer; }
-        .mp-no-plan { text-align: center; padding: 30px; color: #999; }
-        .mp-btn-add { background: #52c41a; color: #fff; border: none; border-radius: 8px; padding: 15px; font-size: 16px; cursor: pointer; width: 100%; margin-top: 10px; }
-        .mp-btn-add:active { background: #73d13d; }
+        .plan-box { background: #fff; border-radius: 8px; padding: 15px; }
+        .plan-title { font-size: 16px; font-weight: bold; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+        .plan-item { display: flex; align-items: center; justify-content: space-between; padding: 10px; background: #f9f9f9; border-radius: 8px; margin-bottom: 8px; }
+        .plan-item.checked { background: #f6ffed; border: 1px solid #b7eb8f; }
+        .plan-info { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+        .plan-name { font-size: 14px; }
+        .btn-del { background: #ff4d4f; color: #fff; border: none; border-radius: 50%; width: 22px; height: 22px; font-size: 14px; cursor: pointer; }
+        .no-plan { text-align: center; padding: 25px; color: #999; }
+        .btn-add { background: #52c41a; color: #fff; border: none; border-radius: 8px; padding: 14px; font-size: 15px; cursor: pointer; width: 100%; margin-top: 10px; }
         
         /* 弹窗 */
-        .mp-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
-        .mp-modal.show { display: flex; }
-        .mp-modal-content { background: #fff; border-radius: 12px; padding: 20px; width: 90%; max-height: 80vh; overflow-y: auto; }
-        .mp-modal-title { font-size: 18px; font-weight: bold; margin-bottom: 10px; text-align: center; }
-        .mp-modal-date { text-align: center; color: #666; margin-bottom: 15px; font-size: 14px; }
-        .mp-option { display: flex; align-items: center; padding: 12px; background: #f9f9f9; border-radius: 8px; margin-bottom: 8px; cursor: pointer; }
-        .mp-option:active { background: #e6f7ff; }
-        .mp-option.selected { background: #e6f7ff; border: 1px solid #667eea; }
-        .mp-option-icon { font-size: 20px; margin-right: 10px; }
-        .mp-option-name { font-size: 14px; color: #333; }
-        .mp-option-check { margin-left: auto; color: #667eea; }
-        .mp-modal-actions { display: flex; gap: 10px; margin-top: 15px; }
-        .mp-btn-cancel { flex: 1; padding: 12px; background: #f0f0f0; color: #333; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
-        .mp-btn-confirm { flex: 1; padding: 12px; background: #667eea; color: #fff; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
-        
-        /* 返回按钮 */
-        .mp-back { background: #667eea; color: #fff; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-size: 14px; margin-bottom: 15px; }
-        .mp-title { font-size: 20px; font-weight: bold; text-align: center; margin-bottom: 15px; color: #333; }
+        .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        .modal.show { display: flex; }
+        .modal-body { background: #fff; border-radius: 12px; padding: 20px; width: 90%; max-height: 70vh; overflow-y: auto; }
+        .modal-title { font-size: 18px; font-weight: bold; text-align: center; margin-bottom: 8px; }
+        .modal-date { text-align: center; color: #666; margin-bottom: 15px; font-size: 14px; }
+        .opt-item { display: flex; align-items: center; padding: 12px; background: #f9f9f9; border-radius: 8px; margin-bottom: 8px; cursor: pointer; }
+        .opt-item.selected { background: #e6f7ff; border: 1px solid #667eea; }
+        .opt-name { font-size: 14px; }
+        .opt-check { margin-left: auto; color: #667eea; }
+        .modal-btns { display: flex; gap: 10px; margin-top: 15px; }
+        .btn-cancel { flex: 1; padding: 12px; background: #f0f0f0; color: #333; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
+        .btn-confirm { flex: 1; padding: 12px; background: #667eea; color: #fff; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
     </style>
 </head>
 <body>
-    <div class="mp-container">
-        <button class="mp-back" onclick="goBack()">← 返回分类</button>
-        <div class="mp-title">📅 维保计划</div>
+    <div class="container">
+        <button class="back-btn" id="btnBack">← 返回</button>
+        <div class="title">📅 维保计划</div>
         
-        <!-- 日历头部 -->
-        <div class="mp-calendar-header">
-            <button class="mp-calendar-nav-btn" id="btn-prev" onclick="changeMonth(-1)">◀ 上月</button>
-            <span class="mp-calendar-title" id="calendar-title">2026年5月</span>
-            <button class="mp-calendar-nav-btn" id="btn-next" onclick="changeMonth(1)">下月 ▶</button>
+        <div class="cal-header">
+            <button class="cal-nav-btn" id="btnPrev">◀ 上月</button>
+            <span class="cal-title" id="calTitle">2026年5月</span>
+            <button class="cal-nav-btn" id="btnNext">下月 ▶</button>
         </div>
         
-        <!-- 日历网格 -->
-        <div class="mp-calendar-wrap">
-            <div class="mp-weekdays">
-                <div class="mp-weekday">日</div>
-                <div class="mp-weekday">一</div>
-                <div class="mp-weekday">二</div>
-                <div class="mp-weekday">三</div>
-                <div class="mp-weekday">四</div>
-                <div class="mp-weekday">五</div>
-                <div class="mp-weekday">六</div>
+        <div class="cal-wrap">
+            <div class="cal-week">
+                <div class="cal-weekday">日</div>
+                <div class="cal-weekday">一</div>
+                <div class="cal-weekday">二</div>
+                <div class="cal-weekday">三</div>
+                <div class="cal-weekday">四</div>
+                <div class="cal-weekday">五</div>
+                <div class="cal-weekday">六</div>
             </div>
-            <div class="mp-days" id="mp-days"></div>
+            <div class="cal-grid" id="calGrid"></div>
         </div>
         
-        <!-- 当日计划列表 -->
-        <div class="mp-plan-list">
-            <div class="mp-plan-title" id="plan-title">5月16日 计划</div>
-            <div id="plan-items"></div>
+        <div class="plan-box">
+            <div class="plan-title" id="planTitle">5月16日 计划</div>
+            <div id="planList"></div>
         </div>
     </div>
 
-    <!-- 新增计划弹窗 -->
-    <div class="mp-modal" id="modal-add">
-        <div class="mp-modal-content">
-            <div class="mp-modal-title">添加维保项目</div>
-            <div class="mp-modal-date" id="modal-date"></div>
-            <div id="modal-options"></div>
-            <div class="mp-modal-actions">
-                <button class="mp-btn-cancel" onclick="closeModal()">取消</button>
-                <button class="mp-btn-confirm" onclick="confirmAdd()">确定添加</button>
+    <!-- 弹窗 -->
+    <div class="modal" id="modalAdd">
+        <div class="modal-body">
+            <div class="modal-title">添加维保项目</div>
+            <div class="modal-date" id="modalDate"></div>
+            <div id="modalOpts"></div>
+            <div class="modal-btns">
+                <button class="btn-cancel" id="btnCancel">取消</button>
+                <button class="btn-confirm" id="btnConfirm">确定添加</button>
             </div>
         </div>
     </div>
 
     <script src="../../common/js/data-manager.js"></script>
     <script>
-        // 维保计划模块
-        const plan = {
-            currentYear: new Date().getFullYear(),
-            currentMonth: new Date().getMonth(),
-            selectedDate: null,
-            selectedOptions: []
-        };
-
-        const MODULE_OPTIONS = [
+        // 配置
+        const MODS = [
             { id: 'battery-test', name: '应急电池放电测试', icon: '🔋' },
             { id: 'generator', name: '发电机组维护性运转记录', icon: '⚙️' },
             { id: 'ats', name: 'ATS维护保养记录', icon: '🔌' },
@@ -165,222 +131,168 @@
             { id: 'elevator-escape', name: '电梯逃生门检查', icon: '🚪' },
             { id: 'elevator-handrail-fault', name: '电梯扶手梯故障报告', icon: '🛗' }
         ];
+        const KEY = 'maintenance_plan';
 
-        const STORAGE_KEY = 'maintenance_plan';
+        // 状态
+        let year = new Date().getFullYear();
+        let month = new Date().getMonth();
+        let selDate = formatDate(new Date());
+        let selOpts = [];
 
-        function init() {
-            plan.selectedDate = formatDate(new Date());
-            renderCalendar();
-            renderPlanList();
+        // 初始化
+        document.getElementById('btnBack').onclick = goBack;
+        document.getElementById('btnPrev').onclick = () => changeMonth(-1);
+        document.getElementById('btnNext').onclick = () => changeMonth(1);
+        document.getElementById('btnCancel').onclick = closeModal;
+        document.getElementById('btnConfirm').onclick = confirmAdd;
+
+        renderCal();
+        renderPlan();
+
+        // 工具函数
+        function formatDate(d) {
+            return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
         }
 
-        function formatDate(date) {
-            const y = date.getFullYear();
-            const m = String(date.getMonth() + 1).padStart(2, '0');
-            const d = String(date.getDate()).padStart(2, '0');
-            return `${y}-${m}-${d}`;
+        function getDays(y, m) { return new Date(y, m + 1, 0).getDate(); }
+        function getFirst(y, m) { return new Date(y, m, 1).getDay(); }
+
+        function getData() { return DataManager.get(KEY) || {}; }
+        function setData(d) { DataManager.set(KEY, d); }
+
+        function getPlans(ds) { return getData()[ds] || []; }
+        function savePlans(ds, ps) {
+            const d = getData();
+            if (ps.length === 0) delete d[ds]; else d[ds] = ps;
+            setData(d);
         }
 
-        function getDaysInMonth(year, month) {
-            return new Date(year, month + 1, 0).getDate();
+        // 切换月份
+        function changeMonth(n) {
+            month += n;
+            if (month > 11) { month = 0; year++; }
+            if (month < 0) { month = 11; year--; }
+            renderCal();
         }
 
-        function getFirstDay(year, month) {
-            return new Date(year, month, 1).getDay();
-        }
-
-        function getPlans(dateStr) {
-            const data = DataManager.get(STORAGE_KEY) || {};
-            return data[dateStr] || [];
-        }
-
-        function savePlans(dateStr, plans) {
-            const data = DataManager.get(STORAGE_KEY) || {};
-            if (plans.length === 0) {
-                delete data[dateStr];
-            } else {
-                data[dateStr] = plans;
-            }
-            DataManager.set(STORAGE_KEY, data);
-        }
-
-        function changeMonth(delta) {
-            plan.currentMonth += delta;
-            if (plan.currentMonth > 11) {
-                plan.currentMonth = 0;
-                plan.currentYear++;
-            } else if (plan.currentMonth < 0) {
-                plan.currentMonth = 11;
-                plan.currentYear--;
-            }
-            renderCalendar();
-        }
-
-        function renderCalendar() {
-            const title = document.getElementById('calendar-title');
-            const daysEl = document.getElementById('mp-days');
-            
-            title.textContent = `${plan.currentYear}年${plan.currentMonth + 1}月`;
-            
-            const data = DataManager.get(STORAGE_KEY) || {};
+        // 渲染日历
+        function renderCal() {
+            document.getElementById('calTitle').textContent = year + '年' + (month + 1) + '月';
+            const grid = document.getElementById('calGrid');
+            const data = getData();
             const today = formatDate(new Date());
-            
             let html = '';
-            
+
             // 空格子
-            const firstDay = getFirstDay(plan.currentYear, plan.currentMonth);
-            for (let i = 0; i < firstDay; i++) {
-                html += '<div class="mp-day empty"></div>';
+            for (let i = 0; i < getFirst(year, month); i++) {
+                html += '<div class="cal-cell empty"></div>';
             }
-            
+
             // 日期
-            const daysInMonth = getDaysInMonth(plan.currentYear, plan.currentMonth);
-            for (let d = 1; d <= daysInMonth; d++) {
-                const dateStr = `${plan.currentYear}-${String(plan.currentMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                const isToday = dateStr === today;
-                const hasPlan = data[dateStr] && data[dateStr].length > 0;
-                const isSelected = dateStr === plan.selectedDate;
-                
-                let cls = 'mp-day';
-                if (isToday) cls += ' today';
-                if (hasPlan) cls += ' has-plan';
-                if (isSelected) cls += ' selected';
-                
-                html += `<div class="${cls}" onclick="selectDate('${dateStr}')">${d}</div>`;
+            for (let d = 1; d <= getDays(year, month); d++) {
+                const ds = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+                let cls = 'cal-cell';
+                if (ds === today) cls += ' today';
+                if (ds === selDate) cls += ' selected';
+                if (data[ds] && data[ds].length > 0) cls += ' has-plan';
+                html += '<div class="' + cls + '" onclick="selectDate(\'' + ds + '\')"><div class="day-num">' + d + '</div></div>';
             }
-            
-            daysEl.innerHTML = html;
+
+            grid.innerHTML = html;
         }
 
-        function selectDate(dateStr) {
-            plan.selectedDate = dateStr;
-            renderCalendar();
-            renderPlanList();
+        // 选择日期
+        function selectDate(ds) {
+            selDate = ds;
+            renderCal();
+            renderPlan();
         }
 
-        function renderPlanList() {
-            const title = document.getElementById('plan-title');
-            const container = document.getElementById('plan-items');
-            
-            const date = new Date(plan.selectedDate);
-            const month = date.getMonth() + 1;
-            const day = date.getDate();
-            const weekday = ['日', '一', '二', '三', '四', '五', '六'][date.getDay()];
-            
-            title.textContent = `${month}月${day}日 周${weekday} 计划`;
-            
-            const plans = getPlans(plan.selectedDate);
-            
+        // 渲染计划
+        function renderPlan() {
+            const d = new Date(selDate);
+            const title = document.getElementById('planTitle');
+            title.textContent = (d.getMonth() + 1) + '月' + d.getDate() + '日 周' + ['日','一','二','三','四','五','六'][d.getDay()] + ' 计划';
+
+            const list = document.getElementById('planList');
+            const plans = getPlans(selDate);
+
             if (plans.length === 0) {
-                container.innerHTML = '<div class="mp-no-plan">暂无计划</div><button class="mp-btn-add" onclick="openModal()">➕ 添加维保项目</button>';
+                list.innerHTML = '<div class="no-plan">暂无计划</div><button class="btn-add" onclick="openModal()">➕ 添加维保项目</button>';
                 return;
             }
-            
+
             let html = '';
-            plans.forEach((p, idx) => {
-                const mod = MODULE_OPTIONS.find(m => m.id === p.moduleId) || { icon: '📋', name: p.moduleId };
-                html += `
-                    <div class="mp-plan-item ${p.checked ? 'checked' : ''}">
-                        <div class="mp-plan-info" onclick="togglePlan(${idx})">
-                            <span class="mp-plan-icon">${p.checked ? '✅' : '⬜'}</span>
-                            <span class="mp-plan-name">${mod.icon} ${mod.name}</span>
-                        </div>
-                        <button class="mp-btn-delete" onclick="deletePlan(${idx})">×</button>
-                    </div>
-                `;
+            plans.forEach((p, i) => {
+                const m = MODS.find(x => x.id === p.moduleId) || { icon: '📋', name: p.moduleId };
+                html += '<div class="plan-item' + (p.checked ? ' checked' : '') + '">' +
+                    '<div class="plan-info" onclick="togglePlan(' + i + ')">' +
+                    '<span>' + (p.checked ? '✅' : '⬜') + '</span>' +
+                    '<span class="plan-name">' + m.icon + ' ' + m.name + '</span></div>' +
+                    '<button class="btn-del" onclick="delPlan(' + i + ')">×</button></div>';
             });
-            
-            container.innerHTML = html + '<button class="mp-btn-add" onclick="openModal()">➕ 添加更多项目</button>';
+            list.innerHTML = html + '<button class="btn-add" onclick="openModal()">➕ 添加更多项目</button>';
         }
 
+        // 弹窗
         function openModal() {
-            document.getElementById('modal-date').textContent = plan.selectedDate;
-            
-            const container = document.getElementById('modal-options');
-            const currentPlans = getPlans(plan.selectedDate);
-            const existingIds = currentPlans.map(p => p.moduleId);
-            
-            plan.selectedOptions = [...existingIds];
-            
+            document.getElementById('modalDate').textContent = selDate;
+            const opts = document.getElementById('modalOpts');
+            const cur = getPlans(selDate).map(p => p.moduleId);
+            selOpts = [...cur];
             let html = '';
-            MODULE_OPTIONS.forEach(m => {
-                const isSelected = existingIds.includes(m.id);
-                html += `
-                    <div class="mp-option ${isSelected ? 'selected' : ''}" onclick="toggleOption('${m.id}', this)">
-                        <span class="mp-option-icon">${m.icon}</span>
-                        <span class="mp-option-name">${m.name}</span>
-                        <span class="mp-option-check">${isSelected ? '✓' : ''}</span>
-                    </div>
-                `;
+            MODS.forEach(m => {
+                const sel = cur.includes(m.id);
+                html += '<div class="opt-item' + (sel ? ' selected' : '') + '" onclick="toggleOpt(\'' + m.id + '\', this)">' +
+                    '<span>' + m.icon + '</span>' +
+                    '<span class="opt-name">' + m.name + '</span>' +
+                    '<span class="opt-check">' + (sel ? '✓' : '') + '</span></div>';
             });
-            
-            container.innerHTML = html;
-            document.getElementById('modal-add').classList.add('show');
+            opts.innerHTML = html;
+            document.getElementById('modalAdd').classList.add('show');
         }
 
-        function toggleOption(moduleId, el) {
-            const idx = plan.selectedOptions.indexOf(moduleId);
-            if (idx > -1) {
-                plan.selectedOptions.splice(idx, 1);
-                el.classList.remove('selected');
-                el.querySelector('.mp-option-check').textContent = '';
-            } else {
-                plan.selectedOptions.push(moduleId);
-                el.classList.add('selected');
-                el.querySelector('.mp-option-check').textContent = '✓';
-            }
+        function toggleOpt(id, el) {
+            const i = selOpts.indexOf(id);
+            if (i > -1) { selOpts.splice(i, 1); el.classList.remove('selected'); el.querySelector('.opt-check').textContent = ''; }
+            else { selOpts.push(id); el.classList.add('selected'); el.querySelector('.opt-check').textContent = '✓'; }
         }
 
         function closeModal() {
-            document.getElementById('modal-add').classList.remove('show');
-            plan.selectedOptions = [];
+            document.getElementById('modalAdd').classList.remove('show');
+            selOpts = [];
         }
 
         function confirmAdd() {
-            if (plan.selectedOptions.length === 0) {
-                alert('请选择要添加的维保项目');
-                return;
-            }
-            
-            const currentPlans = getPlans(plan.selectedDate);
-            const existingIds = currentPlans.map(p => p.moduleId);
-            
-            plan.selectedOptions.forEach(moduleId => {
-                if (!existingIds.includes(moduleId)) {
-                    currentPlans.push({ moduleId, checked: false });
-                }
-            });
-            
-            savePlans(plan.selectedDate, currentPlans);
+            if (selOpts.length === 0) { alert('请选择维保项目'); return; }
+            const cur = getPlans(selDate);
+            const ids = cur.map(p => p.moduleId);
+            selOpts.forEach(id => { if (!ids.includes(id)) cur.push({ moduleId: id, checked: false }); });
+            savePlans(selDate, cur);
             closeModal();
-            renderCalendar();
-            renderPlanList();
+            renderCal();
+            renderPlan();
         }
 
-        function deletePlan(index) {
-            const plans = getPlans(plan.selectedDate);
-            plans.splice(index, 1);
-            savePlans(plan.selectedDate, plans);
-            renderCalendar();
-            renderPlanList();
+        function delPlan(i) {
+            const ps = getPlans(selDate);
+            ps.splice(i, 1);
+            savePlans(selDate, ps);
+            renderCal();
+            renderPlan();
         }
 
-        function togglePlan(index) {
-            const plans = getPlans(plan.selectedDate);
-            plans[index].checked = !plans[index].checked;
-            savePlans(plan.selectedDate, plans);
-            renderPlanList();
+        function togglePlan(i) {
+            const ps = getPlans(selDate);
+            ps[i].checked = !ps[i].checked;
+            savePlans(selDate, ps);
+            renderPlan();
         }
 
         function goBack() {
-            if (parent.app && parent.app.backToCategory) {
-                parent.app.backToCategory();
-            } else {
-                window.location.href = '../../index.html';
-            }
+            if (parent.app && parent.app.backToCategory) parent.app.backToCategory();
+            else window.location.href = '../../index.html';
         }
-
-        init();
     </script>
 </body>
 </html>
