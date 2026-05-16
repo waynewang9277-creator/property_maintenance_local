@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>综合维修维保计划</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', Arial; background: #f5f5f5; color: #333; }
+        .container { padding: 15px; max-width: 500px; margin: 0 auto; }
+        h1 { text-align: center; font-size: 20px; margin-bottom: 15px; }
+        .back { background: #667eea; color: #fff; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; margin-bottom: 15px; font-size: 14px; }
+        .view-tabs { display: flex; gap: 5px; margin-bottom: 15px; }
+        .tab { flex: 1; padding: 12px; text-align: center; background: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; }
+        .tab.active { background: #667eea; color: #fff; }
+        .cal { background: #fff; border-radius: 8px; padding: 15px; margin-bottom: 15px; }
+        .cal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .cal-title { font-size: 18px; font-weight: bold; }
+        .cal-nav { display: flex; gap: 8px; }
+        .cal-nav button { background: #667eea; color: #fff; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 12px; }
+        .week { display: flex; background: #f0f0f0; border-radius: 4px; margin-bottom: 5px; }
+        .wd { flex: 1; text-align: center; padding: 8px; font-weight: bold; font-size: 12px; color: #666; }
+        .days { display: flex; flex-wrap: wrap; }
+        .day { width: 14.28%; height: 45px; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; position: relative; }
+        .day:hover { background: #f0f0f0; }
+        .day.today { background: #667eea; color: #fff; border-radius: 50%; }
+        .day.selected { background: #52c41a; color: #fff; border-radius: 50%; }
+        .day.has-plan::after { content: ''; position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%); width: 6px; height: 6px; background: #ff4d4f; border-radius: 50%; }
+        .day.empty { cursor: default; }
+        .day-plans { background: #fff; border-radius: 8px; padding: 15px; margin-bottom: 15px; }
+        .day-plans-title { font-size: 16px; font-weight: bold; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+        .plan-item { display: flex; align-items: center; justify-content: space-between; padding: 10px; background: #f9f9f9; border-radius: 8px; margin-bottom: 8px; }
+        .plan-item.checked { background: #f6ffed; border: 1px solid #b7eb8f; }
+        .plan-info { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; }
+        .plan-del { background: #ff4d4f; color: #fff; border: none; border-radius: 50%; width: 22px; height: 22px; font-size: 14px; cursor: pointer; }
+        .no-plan { text-align: center; padding: 25px; color: #999; }
+        .task-list { background: #fff; border-radius: 8px; padding: 15px; }
+        .task-item { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f9f9f9; border-radius: 8px; margin-bottom: 10px; }
+        .task-info { display: flex; align-items: center; gap: 10px; }
+        .task-icon { font-size: 24px; }
+        .task-name { font-size: 14px; font-weight: bold; }
+        .task-count { font-size: 12px; color: #666; margin-top: 2px; }
+        .btn-assign { background: #667eea; color: #fff; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 13px; }
+        .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        .modal.show { display: flex; }
+        .modal-body { background: #fff; border-radius: 12px; padding: 20px; width: 95%; max-height: 85vh; overflow-y: auto; }
+        .modal-title { font-size: 18px; font-weight: bold; text-align: center; margin-bottom: 8px; }
+        .modal-subtitle { text-align: center; color: #666; margin-bottom: 15px; font-size: 14px; }
+        .assign-cal { background: #fff; border-radius: 8px; padding: 15px; margin-bottom: 15px; }
+        .assign-info { text-align: center; margin-bottom: 15px; padding: 10px; background: #e6f7ff; border-radius: 8px; }
+        .assign-info .icon { font-size: 24px; }
+        .assign-info .name { font-size: 16px; font-weight: bold; margin-top: 5px; }
+        .assign-cal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .assign-cal-nav button { background: #667eea; color: #fff; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .assign-week { display: flex; background: #f0f0f0; border-radius: 4px; margin-bottom: 3px; }
+        .assign-wd { flex: 1; text-align: center; padding: 6px; font-weight: bold; font-size: 11px; color: #666; }
+        .assign-days { display: flex; flex-wrap: wrap; }
+        .assign-day { width: 14.28%; height: 38px; display: flex; align-items: center; justify-content: center; font-size: 13px; cursor: pointer; }
+        .assign-day:hover { background: #f0f0f0; }
+        .assign-day.selected { background: #667eea; color: #fff; border-radius: 50%; }
+        .assign-day.empty { cursor: default; }
+        .assign-day.has-task { background: #fff3bf; border: 1px solid #faad14; }
+        .selected-dates { margin-top: 15px; padding: 10px; background: #f9f9f9; border-radius: 8px; }
+        .selected-dates-title { font-size: 14px; font-weight: bold; margin-bottom: 8px; color: #666; }
+        .selected-date-tag { display: inline-block; padding: 4px 10px; background: #667eea; color: #fff; border-radius: 4px; margin: 2px; font-size: 12px; cursor: pointer; }
+        .modal-btns { display: flex; gap: 10px; margin-top: 15px; }
+        .btn-cancel { flex: 1; padding: 12px; background: #f0f0f0; color: #333; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
+        .btn-confirm { flex: 1; padding: 12px; background: #52c41a; color: #fff; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
+        .no-task { text-align: center; padding: 40px; color: #999; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="back" id="btnBack">�?返回</button>
+        <h1>🔧 综合维修维保计划</h1>
+        
+        <div class="view-tabs">
+            <button class="tab active" id="tabCal" onclick="showView('calendar')">📅 日历视图</button>
+            <button class="tab" id="tabList" onclick="showView('tasklist')">📋 任务列表</button>
+        </div>
+        
+        <div id="viewCalendar">
+            <div class="cal">
+                <div class="cal-head">
+                    <button class="cal-nav" id="btnPrev">◀</button>
+                    <span class="cal-title" id="calTitle">2026�?�?/span>
+                    <button class="cal-nav" id="btnNext">�?/button>
+                </div>
+                <div class="week">
+                    <div class="wd">�?/div><div class="wd">一</div><div class="wd">�?/div>
+                    <div class="wd">�?/div><div class="wd">�?/div><div class="wd">�?/div><div class="wd">�?/div>
+                </div>
+                <div class="days" id="calDays"></div>
+            </div>
+            <div class="day-plans">
+                <div class="day-plans-title" id="dayPlansTitle">5�?6�?计划</div>
+                <div id="dayPlansList"></div>
+            </div>
+        </div>
+        
+        <div id="viewTaskList" style="display:none;">
+            <div class="task-list" id="taskList"></div>
+        </div>
+    </div>
+
+    <div class="modal" id="modalAssign">
+        <div class="modal-body">
+            <div class="modal-title">分配执行日期</div>
+            <div class="modal-subtitle">点击日历选择执行日期（可多选）</div>
+            <div class="assign-info" id="assignInfo"></div>
+            <div class="assign-cal">
+                <div class="assign-cal-head">
+                    <button class="assign-cal-nav" onclick="assignChangeMonth(-1)">◀</button>
+                    <span class="cal-title" id="assignCalTitle">2026�?�?/span>
+                    <button class="assign-cal-nav" onclick="assignChangeMonth(1)">�?/button>
+                </div>
+                <div class="assign-week">
+                    <div class="assign-wd">�?/div><div class="assign-wd">一</div><div class="assign-wd">�?/div>
+                    <div class="assign-wd">�?/div><div class="assign-wd">�?/div><div class="assign-wd">�?/div><div class="assign-wd">�?/div>
+                </div>
+                <div class="assign-days" id="assignCalDays"></div>
+            </div>
+            <div class="selected-dates" id="selectedDates"></div>
+            <div class="modal-btns">
+                <button class="btn-cancel" onclick="closeAssignModal()">取消</button>
+                <button class="btn-confirm" onclick="confirmAssign()">确认分配</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 综合维修维保任务配置
+        const MODS = [
+            { id: 'water-1', name: '综合维修任务1', icon: '🔧' },
+            { id: 'water-2', name: '综合维修任务2', icon: '🔩' }
+        ];
+        const KEY = 'plan_water_drainage';
+
+        var calYear = new Date().getFullYear();
+        var calMonth = new Date().getMonth();
+        var selDate = formatDate(new Date());
+        var currentView = 'calendar';
+        var assignModuleId = null;
+        var assignYear = new Date().getFullYear();
+        var assignMonth = new Date().getMonth();
+        var selectedDates = [];
+
+        document.getElementById('btnBack').onclick = goBack;
+        document.getElementById('btnPrev').onclick = function() { changeMonth(-1); };
+        document.getElementById('btnNext').onclick = function() { changeMonth(1); };
+
+        function formatDate(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+        function getDays(y, m) { return new Date(y, m + 1, 0).getDate(); }
+        function getFirst(y, m) { return new Date(y, m, 1).getDay(); }
+        function getData() { var d = localStorage.getItem(KEY); return d ? JSON.parse(d) : {}; }
+        function setData(d) { localStorage.setItem(KEY, JSON.stringify(d)); }
+        
+        function getTaskPlans(moduleId) {
+            var data = getData();
+            var result = [];
+            for (var ds in data) {
+                var plans = data[ds];
+                for (var i = 0; i < plans.length; i++) {
+                    if (plans[i].moduleId === moduleId) result.push({ date: ds, checked: plans[i].checked });
+                }
+            }
+            return result;
+        }
+        function getDatePlans(ds) { return getData()[ds] || []; }
+        
+        function assignDates(moduleId, dates) {
+            var data = getData();
+            for (var ds in data) {
+                data[ds] = data[ds].filter(function(p) { return p.moduleId !== moduleId; });
+                if (data[ds].length === 0) delete data[ds];
+            }
+            for (var i = 0; i < dates.length; i++) {
+                var ds = dates[i];
+                if (!data[ds]) data[ds] = [];
+                data[ds].push({ moduleId: moduleId, checked: false });
+            }
+            setData(data);
+        }
+
+        function showView(v) {
+            currentView = v;
+            document.getElementById('tabCal').classList.toggle('active', v === 'calendar');
+            document.getElementById('tabList').classList.toggle('active', v === 'tasklist');
+            document.getElementById('viewCalendar').style.display = v === 'calendar' ? 'block' : 'none';
+            document.getElementById('viewTaskList').style.display = v === 'tasklist' ? 'block' : 'none';
+            if (v === 'calendar') { renderCal(); renderDayPlans(); } else { renderTaskList(); }
+        }
+
+        function changeMonth(n) {
+            calMonth += n;
+            if (calMonth > 11) { calMonth = 0; calYear++; }
+            if (calMonth < 0) { calMonth = 11; calYear--; }
+            renderCal();
+        }
+
+        function renderCal() {
+            document.getElementById('calTitle').textContent = calYear + '�? + (calMonth + 1) + '�?;
+            var grid = document.getElementById('calDays');
+            var data = getData();
+            var today = formatDate(new Date());
+            var first = getFirst(calYear, calMonth);
+            var total = getDays(calYear, calMonth);
+            var html = '';
+            for (var i = 0; i < first; i++) html += '<div class="day empty"></div>';
+            for (var d = 1; d <= total; d++) {
+                var ds = calYear + '-' + String(calMonth + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+                var cls = 'day';
+                if (ds === today) cls += ' today';
+                if (ds === selDate) cls += ' selected';
+                if (data[ds] && data[ds].length > 0) cls += ' has-plan';
+                html += '<div class="' + cls + '" onclick="selectDate(\'' + ds + '\')">' + d + '</div>';
+            }
+            grid.innerHTML = html;
+        }
+
+        function selectDate(ds) { selDate = ds; renderCal(); renderDayPlans(); }
+
+        function renderDayPlans() {
+            var d = new Date(selDate);
+            document.getElementById('dayPlansTitle').textContent = (d.getMonth() + 1) + '�? + d.getDate() + '�?�? + ['�?,'一','�?,'�?,'�?,'�?,'�?][d.getDay()] + ' 计划';
+            var list = document.getElementById('dayPlansList');
+            var plans = getDatePlans(selDate);
+            if (plans.length === 0) { list.innerHTML = '<div class="no-plan">暂无计划</div>'; return; }
+            var html = '';
+            for (var i = 0; i < plans.length; i++) {
+                var p = plans[i];
+                var m = null;
+                for (var j = 0; j < MODS.length; j++) { if (MODS[j].id === p.moduleId) { m = MODS[j]; break; } }
+                if (!m) m = { icon: '📋', name: p.moduleId };
+                html += '<div class="plan-item' + (p.checked ? ' checked' : '') + '">' +
+                    '<div class="plan-info" onclick="togglePlan(\'' + selDate + '\', ' + i + ')">' +
+                    '<span>' + (p.checked ? '�? : '�?) + '</span>' +
+                    '<span>' + m.icon + ' ' + m.name + '</span></div>' +
+                    '<button class="plan-del" onclick="deletePlan(\'' + selDate + '\', ' + i + ')">×</button></div>';
+            }
+            list.innerHTML = html;
+        }
+
+        function renderTaskList() {
+            var list = document.getElementById('taskList');
+            if (MODS.length === 0) { list.innerHTML = '<div class="no-task">该分类暂无维保任�?/div>'; return; }
+            var html = '';
+            for (var i = 0; i < MODS.length; i++) {
+                var m = MODS[i];
+                var plans = getTaskPlans(m.id);
+                html += '<div class="task-item">' +
+                    '<div class="task-info"><span class="task-icon">' + m.icon + '</span>' +
+                    '<div><div class="task-name">' + m.name + '</div>' +
+                    '<div class="task-count">已安�?' + plans.length + ' 个日�?/div></div></div>' +
+                    '<button class="btn-assign" onclick="openAssignModal(\'' + m.id + '\')">📅 分配日期</button></div>';
+            }
+            list.innerHTML = html;
+        }
+
+        function openAssignModal(moduleId) {
+            assignModuleId = moduleId;
+            assignYear = new Date().getFullYear();
+            assignMonth = new Date().getMonth();
+            var plans = getTaskPlans(moduleId);
+            selectedDates = plans.map(function(p) { return p.date; });
+            var m = null;
+            for (var i = 0; i < MODS.length; i++) { if (MODS[i].id === moduleId) { m = MODS[i]; break; } }
+            document.getElementById('assignInfo').innerHTML = '<div class="icon">' + (m ? m.icon : '📋') + '</div><div class="name">' + (m ? m.name : moduleId) + '</div>';
+            renderAssignCal();
+            document.getElementById('modalAssign').classList.add('show');
+        }
+
+        function closeAssignModal() { document.getElementById('modalAssign').classList.remove('show'); assignModuleId = null; selectedDates = []; }
+
+        function assignChangeMonth(n) {
+            assignMonth += n;
+            if (assignMonth > 11) { assignMonth = 0; assignYear++; }
+            if (assignMonth < 0) { assignMonth = 11; assignYear--; }
+            renderAssignCal();
+        }
+
+        function renderAssignCal() {
+            document.getElementById('assignCalTitle').textContent = assignYear + '�? + (assignMonth + 1) + '�?;
+            var grid = document.getElementById('assignCalDays');
+            var first = getFirst(assignYear, assignMonth);
+            var total = getDays(assignYear, assignMonth);
+            var data = getData();
+            var html = '';
+            for (var i = 0; i < first; i++) html += '<div class="assign-day empty"></div>';
+            for (var d = 1; d <= total; d++) {
+                var ds = assignYear + '-' + String(assignMonth + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+                var cls = 'assign-day';
+                if (selectedDates.indexOf(ds) > -1) cls += ' selected';
+                if (data[ds] && data[ds].length > 0 && selectedDates.indexOf(ds) === -1) cls += ' has-task';
+                html += '<div class="' + cls + '" onclick="toggleAssignDate(\'' + ds + '\')">' + d + '</div>';
+            }
+            grid.innerHTML = html;
+            renderSelectedDates();
+        }
+
+        function toggleAssignDate(ds) {
+            var idx = selectedDates.indexOf(ds);
+            if (idx > -1) selectedDates.splice(idx, 1); else selectedDates.push(ds);
+            selectedDates.sort();
+            renderAssignCal();
+        }
+
+        function renderSelectedDates() {
+            var el = document.getElementById('selectedDates');
+            if (selectedDates.length === 0) { el.innerHTML = '<div class="selected-dates-title">未选择日期</div>'; return; }
+            var html = '<div class="selected-dates-title">已选择 ' + selectedDates.length + ' 个日期：</div>';
+            for (var i = 0; i < selectedDates.length; i++) {
+                var ds = selectedDates[i];
+                var d = new Date(ds);
+                html += '<span class="selected-date-tag" onclick="removeAssignDate(\'' + ds + '\')">' + (d.getMonth() + 1) + '�? + d.getDate() + '�?×</span>';
+            }
+            el.innerHTML = html;
+        }
+
+        function removeAssignDate(ds) { var idx = selectedDates.indexOf(ds); if (idx > -1) selectedDates.splice(idx, 1); renderAssignCal(); }
+
+        function confirmAssign() {
+            if (selectedDates.length === 0) { alert('请至少选择一个日�?); return; }
+            assignDates(assignModuleId, selectedDates);
+            closeAssignModal();
+            showView('tasklist');
+        }
+
+        function togglePlan(ds, idx) {
+            var data = getData();
+            if (data[ds] && data[ds][idx]) { data[ds][idx].checked = !data[ds][idx].checked; setData(data); renderDayPlans(); }
+        }
+
+        function deletePlan(ds, idx) {
+            var data = getData();
+            if (data[ds]) { data[ds].splice(idx, 1); if (data[ds].length === 0) delete data[ds]; setData(data); renderCal(); renderDayPlans(); }
+        }
+
+        function goBack() {
+            if (parent.app && parent.app.backToCategory) parent.app.backToCategory();
+            else window.location.href = '../../index.html';
+        }
+
+        renderCal();
+        renderDayPlans();
+    </script>
+</body>
+</html>

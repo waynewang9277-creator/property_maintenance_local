@@ -6,7 +6,7 @@ const app = {
             name: '强电维保',
             icon: '⚡',
             items: [
-                { id: 'maintenance-plan', name: '维保计划', icon: '📅' },
+                { id: 'strong-power-plan', name: '维保计划', icon: '📅' },
                 { id: 'battery-test', name: '应急装置电池放电测试', icon: '🔋' },
                 { id: 'generator', name: '发电机组维护性运转记录', icon: '⚙️' },
                 { id: 'ats', name: 'ATS维护保养记录', icon: '🔌' },
@@ -22,7 +22,7 @@ const app = {
             name: '综合维修维保',
             icon: '🔧',
             items: [
-                { id: 'maintenance-plan', name: '维保计划', icon: '📅' }
+                { id: 'comprehensive-plan', name: '维保计划', icon: '📅' }
             ]
         },
         {
@@ -30,7 +30,7 @@ const app = {
             name: '弱电维保',
             icon: '📡',
             items: [
-                { id: 'maintenance-plan', name: '维保计划', icon: '📅' }
+                { id: 'weak-power-plan', name: '维保计划', icon: '📅' }
             ]
         },
         {
@@ -38,7 +38,7 @@ const app = {
             name: '空调维保',
             icon: '❄️',
             items: [
-                { id: 'maintenance-plan', name: '维保计划', icon: '📅' }
+                { id: 'air-condition-plan', name: '维保计划', icon: '📅' }
             ]
         },
         {
@@ -46,7 +46,7 @@ const app = {
             name: '给排水维保',
             icon: '💧',
             items: [
-                { id: 'maintenance-plan', name: '维保计划', icon: '📅' }
+                { id: 'water-drainage-plan', name: '维保计划', icon: '📅' }
             ]
         }
     ],
