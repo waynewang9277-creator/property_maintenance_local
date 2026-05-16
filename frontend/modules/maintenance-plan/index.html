@@ -177,10 +177,18 @@
 
         // 渲染日历
         function renderCal() {
-            document.getElementById('calTitle').textContent = year + '年' + (month + 1) + '月';
-            const grid = document.getElementById('calGrid');
+            const titleEl = document.getElementById('calTitle');
+            const gridEl = document.getElementById('calGrid');
+            if (!titleEl || !gridEl) { alert('日历元素未找到!'); return; }
+            
+            titleEl.textContent = year + '年' + (month + 1) + '月';
             const data = getData();
             const today = formatDate(new Date());
+            const first = getFirst(year, month);
+            const days = getDays(year, month);
+            
+            alert('调试: 年=' + year + ' 月=' + (month+1) + ' 1号星期=' + first + ' 天数=' + days);
+            
             let html = '';
 
             // 空格子
