@@ -106,6 +106,7 @@ const app = {
         document.getElementById('main-menu').classList.toggle('hidden', view !== 'main');
         document.getElementById('category-page').classList.toggle('hidden', view !== 'category');
         document.getElementById('module-container').classList.toggle('hidden', view !== 'item');
+        document.getElementById('mainHeader').classList.toggle('hidden', view !== 'main');
     }
 };
 document.addEventListener('DOMContentLoaded', () => { app.init(); });
