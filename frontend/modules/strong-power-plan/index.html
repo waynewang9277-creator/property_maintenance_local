@@ -244,8 +244,7 @@
                     for (var j = 0; j < MODS.length; j++) { if (MODS[j].id === plans[t].moduleId) { m = MODS[j]; break; } }
                     if (!m) continue;
                     var color = taskColors[j % taskColors.length];
-                    var shortName = m.name.length > 6 ? m.name.substr(0, 5) + '...' : m.name;
-                    tasksHtml += '<div class="day-task" style="background:' + color + ';" title="' + m.name + '">' + m.icon + ' ' + shortName + '</div>';
+                    tasksHtml += '<div class="day-task" style="background:' + color + ';">' + m.icon + ' ' + m.name + '</div>';
                 }
                 html += '<div class="' + cls + '" onclick="selectDate(\'' + ds + '\')">' +
                     '<div class="day-num">' + d + '</div>' +
