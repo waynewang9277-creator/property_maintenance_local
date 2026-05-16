@@ -6,6 +6,7 @@ const app = {
             name: '强电维保',
             icon: '⚡',
             items: [
+                { id: 'maintenance-plan', name: '维保计划', icon: '📅' },
                 { id: 'battery-test', name: '应急装置电池放电测试', icon: '🔋' },
                 { id: 'generator', name: '发电机组维护性运转记录', icon: '⚙️' },
                 { id: 'ats', name: 'ATS维护保养记录', icon: '🔌' },
@@ -20,25 +21,33 @@ const app = {
             id: 'comprehensive',
             name: '综合维修维保',
             icon: '🔧',
-            items: []
+            items: [
+                { id: 'maintenance-plan', name: '维保计划', icon: '📅' }
+            ]
         },
         {
             id: 'weak-power',
             name: '弱电维保',
             icon: '📡',
-            items: []
+            items: [
+                { id: 'maintenance-plan', name: '维保计划', icon: '📅' }
+            ]
         },
         {
             id: 'air-condition',
             name: '空调维保',
             icon: '❄️',
-            items: []
+            items: [
+                { id: 'maintenance-plan', name: '维保计划', icon: '📅' }
+            ]
         },
         {
             id: 'water-drainage',
             name: '给排水维保',
             icon: '💧',
-            items: []
+            items: [
+                { id: 'maintenance-plan', name: '维保计划', icon: '📅' }
+            ]
         }
     ],
     currentView: 'main',
