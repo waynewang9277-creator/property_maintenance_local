@@ -78,6 +78,11 @@ const plan = {
         const grid = document.getElementById('calendar-grid');
         const title = document.getElementById('calendar-title');
         
+        if (!grid || !title) {
+            console.error('日历元素未找到');
+            return;
+        }
+        
         // 显示标题
         title.textContent = `${this.currentYear}年${this.currentMonth + 1}月`;
 
@@ -86,8 +91,9 @@ const plan = {
 
         // 添加星期标题
         const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+        let html = '';
         weekdays.forEach(day => {
-            grid.innerHTML += `<div class="calendar-weekday">${day}</div>`;
+            html += `<div class="calendar-weekday">${day}</div>`;
         });
 
         // 获取当月数据
@@ -97,7 +103,7 @@ const plan = {
         // 计算第一天前的空格子数
         const firstDay = this.getFirstDayOfMonth(this.currentYear, this.currentMonth);
         for (let i = 0; i < firstDay; i++) {
-            grid.innerHTML += '<div class="calendar-day" style="background:transparent;"></div>';
+            html += '<div class="calendar-day" style="background:transparent;"></div>';
         }
 
         // 填充日期
@@ -113,8 +119,11 @@ const plan = {
             if (hasPlan) classes += ' has-plan';
             if (isSelected) classes += ' selected';
 
-            grid.innerHTML += `<div class="${classes}" onclick="plan.selectDate('${dateStr}')">${day}</div>`;
+            html += `<div class="${classes}" onclick="plan.selectDate('${dateStr}')">${day}</div>`;
         }
+
+        grid.innerHTML = html;
+        console.log('日历渲染完成，天数：', daysInMonth);
     },
 
     // 选择日期
