@@ -29,8 +29,8 @@ var StrongPowerPlanModule = {
     STYLE_BLACK: 89,      // 办公楼计划 - 黑色填充
     STYLE_DARK_BLUE: 90,  // 商场计划 - 深蓝色填充
     STYLE_DARK_GREEN: 91, // 已执行 - 深绿色填充
-    STYLE_DIAGONAL_UP: 92,    // 未计划 - 斜杠(\)
-    STYLE_DIAGONAL_DOWN: 93,  // 未计划 - 反斜杠(/)
+    STYLE_DIAGONAL_UP: 89,    // 未计划 - 斜杠(/)
+    STYLE_DIAGONAL_DOWN: 90,  // 未计划 - 反斜杠(\)
 
     // 数据结构: { "2026-05": { items: { 1: { office: [1,2,3], mall: [5,6], exec: { office: [1], mall: [2] } } } } }
     // yearMonth: "2026-05"
