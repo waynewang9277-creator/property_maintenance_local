@@ -29,6 +29,8 @@ var StrongPowerPlanModule = {
     STYLE_BLACK: 89,      // 办公楼计划 - 黑色填充
     STYLE_DARK_BLUE: 90,  // 商场计划 - 深蓝色填充
     STYLE_DARK_GREEN: 91, // 已执行 - 深绿色填充
+    STYLE_DIAGONAL_UP: 92,    // 未计划 - 斜杠(\)
+    STYLE_DIAGONAL_DOWN: 93,  // 未计划 - 反斜杠(/)
 
     // 数据结构: { "2026-05": { items: { 1: { office: [1,2,3], mall: [5,6], exec: { office: [1], mall: [2] } } } } }
     // yearMonth: "2026-05"
@@ -157,6 +159,20 @@ var StrongPowerPlanModule = {
                     var planRow = 5 + itemId * 2;      // e.g. item1=6, item2=8...
                     var execRow = planRow + 1;          // e.g. item1=7, item2=9...
                     var itemPlan = monthData[itemId];
+                    var hasNoPlan = (itemPlan.office.length === 0 && itemPlan.mall.length === 0);
+
+                    // 如果没有任何计划，对整行打斜杠表示未安排
+                    if (hasNoPlan) {
+                        for (var day = 1; day <= 31; day++) {
+                            var col1 = self.dayCol(day, 1);
+                            var col2 = self.dayCol(day, 2);
+                            self.setCellValueAndStyle(doc, col1 + planRow, '', self.STYLE_DIAGONAL_DOWN);
+                            self.setCellValueAndStyle(doc, col2 + planRow, '', self.STYLE_DIAGONAL_DOWN);
+                            self.setCellValueAndStyle(doc, col1 + execRow, '', self.STYLE_DIAGONAL_UP);
+                            self.setCellValueAndStyle(doc, col2 + execRow, '', self.STYLE_DIAGONAL_UP);
+                        }
+                        continue;
+                    }
 
                     // 日期列填充 (day 1-31)
                     for (var day = 1; day <= 31; day++) {
