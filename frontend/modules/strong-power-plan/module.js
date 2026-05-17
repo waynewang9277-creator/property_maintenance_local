@@ -26,11 +26,11 @@ var StrongPowerPlanModule = {
     ],
 
     // 颜色样式索引（修改后的模板添加的样式）
-    STYLE_BLACK: 89,      // 办公楼计划 - 黑色填充
-    STYLE_DARK_BLUE: 90,  // 商场计划 - 深蓝色填充
-    STYLE_DARK_GREEN: 91, // 已执行 - 深绿色填充
-    STYLE_DIAGONAL_UP: 89,    // 未计划 - 斜杠(/)
-    STYLE_DIAGONAL_DOWN: 90,  // 未计划 - 反斜杠(\)
+    // 模板中实际的样式索引
+    STYLE_BLACK: 69,       // 办公楼计划 - 黑色填充 (fillId=5)
+    STYLE_DARK_BLUE: 70,   // 商场计划 - 深蓝色填充 (fillId=6)
+    STYLE_DARK_GREEN: 71,  // 已执行 - 深绿色填充 (fillId=7)
+    STYLE_DIAGONAL: 76,    // 未计划 - 斜杠(/) - 使用borderId=32的对角线上划线，无填充
 
     // 数据结构: { "2026-05": { items: { 1: { office: [1,2,3], mall: [5,6], exec: { office: [1], mall: [2] } } } } }
     // yearMonth: "2026-05"
@@ -166,10 +166,11 @@ var StrongPowerPlanModule = {
                         for (var day = 1; day <= 31; day++) {
                             var col1 = self.dayCol(day, 1);
                             var col2 = self.dayCol(day, 2);
-                            self.setCellValueAndStyle(doc, col1 + planRow, '', self.STYLE_DIAGONAL_DOWN);
-                            self.setCellValueAndStyle(doc, col2 + planRow, '', self.STYLE_DIAGONAL_DOWN);
-                            self.setCellValueAndStyle(doc, col1 + execRow, '', self.STYLE_DIAGONAL_UP);
-                            self.setCellValueAndStyle(doc, col2 + execRow, '', self.STYLE_DIAGONAL_UP);
+                            // 计划和执行行都使用斜杠样式
+                            self.setCellValueAndStyle(doc, col1 + planRow, '', self.STYLE_DIAGONAL);
+                            self.setCellValueAndStyle(doc, col2 + planRow, '', self.STYLE_DIAGONAL);
+                            self.setCellValueAndStyle(doc, col1 + execRow, '', self.STYLE_DIAGONAL);
+                            self.setCellValueAndStyle(doc, col2 + execRow, '', self.STYLE_DIAGONAL);
                         }
                         continue;
                     }
