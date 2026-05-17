@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>应急电池放电测试</title>
+    <link rel="stylesheet" href="../../common/css/style.css">
+    <style>
+        .test-form-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .form-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .form-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+        }
+        .btn-remove {
+            background: #ff4d4f;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-size: 16px;
+            cursor: pointer;
+            line-height: 24px;
+            text-align: center;
+        }
+        .btn-remove:active {
+            background: #ff7875;
+        }
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        .btn-lg {
+            padding: 12px 24px;
+            font-size: 14px;
+        }
+        .form-footer {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed #ddd;
+        }
+        .test-list-container {
+            margin-top: 15px;
+        }
+        .record-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .record-item:active {
+            background: #f0f0f0;
+        }
+        .record-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .record-location {
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+        }
+        .record-date {
+            font-size: 12px;
+            color: #666;
+        }
+        .record-count {
+            font-size: 11px;
+            color: #999;
+        }
+        .btn-delete {
+            background: #ff4d4f;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        .btn-delete:active {
+            background: #ff7875;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="module-header">
+            <button class="btn-back" onclick="if(parent.app && parent.app.backToCategory){parent.app.backToCategory();}else{window.location.href='../../index.html';}">← 返回分类</button>
+            <h2 class="module-title">🔋 应急电池放电测试</h2>
+        </header>
+
+        <main class="module-main">
+            <!-- 顶部按钮区 -->
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <button class="btn btn-primary" id="btn-save">💾 保存记录</button>
+                <button class="btn btn-outline" id="btn-cancel">🗑 清空表单</button>
+            </div>
+            
+            <!-- 测试列表（历史记录） -->
+            <div id="records-container" class="test-list-container"></div>
+            
+            <!-- 多个测试表单容器 -->
+            <div id="test-forms-container"></div>
+            
+            <!-- 底部操作按钮区 -->
+            <div id="bottom-actions" style="display: flex; gap: 10px; margin-top: 15px;">
+                <button class="btn btn-primary" id="btn-new-test" style="flex:1;">➕ 新建测试</button>
+                <button class="btn btn-success" id="btn-generate-pdf" style="flex:1;">📄 生成PDF报告</button>
+            </div>
+            
+            <!-- PDF预览容器 -->
+            <div id="pdf-container"></div>
+        </main>
+    </div>
+
+    <script src="../../common/js/lib/html2canvas.min.js"></script>
+    <script src="../../common/js/lib/jspdf.min.js"></script>
+    <script src="../../common/js/data-manager.js"></script>
+    <script src="module.js"></script>
+</body>
+</html>

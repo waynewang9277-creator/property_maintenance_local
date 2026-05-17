@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Busbar Debug</title>
+    <script src="../../common/js/tesseract.min.js"></script>
+</head>
+<body>
+    <h1>Debug Page</h1>
+    <pre id="output"></pre>
+    <script>
+        var out = document.getElementById('output');
+        function log(msg) {
+            out.textContent += msg + '\n';
+            console.log(msg);
+        }
+        
+        log('1. Page loaded');
+        log('typeof Tesseract: ' + typeof Tesseract);
+        
+        if (typeof Tesseract !== 'undefined') {
+            log('2. Tesseract loaded, initializing...');
+            Tesseract.createWorker('eng').then(function(worker) {
+                log('3. OCR worker ready!');
+                worker.terminate();
+            }).catch(function(e) {
+                log('OCR error: ' + e.message);
+            });
+        } else {
+            log('ERROR: Tesseract not loaded');
+        }
+        
+        // Test BusbarModule
+        log('4. Testing BusbarModule...');
+    </script>
+</body>
+</html>
