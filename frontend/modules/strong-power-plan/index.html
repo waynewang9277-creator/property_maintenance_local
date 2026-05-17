@@ -19,7 +19,9 @@
         .cal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
         .cal-title { font-size: 28px; font-weight: bold; }
         .cal-nav { display: flex; gap: 12px; }
-        .cal-nav button { background: #667eea; color: #fff; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 16px; }
+        .cal-nav button, .cal-nav .btn-export { background: #667eea; color: #fff; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 16px; }
+        .btn-export { background: #52c41a; }
+        .cal-nav .btn-export:hover { background: #3a9d0c; }
         .week { display: flex; background: #f0f0f0; border-radius: 8px; margin-bottom: 10px; }
         .wd { flex: 1; text-align: center; padding: 14px; font-weight: bold; font-size: 18px; color: #666; }
         .days { display: flex; flex-wrap: wrap; }
@@ -33,22 +35,30 @@
         .day-num { font-size: 22px; font-weight: bold; margin-bottom: 4px; }
         .day-tasks { width: 100%; display: flex; flex-direction: column; gap: 2px; align-items: center; overflow: hidden; }
         .day-task { width: 100%; font-size: 14px; padding: 3px 6px; border-radius: 4px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #fff; }
+        .day-task.office { border-left: 3px solid #000; }
+        .day-task.mall { border-left: 3px solid #1F497D; }
+        .day-task.exec { opacity: 0.6; }
         
         .day-plans { background: #fff; border-radius: 12px; padding: 25px; margin-bottom: 25px; }
         .day-plans-title { font-size: 22px; font-weight: bold; margin-bottom: 15px; padding-bottom: 12px; border-bottom: 1px solid #eee; }
         .plan-item { display: flex; align-items: center; justify-content: space-between; padding: 15px; background: #f9f9f9; border-radius: 10px; margin-bottom: 12px; }
         .plan-item.checked { background: #f6ffed; border: 1px solid #b7eb8f; }
         .plan-info { display: flex; align-items: center; gap: 15px; cursor: pointer; font-size: 22px; }
+        .plan-regions { display: flex; gap: 6px; margin-top: 4px; }
+        .region-tag { padding: 2px 8px; border-radius: 4px; font-size: 12px; color: #fff; }
+        .region-tag.office { background: #000; }
+        .region-tag.mall { background: #1F497D; }
+        .region-tag.exec { background: #00B050; }
         .plan-del { background: #ff4d4f; color: #fff; border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 18px; cursor: pointer; }
         .no-plan { text-align: center; padding: 40px; color: #999; font-size: 18px; }
         
-        .task-list { background: #fff; border-radius: 8px; padding: 15px; max-width: 600px; margin: 0 auto; }
-        .task-item { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f9f9f9; border-radius: 8px; margin-bottom: 10px; }
-        .task-info { display: flex; align-items: center; gap: 10px; }
-        .task-icon { font-size: 24px; }
-        .task-name { font-size: 14px; font-weight: bold; }
+        .task-list { background: #fff; border-radius: 8px; padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 50%; margin: 0 auto; box-sizing: border-box; }
+        .task-item { display: flex; align-items: center; padding: 12px; background: #f9f9f9; border-radius: 8px; min-width: 0; gap: 10px; overflow: hidden; }
+        .task-info { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; overflow: hidden; }
+        .task-icon { font-size: 24px; flex-shrink: 0; }
+        .task-name { font-size: 14px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
         .task-count { font-size: 12px; color: #666; margin-top: 2px; }
-        .btn-assign { background: #667eea; color: #fff; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 13px; }
+        .btn-assign { background: #667eea; color: #fff; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 13px; flex-shrink: 0; white-space: nowrap; }
         
         .no-task { text-align: center; padding: 40px; color: #999; }
         
@@ -67,15 +77,30 @@
         .assign-week { display: flex; background: #f0f0f0; border-radius: 8px; margin-bottom: 6px; }
         .assign-wd { flex: 1; text-align: center; padding: 10px; font-weight: bold; font-size: 16px; color: #666; }
         .assign-days { display: flex; flex-wrap: wrap; }
-        .assign-day { width: 14.28%; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; }
+        .assign-day { width: 14.28%; height: 55px; display: flex; cursor: pointer; }
         .assign-day:hover { background: #f0f0f0; }
-        .assign-day.selected { background: #667eea; color: #fff; border-radius: 8px; }
         .assign-day.empty { cursor: default; }
-        .assign-day.has-task { background: #fff3bf; border: 1px solid #faad14; }
+        .assign-day-left { flex: 1; display: flex; align-items: center; justify-content: center; border-right: 1px solid #fff; border-radius: 8px 0 0 8px; }
+        .assign-day-right { flex: 1; display: flex; align-items: center; justify-content: center; border-radius: 0 8px 8px 0; }
+        .assign-day-left.selected { background: #000; color: #fff; }
+        .assign-day-right.selected { background: #1F497D; color: #fff; }
+        .assign-day-left.has-task { background: #666; color: #fff; }
+        .assign-day-right.has-task { background: #1F497D; color: #fff; }
+        .assign-day-left.in-date, .assign-day-right.in-date { background: #52c41a; color: #fff; }
+        
+        .region-selector { display: flex; gap: 10px; margin-bottom: 20px; }
+        .region-btn { flex: 1; padding: 14px; border: 2px solid #ddd; border-radius: 10px; font-size: 18px; cursor: pointer; background: #fff; }
+        .region-btn.active { border-color: #667eea; background: #e6f7ff; }
+        .region-btn .region-name { font-weight: bold; }
+        .region-btn .region-desc { font-size: 13px; color: #888; margin-top: 4px; }
+        .region-btn.office.active { border-color: #000; background: #f5f5f5; }
+        .region-btn.mall.active { border-color: #1F497D; background: #e6f0ff; }
         
         .selected-dates { margin-top: 20px; padding: 15px; background: #f9f9f9; border-radius: 12px; }
         .selected-dates-title { font-size: 18px; font-weight: bold; margin-bottom: 12px; color: #666; }
         .selected-date-tag { display: inline-block; padding: 6px 14px; background: #667eea; color: #fff; border-radius: 6px; margin: 4px; font-size: 16px; cursor: pointer; }
+        .selected-date-tag.office { background: #000; }
+        .selected-date-tag.mall { background: #1F497D; }
         
         .modal-btns { display: flex; gap: 15px; margin-top: 20px; }
         .btn-cancel { flex: 1; padding: 16px; background: #f0f0f0; color: #333; border: none; border-radius: 10px; font-size: 20px; cursor: pointer; }
@@ -98,6 +123,7 @@
                     <button class="cal-nav" id="btnPrev">◀</button>
                     <span class="cal-title" id="calTitle">2026年5月</span>
                     <button class="cal-nav" id="btnNext">▶</button>
+                    <button class="cal-nav btn-export" id="btnExport">📥 导出Excel</button>
                 </div>
                 <div class="week">
                     <div class="wd">日</div><div class="wd">一</div><div class="wd">二</div>
@@ -130,6 +156,7 @@
                     <span class="cal-title" id="assignCalTitle">2026年5月</span>
                     <button class="assign-cal-nav" onclick="assignChangeMonth(1)">▶</button>
                 </div>
+                <div style="text-align:center;margin-bottom:10px;color:#888;font-size:14px;">左半边 <b style="color:#000">●</b> 办公楼 &nbsp;|&nbsp; 右半边 <b style="color:#1F497D">●</b> 商场</div>
                 <div class="assign-week">
                     <div class="assign-wd">日</div><div class="assign-wd">一</div><div class="assign-wd">二</div>
                     <div class="assign-wd">三</div><div class="assign-wd">四</div><div class="assign-wd">五</div><div class="assign-wd">六</div>
@@ -146,16 +173,30 @@
         </div>
     </div>
 
+    <div class="modal" id="loading-overlay" style="background:rgba(0,0,0,0.7);display:none;flex-direction:column;align-items:center;justify-content:center;">
+        <div style="color:#fff;font-size:24px;">📥 正在导出Excel...</div>
+    </div>
+
+    <script src="../../common/js/lib/jszip.min.js"></script>
+    <script src="module.js"></script>
     <script>
         const MODS = [
-            { id: 'battery-test', name: '应急电池放电测试', icon: '🔋' },
-            { id: 'generator', name: '发电机组维护性运转记录', icon: '⚙️' },
-            { id: 'ats', name: 'ATS维护保养记录', icon: '🔌' },
-            { id: 'capacitor-check', name: '电容检查及测温', icon: '🔌' },
-            { id: 'busbar-check', name: '供电母排检查及测温', icon: '⚡' },
-            { id: 'power-room-monthly', name: '强电间月度巡检', icon: '📋' },
-            { id: 'elevator-escape', name: '电梯逃生门检查', icon: '🚪' },
-            { id: 'elevator-handrail-fault', name: '电梯扶手梯故障报告', icon: '🛗' }
+            { id: 'item-1',  name: '应急装置电池放电时间测试',   icon: '🔋', itemId: 1 },
+            { id: 'item-2',  name: '擦窗机保养',                icon: '🪟', itemId: 2 },
+            { id: 'item-3',  name: '应急发电机保养',            icon: '⚙️', itemId: 3 },
+            { id: 'item-4',  name: '电容检查及测温',            icon: '🔌', itemId: 4 },
+            { id: 'item-5',  name: '供电母排检查测温记录表',    icon: '⚡', itemId: 5 },
+            { id: 'item-6',  name: '强电间月度巡检',            icon: '📋', itemId: 6 },
+            { id: 'item-7',  name: '高压绝缘工具预防性试验',    icon: '🧪', itemId: 7 },
+            { id: 'item-8',  name: '高压供电系统检查',          icon: '🔌', itemId: 8 },
+            { id: 'item-9',  name: '泛光/景观照明系统检查',     icon: '💡', itemId: 9 },
+            { id: 'item-10', name: '外围LOGO灯箱年检及备案',   icon: '📜', itemId: 10 },
+            { id: 'item-11', name: '供配电设备电控箱月度检查',  icon: '⚙️', itemId: 11 },
+            { id: 'item-12', name: '防雷检测',                  icon: '⛈️', itemId: 12 },
+            { id: 'item-13', name: '电梯扶手梯故障报告',        icon: '🛗', itemId: 13 },
+            { id: 'item-14', name: '电梯/扶手梯年检',          icon: '🛗', itemId: 14 },
+            { id: 'item-15', name: '电扶梯维护保养',            icon: '🛗', itemId: 15 },
+            { id: 'item-16', name: '电梯逃生门检查',            icon: '🚪', itemId: 16 }
         ];
         const KEY = 'plan_strong_power';
         var taskColors = ['#667eea','#52c41a','#ff4d4f','#faad14','#13c2c2','#722ed1','#eb2f96','#fa8c16'];
@@ -167,11 +208,15 @@
         var assignModuleId = null;
         var assignYear = new Date().getFullYear();
         var assignMonth = new Date().getMonth();
-        var selectedDates = [];
+        var selectedDates = [];  // format: 'date_office' or 'date_mall'
 
         document.getElementById('btnBack').onclick = goBack;
         document.getElementById('btnPrev').onclick = function() { changeMonth(-1); };
         document.getElementById('btnNext').onclick = function() { changeMonth(1); };
+        document.getElementById('btnExport').onclick = function() {
+            var ym = calYear + '-' + String(calMonth + 1).padStart(2, '0');
+            StrongPowerPlanModule.exportExcel(ym);
+        };
 
         function formatDate(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
         function getDays(y, m) { return new Date(y, m + 1, 0).getDate(); }
@@ -179,13 +224,20 @@
         function getData() { var d = localStorage.getItem(KEY); return d ? JSON.parse(d) : {}; }
         function setData(d) { localStorage.setItem(KEY, JSON.stringify(d)); }
         
+        function getModItemId(moduleId) {
+            for (var i = 0; i < MODS.length; i++) {
+                if (MODS[i].id === moduleId) return MODS[i].itemId;
+            }
+            return null;
+        }
+        
         function getTaskPlans(moduleId) {
             var data = getData();
             var result = [];
             for (var ds in data) {
                 var plans = data[ds];
                 for (var i = 0; i < plans.length; i++) {
-                    if (plans[i].moduleId === moduleId) result.push({ date: ds, checked: plans[i].checked });
+                    if (plans[i].moduleId === moduleId) result.push({ date: ds, region: plans[i].region, checked: plans[i].checked });
                 }
             }
             return result;
@@ -193,16 +245,19 @@
         
         function getDatePlans(ds) { return getData()[ds] || []; }
         
-        function assignDates(moduleId, dates) {
+        function assignDates(moduleId, region, dates) {
             var data = getData();
+            var itemId = getModItemId(moduleId);
+            // Remove existing for this module+region
             for (var ds in data) {
-                data[ds] = data[ds].filter(function(p) { return p.moduleId !== moduleId; });
+                data[ds] = data[ds].filter(function(p) { return !(p.moduleId === moduleId && p.region === region); });
                 if (data[ds].length === 0) delete data[ds];
             }
+            // Add new
             for (var i = 0; i < dates.length; i++) {
                 var ds = dates[i];
                 if (!data[ds]) data[ds] = [];
-                data[ds].push({ moduleId: moduleId, checked: false });
+                data[ds].push({ moduleId: moduleId, region: region, checked: false });
             }
             setData(data);
         }
@@ -240,11 +295,15 @@
                 var plans = data[ds] || [];
                 var tasksHtml = '';
                 for (var t = 0; t < plans.length; t++) {
+                    var p = plans[t];
                     var m = null;
-                    for (var j = 0; j < MODS.length; j++) { if (MODS[j].id === plans[t].moduleId) { m = MODS[j]; break; } }
+                    var mIdx = -1;
+                    for (var j = 0; j < MODS.length; j++) { if (MODS[j].id === p.moduleId) { m = MODS[j]; mIdx = j; break; } }
                     if (!m) continue;
-                    var color = taskColors[j % taskColors.length];
-                    tasksHtml += '<div class="day-task" style="background:' + color + ';">' + m.icon + ' ' + m.name + '</div>';
+                    var color = taskColors[mIdx % taskColors.length];
+                    var regionClass = p.region === 'mall' ? 'mall' : 'office';
+                    var execClass = p.checked ? ' exec' : '';
+                    tasksHtml += '<div class="day-task ' + regionClass + execClass + '" style="background:' + color + ';">' + m.icon + ' ' + m.name + '</div>';
                 }
                 html += '<div class="' + cls + '" onclick="selectDate(\'' + ds + '\')">' +
                     '<div class="day-num">' + d + '</div>' +
@@ -270,10 +329,15 @@
                 for (var j = 0; j < MODS.length; j++) { if (MODS[j].id === p.moduleId) { m = MODS[j]; mIdx = j; break; } }
                 if (!m) m = { icon: '📋', name: p.moduleId };
                 var color = mIdx >= 0 ? taskColors[mIdx % taskColors.length] : '#667eea';
+                var regionClass = p.region === 'mall' ? 'mall' : 'office';
+                var regionName = p.region === 'mall' ? '🏬 商场' : '🏢 办公楼';
                 html += '<div class="plan-item' + (p.checked ? ' checked' : '') + '">' +
                     '<div class="plan-info" onclick="togglePlan(\'' + selDate + '\', ' + i + ')">' +
                     '<span>' + (p.checked ? '✅' : '⬜') + '</span>' +
-                    '<span style="background:' + color + ';color:#fff;padding:2px 8px;border-radius:4px;font-size:12px;">' + m.icon + ' ' + m.name + '</span></div>' +
+                    '<div>' +
+                    '<div style="font-size:18px;">' + m.icon + ' ' + m.name + '</div>' +
+                    '<div class="plan-regions"><span class="region-tag ' + regionClass + '">' + regionName + '</span></div>' +
+                    '</div></div>' +
                     '<button class="plan-del" onclick="deletePlan(\'' + selDate + '\', ' + i + ')">×</button></div>';
             }
             list.innerHTML = html;
@@ -303,8 +367,9 @@
             assignModuleId = moduleId;
             assignYear = new Date().getFullYear();
             assignMonth = new Date().getMonth();
+            // Load existing dates for this module in new format (date_region)
             var plans = getTaskPlans(moduleId);
-            selectedDates = plans.map(function(p) { return p.date; });
+            selectedDates = plans.map(function(p) { return p.date + '_' + p.region; });
             var m = null;
             for (var i = 0; i < MODS.length; i++) { if (MODS[i].id === moduleId) { m = MODS[i]; break; } }
             document.getElementById('assignInfo').innerHTML = 
@@ -333,46 +398,70 @@
             for (var i = 0; i < first; i++) html += '<div class="assign-day empty"></div>';
             for (var d = 1; d <= total; d++) {
                 var ds = assignYear + '-' + String(assignMonth + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
-                var cls = 'assign-day';
-                if (selectedDates.indexOf(ds) > -1) cls += ' selected';
-                if (data[ds] && data[ds].length > 0 && selectedDates.indexOf(ds) === -1) cls += ' has-task';
-                html += '<div class="' + cls + '" onclick="toggleAssignDate(\'' + ds + '\')">' + d + '</div>';
+                var dayPlans = data[ds] || [];
+                var hasOffice = dayPlans.some(function(p) { return p.moduleId === assignModuleId && p.region === 'office'; });
+                var hasMall = dayPlans.some(function(p) { return p.moduleId === assignModuleId && p.region === 'mall'; });
+                var hasOfficeSelected = selectedDates.indexOf(ds + '_office') > -1;
+                var hasMallSelected = selectedDates.indexOf(ds + '_mall') > -1;
+                html += '<div class="assign-day">' +
+                    '<div class="assign-day-left' + (hasOfficeSelected ? ' selected' : '') + (hasOffice && !hasOfficeSelected ? ' has-task' : '') + '" onclick="toggleAssignDate(\'' + ds + '\', \'office\')">' + d + '</div>' +
+                    '<div class="assign-day-right' + (hasMallSelected ? ' selected' : '') + (hasMall && !hasMallSelected ? ' has-task' : '') + '" onclick="toggleAssignDate(\'' + ds + '\', \'mall\')">' + d + '</div>' +
+                    '</div>';
             }
             grid.innerHTML = html;
             renderSelectedDates();
         }
 
-        function toggleAssignDate(ds) {
-            var idx = selectedDates.indexOf(ds);
-            if (idx > -1) selectedDates.splice(idx, 1); else selectedDates.push(ds);
+        function toggleAssignDate(ds, region) {
+            var key = ds + '_' + region;
+            var idx = selectedDates.indexOf(key);
+            if (idx > -1) selectedDates.splice(idx, 1); else selectedDates.push(key);
             selectedDates.sort();
             renderAssignCal();
         }
 
         function renderSelectedDates() {
             var el = document.getElementById('selectedDates');
-            if (selectedDates.length === 0) { el.innerHTML = '<div class="selected-dates-title">未选择日期</div>'; return; }
-            var html = '<div class="selected-dates-title">已选择 ' + selectedDates.length + ' 个日期：</div>';
+            var officeCount = 0, mallCount = 0;
             for (var i = 0; i < selectedDates.length; i++) {
-                var ds = selectedDates[i];
+                if (selectedDates[i].endsWith('_office')) officeCount++;
+                else mallCount++;
+            }
+            if (officeCount === 0 && mallCount === 0) {
+                el.innerHTML = '<div class="selected-dates-title">点击日期格子的左(办公楼) / 右(商场) 半边分配</div>';
+                return;
+            }
+            var html = '<div class="selected-dates-title">已选：<span style="background:#000;padding:2px 8px;color:#fff;border-radius:4px;margin-right:8px;">办公楼 ' + officeCount + '</span><span style="background:#1F497D;padding:2px 8px;color:#fff;border-radius:4px;">商场 ' + mallCount + '</span></div>';
+            for (var i = 0; i < selectedDates.length; i++) {
+                var parts = selectedDates[i].split('_');
+                var ds = parts[0];
+                var region = parts[1];
                 var d = new Date(ds);
-                html += '<span class="selected-date-tag" onclick="removeAssignDate(\'' + ds + '\')">' + (d.getMonth() + 1) + '月' + d.getDate() + '日 ×</span>';
+                html += '<span class="selected-date-tag ' + region + '" onclick="removeAssignDate(\'' + selectedDates[i] + '\')">' + (d.getMonth() + 1) + '月' + d.getDate() + '日 ' + (region === 'office' ? '办公楼' : '商场') + ' ×</span>';
             }
             el.innerHTML = html;
         }
 
-        function removeAssignDate(ds) { var idx = selectedDates.indexOf(ds); if (idx > -1) selectedDates.splice(idx, 1); renderAssignCal(); }
+        function removeAssignDate(key) { var idx = selectedDates.indexOf(key); if (idx > -1) selectedDates.splice(idx, 1); renderAssignCal(); }
 
         function confirmAssign() {
-            if (selectedDates.length === 0) { alert('请至少选择一个日期'); return; }
-            assignDates(assignModuleId, selectedDates);
+            // selectedDates are in format 'date_region', split and assign
+            var officeDates = [];
+            var mallDates = [];
+            for (var i = 0; i < selectedDates.length; i++) {
+                var parts = selectedDates[i].split('_');
+                if (parts[1] === 'office') officeDates.push(parts[0]);
+                else mallDates.push(parts[0]);
+            }
+            assignDates(assignModuleId, 'office', officeDates);
+            assignDates(assignModuleId, 'mall', mallDates);
             closeAssignModal();
             showView('tasklist');
         }
 
         function togglePlan(ds, idx) {
             var data = getData();
-            if (data[ds] && data[ds][idx]) { data[ds][idx].checked = !data[ds][idx].checked; setData(data); renderDayPlans(); }
+            if (data[ds] && data[ds][idx]) { data[ds][idx].checked = !data[ds][idx].checked; setData(data); renderCal(); renderDayPlans(); }
         }
 
         function deletePlan(ds, idx) {
