@@ -208,9 +208,11 @@ var StrongPowerPlanModule = {
                 link.download = '强电维保计划_' + year + '年' + month + '月.xlsx';
                 link.href = url;
                 link.click();
+                alert('导出成功！');
             })
             .catch(function(e) {
                 console.error('Export error:', e);
+                alert('导出失败: ' + e.message);
             });
     },
 
