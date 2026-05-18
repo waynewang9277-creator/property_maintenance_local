@@ -481,8 +481,6 @@
             isDragging = true;
             dragRegion = el.dataset.region;
             draggedSet = {};
-            var ds = el.dataset.ds;
-            if (ds) tryDragSelect(ds, dragRegion);
         }
 
         function onDragMove(e) {
@@ -492,7 +490,13 @@
             if (el) el = el.closest('.assign-day-left, .assign-day-right');
             if (!el || !el.dataset.region) return;
             var ds = el.dataset.ds;
-            if (ds && el.dataset.region === dragRegion) tryDragSelect(ds, dragRegion);
+            var region = el.dataset.region;
+            if (region !== dragRegion) {
+                // 切换了左右区域，重置draggedSet，只清除旧region的记录
+                draggedSet = {};
+                dragRegion = region;
+            }
+            if (ds) tryDragSelect(ds, region);
         }
 
         function onDragEnd() {
@@ -501,7 +505,7 @@
                 dragRegion = null;
                 draggedSet = {};
                 justDragged = true;
-                setTimeout(function() { justDragged = false; }, 300);
+                setTimeout(function() { justDragged = false; }, 50);
             }
         }
 
@@ -509,8 +513,11 @@
             var key = ds + '_' + region;
             if (draggedSet[key]) return;
             draggedSet[key] = true;
-            if (selectedDates.indexOf(key) === -1) {
-                selectedDates.push(key);
+            var idx = selectedDates.indexOf(key);
+            if (idx > -1) {
+                selectedDates.splice(idx, 1); // 已选中则取消
+            } else {
+                selectedDates.push(key); // 未选中则添加
             }
             renderAssignCal();
         }
