@@ -26,9 +26,9 @@ var StrongPowerPlanModule = {
     ],
 
     // 颜色样式索引（修改后的模板添加的样式）
-    STYLE_BLACK: 89,      // 办公楼计划 - 黑色填充
-    STYLE_DARK_BLUE: 90,  // 商场计划 - 深蓝色填充
-    STYLE_DARK_GREEN: 91, // 已执行 - 深绿色填充
+    STYLE_BLACK: 79,       // 办公楼计划 - 黑色填充 (AK38)
+    STYLE_DARK_BLUE: 81,  // 商场计划 - 蓝色填充 (AT38)
+    STYLE_DARK_GREEN: 83, // 已执行 - 绿色填充 (BE38)
 
     // 数据结构: { "2026-05": { items: { 1: { office: [1,2,3], mall: [5,6], exec: { office: [1], mall: [2] } } } } }
     // yearMonth: "2026-05"
