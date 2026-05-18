@@ -368,8 +368,8 @@
 
         function openAssignModal(moduleId) {
             assignModuleId = moduleId;
-            assignYear = new Date().getFullYear();
-            assignMonth = new Date().getMonth();
+            assignYear = calYear;
+            assignMonth = calMonth;
             // Load existing dates for this module in new format (date_region)
             var plans = getTaskPlans(moduleId);
             selectedDates = plans.map(function(p) { return p.date + '_' + p.region; });
