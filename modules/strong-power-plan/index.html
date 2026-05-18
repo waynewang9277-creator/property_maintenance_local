@@ -149,7 +149,7 @@
     <div class="modal" id="modalAssign">
         <div class="modal-body">
             <div class="modal-title">分配执行日期</div>
-            <div class="modal-subtitle">点击日历选择执行日期（可多选）</div>
+            <div class="modal-subtitle">点击或长按拖动选择日期（可多选）</div>
             
             <div class="assign-info" id="assignInfo"></div>
             
@@ -212,6 +212,9 @@
         var assignYear = new Date().getFullYear();
         var assignMonth = new Date().getMonth();
         var selectedDates = [];  // format: 'date_office' or 'date_mall'
+        var isDragging = false;        // 拖动多选状态
+        var dragRegion = null;          // 当前拖动目标的 region（office/mall）
+        var draggedSet = {};            // 记录本次拖动中已添加过的 key，避免重复添加
 
         document.getElementById('btnBack').onclick = goBack;
         document.getElementById('btnPrev').onclick = function() { changeMonth(-1); };
@@ -379,6 +382,7 @@
                 '<div class="icon">' + (m ? m.icon : '📋') + '</div>' +
                 '<div class="name">' + (m ? m.name : moduleId) + '</div>';
             renderAssignCal();
+            initDragSelect();
             document.getElementById('modalAssign').classList.add('show');
         }
 
@@ -407,8 +411,8 @@
                 var hasOfficeSelected = selectedDates.indexOf(ds + '_office') > -1;
                 var hasMallSelected = selectedDates.indexOf(ds + '_mall') > -1;
                 html += '<div class="assign-day">' +
-                    '<div class="assign-day-left' + (hasOfficeSelected ? ' selected' : '') + (hasOffice && !hasOfficeSelected ? ' has-task' : '') + '" onclick="toggleAssignDate(\'' + ds + '\', \'office\')">' + d + '</div>' +
-                    '<div class="assign-day-right' + (hasMallSelected ? ' selected' : '') + (hasMall && !hasMallSelected ? ' has-task' : '') + '" onclick="toggleAssignDate(\'' + ds + '\', \'mall\')">' + d + '</div>' +
+                    '<div class="assign-day-left' + (hasOfficeSelected ? ' selected' : '') + (hasOffice && !hasOfficeSelected ? ' has-task' : '') + '" data-ds="' + ds + '" data-region="office">' + d + '</div>' +
+                    '<div class="assign-day-right' + (hasMallSelected ? ' selected' : '') + (hasMall && !hasMallSelected ? ' has-task' : '') + '" data-ds="' + ds + '" data-region="mall">' + d + '</div>' +
                     '</div>';
             }
             grid.innerHTML = html;
@@ -446,6 +450,70 @@
         }
 
         function removeAssignDate(key) { var idx = selectedDates.indexOf(key); if (idx > -1) selectedDates.splice(idx, 1); renderAssignCal(); }
+
+        // ---------- 拖动多选 ----------
+        function initDragSelect() {
+            var grid = document.getElementById('assignCalDays');
+            grid.addEventListener('mousedown', onDragStart);
+            grid.addEventListener('mousemove', onDragMove);
+            document.addEventListener('mouseup', onDragEnd);
+            grid.addEventListener('touchstart', onDragStart, { passive: false });
+            grid.addEventListener('touchmove', onDragMove, { passive: false });
+            document.addEventListener('touchend', onDragEnd);
+        }
+
+        function onDragStart(e) {
+            var el = getElFromEvent(e);
+            if (!el || !el.classList.contains('assign-day-left') && !el.classList.contains('assign-day-right')) return;
+            e.preventDefault();
+            isDragging = true;
+            dragRegion = el.dataset.region;
+            draggedSet = {};
+            var ds = el.dataset.ds;
+            if (ds) tryDragSelect(ds, dragRegion);
+        }
+
+        function onDragMove(e) {
+            if (!isDragging) return;
+            e.preventDefault();
+            var el = getElFromEvent(e);
+            if (!el) return;
+            var tag = el.classList.contains('assign-day-left') ? 'assign-day-left' : el.classList.contains('assign-day-right') ? 'assign-day-right' : null;
+            if (!tag) {
+                // 可能落在父级 assign-day 上，尝试找子元素
+                var child = el.querySelector('.assign-day-left, .assign-day-right');
+                if (child) el = child;
+            }
+            if (!el.dataset.region) return;
+            var ds = el.dataset.ds;
+            if (ds && el.dataset.region === dragRegion) tryDragSelect(ds, dragRegion);
+        }
+
+        function onDragEnd() {
+            if (isDragging) {
+                isDragging = false;
+                dragRegion = null;
+                draggedSet = {};
+            }
+        }
+
+        function tryDragSelect(ds, region) {
+            var key = ds + '_' + region;
+            if (draggedSet[key]) return;
+            draggedSet[key] = true;
+            if (selectedDates.indexOf(key) === -1) {
+                selectedDates.push(key);
+            }
+            renderAssignCal();
+        }
+
+        function getElFromEvent(e) {
+            if (e.touches && e.touches.length > 0) {
+                return document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY);
+            }
+            return e.target;
+        }
+        // ---------- 拖动多选结束 ----------
 
         function confirmAssign() {
             // selectedDates are in format 'date_region', split and assign
