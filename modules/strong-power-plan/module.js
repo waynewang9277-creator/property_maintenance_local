@@ -123,8 +123,6 @@ var StrongPowerPlanModule = {
         var year = parseInt(parts[0]);
         var month = parseInt(parts[1]);
 
-        document.getElementById('loading-overlay').style.display = 'flex';
-
         var JSZip = window.JSZip;
         var parser = new DOMParser();
         var NS = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
@@ -215,7 +213,6 @@ var StrongPowerPlanModule = {
                 return zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
             })
             .then(function(blob) {
-                document.getElementById('loading-overlay').style.display = 'none';
                 var url = URL.createObjectURL(blob);
                 var link = document.createElement('a');
                 link.download = '强电维保计划_' + year + '年' + month + '月.xlsx';
@@ -223,7 +220,6 @@ var StrongPowerPlanModule = {
                 link.click();
             })
             .catch(function(e) {
-                document.getElementById('loading-overlay').style.display = 'none';
                 console.error('Export error:', e);
                 alert('导出失败: ' + e.message);
             });
