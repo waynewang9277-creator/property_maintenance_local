@@ -215,6 +215,7 @@
         var isDragging = false;        // 拖动多选状态
         var dragRegion = null;          // 当前拖动目标的 region（office/mall）
         var draggedSet = {};            // 记录本次拖动中已添加过的 key，避免重复添加
+        var justDragged = false;        // 刚结束拖动标记，防止拖动后立即触发点击取消
 
         document.getElementById('btnBack').onclick = goBack;
         document.getElementById('btnPrev').onclick = function() { changeMonth(-1); };
@@ -460,6 +461,13 @@
             grid.addEventListener('touchstart', onDragStart, { passive: false });
             grid.addEventListener('touchmove', onDragMove, { passive: false });
             document.addEventListener('touchend', onDragEnd);
+            // 点击切换选中状态（非拖动情况下）
+            grid.addEventListener('click', function(e) {
+                if (justDragged) { justDragged = false; return; }
+                var el = e.target;
+                if (!el.dataset.ds || !el.dataset.region) return;
+                toggleAssignDate(el.dataset.ds, el.dataset.region);
+            });
         }
 
         function onDragStart(e) {
@@ -494,6 +502,8 @@
                 isDragging = false;
                 dragRegion = null;
                 draggedSet = {};
+                justDragged = true;
+                setTimeout(function() { justDragged = false; }, 300);
             }
         }
 
