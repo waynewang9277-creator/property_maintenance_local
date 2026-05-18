@@ -377,9 +377,10 @@
             // Load existing dates for this module in new format (date_region)
             var plans = getTaskPlans(moduleId);
             selectedDates = plans.map(function(p) { return p.date + '_' + p.region; });
+            justDragged = false;
             var m = null;
             for (var i = 0; i < MODS.length; i++) { if (MODS[i].id === moduleId) { m = MODS[i]; break; } }
-            document.getElementById('assignInfo').innerHTML = 
+            document.getElementById('assignInfo').innerHTML =
                 '<div class="icon">' + (m ? m.icon : '📋') + '</div>' +
                 '<div class="name">' + (m ? m.name : moduleId) + '</div>';
             renderAssignCal();
@@ -455,6 +456,8 @@
         // ---------- 拖动多选 ----------
         function initDragSelect() {
             var grid = document.getElementById('assignCalDays');
+            if (grid.dataset.dragInit) return; // 防止重复初始化
+            grid.dataset.dragInit = '1';
             grid.addEventListener('mousedown', onDragStart);
             grid.addEventListener('mousemove', onDragMove);
             document.addEventListener('mouseup', onDragEnd);
@@ -464,15 +467,16 @@
             // 点击切换选中状态（非拖动情况下）
             grid.addEventListener('click', function(e) {
                 if (justDragged) { justDragged = false; return; }
-                var el = e.target;
-                if (!el.dataset.ds || !el.dataset.region) return;
+                var el = e.target.closest('.assign-day-left, .assign-day-right');
+                if (!el || !el.dataset.ds || !el.dataset.region) return;
                 toggleAssignDate(el.dataset.ds, el.dataset.region);
             });
         }
 
         function onDragStart(e) {
             var el = getElFromEvent(e);
-            if (!el || !el.classList.contains('assign-day-left') && !el.classList.contains('assign-day-right')) return;
+            if (el) el = el.closest('.assign-day-left, .assign-day-right');
+            if (!el) return;
             e.preventDefault();
             isDragging = true;
             dragRegion = el.dataset.region;
@@ -485,14 +489,8 @@
             if (!isDragging) return;
             e.preventDefault();
             var el = getElFromEvent(e);
-            if (!el) return;
-            var tag = el.classList.contains('assign-day-left') ? 'assign-day-left' : el.classList.contains('assign-day-right') ? 'assign-day-right' : null;
-            if (!tag) {
-                // 可能落在父级 assign-day 上，尝试找子元素
-                var child = el.querySelector('.assign-day-left, .assign-day-right');
-                if (child) el = child;
-            }
-            if (!el.dataset.region) return;
+            if (el) el = el.closest('.assign-day-left, .assign-day-right');
+            if (!el || !el.dataset.region) return;
             var ds = el.dataset.ds;
             if (ds && el.dataset.region === dragRegion) tryDragSelect(ds, dragRegion);
         }
