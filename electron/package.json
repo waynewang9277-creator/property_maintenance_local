@@ -1,0 +1,48 @@
+{
+  "name": "kelong-app",
+  "version": "1.0.0",
+  "description": "物业维保管理系统",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win --dir",
+    "dist": "electron-builder --win"
+  },
+  "build": {
+    "appId": "com.kelong.app",
+    "productName": "物业维保管理系统",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "icon.ico"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "**/modules/**",
+      "**/common/**",
+      "**/index.html"
+    ],
+    "extraResources": [
+      {
+        "from": "../modules",
+        "to": "modules"
+      },
+      {
+        "from": "../common",
+        "to": "common"
+      }
+    ]
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  }
+}
