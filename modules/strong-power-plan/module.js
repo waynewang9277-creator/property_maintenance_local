@@ -184,11 +184,11 @@ var StrongPowerPlanModule = {
                         if (hasOfficePlan) {
                             var cellRef = col1 + planRow;
                             // 调试：写入 day 和 itemId 作为单元格值（临时调试用）
-                            self.setCellValueAndStyle(doc, cellRef, 'd'+day+'i'+itemId, self.STYLE_BLACK);
+                            self.setCellValueAndStyle(doc, cellRef, '', self.STYLE_BLACK);
                         }
                         if (hasMallPlan) {
                             var cellRef = col2 + planRow;
-                            self.setCellValueAndStyle(doc, cellRef, 'd'+day+'i'+itemId, self.STYLE_DARK_BLUE);
+                            self.setCellValueAndStyle(doc, cellRef, '', self.STYLE_DARK_BLUE);
                         }
 
                         // --- 执行行 ---
@@ -197,11 +197,11 @@ var StrongPowerPlanModule = {
 
                         if (hasOfficeExec) {
                             var cellRef = col1 + execRow;
-                            self.setCellValueAndStyle(doc, cellRef, 'ExD'+day+'i'+itemId, self.STYLE_DARK_GREEN);
+                            self.setCellValueAndStyle(doc, cellRef, '', self.STYLE_DARK_GREEN);
                         }
                         if (hasMallExec) {
                             var cellRef = col2 + execRow;
-                            self.setCellValueAndStyle(doc, cellRef, 'ExD'+day+'i'+itemId, self.STYLE_DARK_GREEN);
+                            self.setCellValueAndStyle(doc, cellRef, '', self.STYLE_DARK_GREEN);
                         }
                     }
                 }
