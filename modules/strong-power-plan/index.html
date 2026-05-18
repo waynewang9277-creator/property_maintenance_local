@@ -126,7 +126,7 @@
                     <span class="cal-title" id="calTitle">2026年5月</span>
                     <button class="cal-nav" id="btnNext">▶</button>
                     <button class="cal-nav btn-export" id="btnExport">📥 导出Excel</button>
-                    <button class="cal-nav btn-clear" id="btnClear" onclick="clearAllPlans()">🗑️ 清除全部</button>
+                    <button class="cal-nav btn-clear" id="btnClear" onclick="clearAllPlans()">🗑️ 清除当月</button>
                 </div>
                 <div class="week">
                     <div class="wd">日</div><div class="wd">一</div><div class="wd">二</div>
@@ -601,8 +601,15 @@
         }
 
         function clearAllPlans() {
-            if (!confirm('确定要清除所有计划吗？此操作不可恢复。')) return;
-            localStorage.removeItem(KEY);
+            if (!confirm('确定要清除当月（' + (calMonth + 1) + '月）所有计划吗？此操作不可恢复。')) return;
+            var data = getData();
+            for (var ds in data) {
+                var d = new Date(ds);
+                if (d.getFullYear() === calYear && d.getMonth() === calMonth) {
+                    delete data[ds];
+                }
+            }
+            setData(data);
             renderCal();
             renderDayPlans();
         }
