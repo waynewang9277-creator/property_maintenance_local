@@ -1,26 +1,36 @@
 @echo off
 echo ================================
-echo   物业维保管理系统 - 构建工具
+echo   Property Maintenance System
 echo ================================
 echo.
 
-echo [1/3] 检查 Node.js...
+echo [1/3] Checking Node.js...
 node --version >nul 2>&1
 if errorlevel 1 (
-    echo 错误：未安装 Node.js
-    echo 请先安装 https://nodejs.org/
+    echo ERROR: Node.js is not installed
+    echo Please install from https://nodejs.org/
     pause
     exit /b 1
 )
 
-echo [2/3] 安装依赖（首次运行）...
+echo [2/3] Installing dependencies (first run)...
 call npm install
+if errorlevel 1 (
+    echo ERROR: npm install failed
+    pause
+    exit /b 1
+)
 
-echo [3/3] 构建 Windows 可执行文件...
+echo [3/3] Building Windows executable...
 call npm run dist
+if errorlevel 1 (
+    echo ERROR: Build failed
+    pause
+    exit /b 1
+)
 
 echo.
 echo ================================
-echo 构建完成！exe 文件在 dist\ 目录
+echo Build complete! EXE is in dist\
 echo ================================
 pause
