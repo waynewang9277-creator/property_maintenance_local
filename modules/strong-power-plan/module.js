@@ -66,10 +66,7 @@ var StrongPowerPlanModule = {
         var year = parseInt(parts[0]);
         var month = parseInt(parts[1]);
         var daysInMonth = new Date(year, month, 0).getDate();
-        
-        console.log('getMonthData called, yearMonth:', yearMonth, 'daysInMonth:', daysInMonth);
-        console.log('localStorage data keys:', Object.keys(this.data));
-        
+
         var result = {};
         for (var itemId = 1; itemId <= 16; itemId++) {
             result[itemId] = {
@@ -83,7 +80,6 @@ var StrongPowerPlanModule = {
         for (var d = 1; d <= daysInMonth; d++) {
             var dateStr = yearMonth + '-' + String(d).padStart(2, '0');
             var dayData = this.data[dateStr];
-            console.log('day', d, 'dateStr:', dateStr, 'dayData:', JSON.stringify(dayData));
             if (!dayData) continue;
             
             for (var i = 0; i < dayData.length; i++) {
@@ -159,8 +155,6 @@ var StrongPowerPlanModule = {
                 // ...
                 // itemId=n -> 计划行=5+n*2, 执行行=6+n*2
 
-                alert('self.data: ' + typeof self.data + ', self.STORAGE_KEY: ' + self.STORAGE_KEY);
-
                 for (var itemId = 1; itemId <= 16; itemId++) {
                     var planRow = 4 + itemId * 2;   // e.g. item1=6, item2=8...
                     var execRow = planRow + 1;         // e.g. item1=7, item2=9...
@@ -174,10 +168,6 @@ var StrongPowerPlanModule = {
                         // --- 计划行 ---
                         var hasOfficePlan = itemPlan.office.indexOf(day) >= 0;
                         var hasMallPlan = itemPlan.mall.indexOf(day) >= 0;
-
-                        if (hasOfficePlan || hasMallPlan) {
-                            alert('itemId=' + itemId + ', day=' + day + ', hasOffice=' + hasOfficePlan + ', hasMall=' + hasMallPlan + ', office=' + JSON.stringify(itemPlan.office) + ', mall=' + JSON.stringify(itemPlan.mall));
-                        }
 
                         if (hasOfficePlan) {
                             var cellRef = col1 + planRow;
@@ -221,7 +211,6 @@ var StrongPowerPlanModule = {
             })
             .catch(function(e) {
                 console.error('Export error:', e);
-                alert('导出失败: ' + e.message);
             });
     },
 
