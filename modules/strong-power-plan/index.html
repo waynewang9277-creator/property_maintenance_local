@@ -114,6 +114,10 @@
         .modal-btns { display: flex; gap: 10px; margin-top: 12px; }
         .btn-cancel { flex: 1; padding: 12px; background: #f0f0f0; color: #333; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
         .btn-confirm { flex: 1; padding: 12px; background: #52c41a; color: #fff; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
+
+        .assign-page { padding: 12px; background: #f5f5f5; min-height: 100vh; }
+        .assign-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+        .assign-title { font-size: 18px; margin: 0; }
     </style>
 </head>
 <body>
@@ -155,20 +159,21 @@
         </div>
     </div>
 
-    <div class="modal" id="modalAssign">
-        <div class="modal-body">
-            <div class="modal-title">分配执行日期</div>
-            <div class="modal-subtitle">点击日期左(办公楼)/右(商场)半边分配 · 点击星期选中整列</div>
-            
+    <div id="viewAssign" style="display:none;">
+        <div class="assign-page">
+            <div class="assign-header">
+                <button class="back" id="btnBackAssign">← 返回</button>
+                <h1 class="assign-title">分配执行日期</h1>
+            </div>
             <div class="assign-info" id="assignInfo"></div>
-            
             <div class="assign-cal">
                 <div class="assign-cal-head">
                     <button class="assign-cal-nav" onclick="assignChangeMonth(-1)">◀</button>
                     <span class="cal-title" id="assignCalTitle">2026年5月</span>
                     <button class="assign-cal-nav" onclick="assignChangeMonth(1)">▶</button>
                 </div>
-                <div style="text-align:center;margin-bottom:10px;color:#888;font-size:14px;">左半边 <b style="color:#000">●</b> 办公楼 &nbsp;|&nbsp; 右半边 <b style="color:#1F497D">●</b> 商场</div>
+                <div style="text-align:center;margin-bottom:8px;color:#888;font-size:13px;">左半边 <b style="color:#000">●</b> 办公楼 &nbsp;|&nbsp; 右半边 <b style="color:#1F497D">●</b> 商场</div>
+                <div style="text-align:center;margin-bottom:6px;color:#667eea;font-size:13px;">点击星期标签选中整列</div>
                 <div class="assign-week">
                     <div class="assign-wd" onclick="toggleWeekday(0)">日</div>
                     <div class="assign-wd" onclick="toggleWeekday(1)">一</div>
@@ -180,9 +185,7 @@
                 </div>
                 <div class="assign-days" id="assignCalDays"></div>
             </div>
-            
             <div class="selected-dates" id="selectedDates"></div>
-            
             <div class="modal-btns">
                 <button class="btn-cancel" onclick="closeAssignModal()">取消</button>
                 <button class="btn-confirm" onclick="confirmAssign()">确认分配</button>
@@ -224,6 +227,7 @@
         var selectedDates = [];  // format: 'date_office' or 'date_mall'
 
         document.getElementById('btnBack').onclick = goBack;
+        document.getElementById('btnBackAssign').onclick = closeAssignModal;
         document.getElementById('btnPrev').onclick = function() { changeMonth(-1); };
         document.getElementById('btnNext').onclick = function() { changeMonth(1); };
         document.getElementById('btnExport').onclick = function() {
@@ -281,7 +285,9 @@
             document.getElementById('tabList').classList.toggle('active', v === 'tasklist');
             document.getElementById('viewCalendar').style.display = v === 'calendar' ? 'block' : 'none';
             document.getElementById('viewTaskList').style.display = v === 'tasklist' ? 'block' : 'none';
-            if (v === 'calendar') { renderCal(); renderDayPlans(); } else { renderTaskList(); }
+            document.getElementById('viewAssign').style.display = v === 'assign' ? 'block' : 'none';
+            if (v === 'calendar') { renderCal(); renderDayPlans(); }
+            else if (v === 'tasklist') { renderTaskList(); }
         }
 
         function changeMonth(n) {
@@ -390,10 +396,10 @@
                 '<div class="name">' + (m ? m.name : moduleId) + '</div>';
             renderAssignCal();
             initDragSelect();
-            document.getElementById('modalAssign').classList.add('show');
+            showView('assign');
         }
 
-        function closeAssignModal() { document.getElementById('modalAssign').classList.remove('show'); assignModuleId = null; selectedDates = []; }
+        function closeAssignModal() { showView('tasklist'); assignModuleId = null; selectedDates = []; }
 
         function assignChangeMonth(n) {
             assignMonth += n;
