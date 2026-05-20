@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>发电机组维护性运转记录表</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: "SimSun", "宋体", serif; background: #fff; font-size: 9pt; }
+        
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 10mm;
+            margin: 0 auto;
+            background: #fff;
+        }
+        
+        /* 主表格样式 */
+        table.main {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9pt;
+        }
+        
+        table.main td {
+            border: 1px solid #000;
+            padding: 3px 5px;
+            vertical-align: middle;
+        }
+        
+        /* 表头背景 */
+        .header-cell {
+            background: #f0f0f0;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        /* 标签列 */
+        .label-cell {
+            background: #f9f9f9;
+            text-align: left;
+            font-weight: normal;
+        }
+        
+        /* 标题行 */
+        .title-row td {
+            font-size: 16pt;
+            font-weight: bold;
+            text-align: center;
+            border: none;
+            padding: 10px 0;
+        }
+        
+        /* 基本信息行 */
+        .info-row td {
+            border: none;
+            padding: 5px 0;
+            text-align: right;
+        }
+        
+        .info-row td:first-child {
+            text-align: left;
+        }
+        
+        /* 维护程序表格 */
+        .proc-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 5px 0;
+        }
+        .proc-table td {
+            border: 1px solid #000;
+            padding: 4px 6px;
+            vertical-align: middle;
+        }
+        
+        /* 供油系统表格 */
+        .fuel-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 5px 0;
+        }
+        .fuel-table td {
+            border: 1px solid #000;
+            padding: 4px 6px;
+            vertical-align: middle;
+            text-align: center;
+        }
+        
+        /* 运行记录部分 */
+        .record-section {
+            margin: 5px 0;
+        }
+        
+        .record-section td {
+            text-align: center;
+            padding: 4px 3px;
+        }
+        
+        /* 负载测试记录 */
+        .load-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 5px 0;
+        }
+        .load-table td {
+            border: 1px solid #000;
+            padding: 4px 5px;
+            text-align: center;
+        }
+        
+        /* 注意事项 */
+        .notice {
+            font-size: 8pt;
+            line-height: 1.6;
+            margin: 10px 0;
+            padding: 5px;
+            border: 1px solid #999;
+        }
+        
+        /* 签名栏 */
+        .signature {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            font-size: 10pt;
+        }
+        
+        /* 列宽定义 */
+        .w1 { width: 25mm; }
+        .w2 { width: 35mm; }
+        .w3 { width: 25mm; }
+        .w4 { width: 25mm; }
+        .w5 { width: 20mm; }
+    </style>
+</head>
+<body>
+    <div class="page" id="report-content">
+        <!-- 标题 -->
+        <table class="main">
+            <tr class="title-row">
+                <td colspan="16">发电机组维护性运转记录表</td>
+            </tr>
+        </table>
+        
+        <!-- 基本信息 -->
+        <table class="main">
+            <tr class="info-row">
+                <td width="60%"><strong>日期：</strong>__________</td>
+                <td width="40%"><strong>室温：</strong>_____°C</td>
+            </tr>
+        </table>
+        
+        <!-- 维护程序 -->
+        <table class="proc-table">
+            <tr>
+                <td rowspan="3" style="width: 20mm; background: #f0f0f0; font-weight: bold; text-align: center;">维护及要求程序</td>
+                <td style="text-align: left; width: 130mm;">1. 扫除机组表面灰尘，保持整洁。</td>
+                <td style="width: 20mm;"></td>
+                <td style="text-align: left;">4. 检查油底箱，喷油泵的机油，如油位低应及时补充到位。</td>
+            </tr>
+            <tr>
+                <td style="text-align: left;">2. 检查是否有漏油及漏水现象。</td>
+                <td></td>
+                <td style="text-align: left;">5. 检查水箱水量。</td>
+            </tr>
+            <tr>
+                <td style="text-align: left;">3. 清除空气滤器的滤芯内腔通道附粘的灰尘。</td>
+                <td></td>
+                <td style="text-align: center; background: #f0f0f0;">正常 □</td>
+            </tr>
+            <tr>
+                <td colspan="4" style="text-align: left; font-size: 8pt;">□ 存在问题，并将故障情况详述于各项内。</td>
+            </tr>
+        </table>
+        
+        <!-- 供油系统 -->
+        <table class="fuel-table">
+            <tr>
+                <td colspan="16" class="header-cell">供油系统</td>
+            </tr>
+            <tr>
+                <td class="label-cell" style="width: 30mm;">地下油缸油量</td>
+                <td style="width: 25mm;"></td>
+                <td class="label-cell" style="width: 30mm;">日常油缸油量</td>
+                <td style="width: 25mm;"></td>
+                <td class="label-cell" style="width: 25mm;">油泵编号</td>
+                <td colspan="2" style="width: 50mm;"></td>
+            </tr>
+            <tr>
+                <td class="label-cell">油泵控制箱</td>
+                <td></td>
+                <td class="label-cell">油压 (PSI)</td>
+                <td></td>
+                <td class="label-cell">油泵运行噪音</td>
+                <td></td>
+                <td class="label-cell">油管/油泵漏油情况</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td class="label-cell">备注</td>
+                <td colspan="7"></td>
+            </tr>
+            <tr>
+                <td colspan="8" style="height: 8mm;"></td>
+            </tr>
+        </table>
+        
+        <!-- 第一组运行记录 -->
+        <table class="fuel-table">
+            <tr>
+                <td rowspan="2" class="header-cell" style="width: 15mm;">号机组</td>
+                <td colspan="2" class="header-cell" style="width: 50mm;">启机、停机时间</td>
+                <td colspan="3" class="header-cell" style="width: 45mm;">电压 (V)</td>
+                <td colspan="3" class="header-cell" style="width: 45mm;">电流 (A)</td>
+                <td class="header-cell" style="width: 20mm;">频率</td>
+                <td class="header-cell" style="width: 20mm;">转速</td>
+                <td class="header-cell" style="width: 20mm;">水温</td>
+                <td colspan="2" class="header-cell" style="width: 40mm;">启动电池 电压(V)</td>
+                <td class="header-cell" style="width: 30mm;">备注</td>
+            </tr>
+            <tr>
+                <td class="label-cell">AB</td>
+                <td class="label-cell">BC</td>
+                <td class="label-cell">CA</td>
+                <td class="label-cell">A</td>
+                <td class="label-cell">B</td>
+                <td class="label-cell">C</td>
+                <td class="label-cell">(Hz)</td>
+                <td class="label-cell">(r/Min)</td>
+                <td class="label-cell">(°C)</td>
+                <td colspan="2"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td rowspan="2" class="label-cell">自动 ○&nbsp;&nbsp; 手动 ○</td>
+                <td>启动：&nbsp;&nbsp;&nbsp;&nbsp;时&nbsp;&nbsp;&nbsp;&nbsp;分</td>
+                <td class="label-cell">第5分钟</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td colspan="2" rowspan="2"></td>
+                <td rowspan="2"></td>
+            </tr>
+            <tr>
+                <td>停止：&nbsp;&nbsp;&nbsp;&nbsp;时&nbsp;&nbsp;&nbsp;&nbsp;分</td>
+                <td class="label-cell">第10分钟</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td colspan="4" class="label-cell">油泵编号：_____号</td>
+                <td class="label-cell">第20分钟</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td colspan="2" class="label-cell" style="background: #f0f0f0;">电气部分</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td colspan="4"></td>
+                <td class="label-cell">第30分钟</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td class="label-cell">机组控制</td>
+                <td class="label-cell">开关柜</td>
+                <td></td>
+            </tr>
+        </table>
+        
+        <!-- 负载测试记录 -->
+        <table class="load-table">
+            <tr>
+                <td colspan="8" class="header-cell">负载测试记录</td>
+            </tr>
+            <tr>
+                <td class="label-cell" style="width: 25mm;"></td>
+                <td style="width: 25mm;">第5分钟</td>
+                <td style="width: 25mm;">第10分钟</td>
+                <td style="width: 25mm;">第20分钟</td>
+                <td style="width: 25mm;">第30分钟</td>
+                <td colspan="3" class="label-cell">备注</td>
+            </tr>
+            <tr>
+                <td class="label-cell">电压 (V)</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td colspan="3" rowspan="6"></td>
+            </tr>
+            <tr>
+                <td class="label-cell">电流 (A)</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td class="label-cell">频率 (Hz)</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td class="label-cell">转速</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td class="label-cell">水温 (°C)</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td class="label-cell">启动电池电压(V)</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+        </table>
+        
+        <!-- 运行记录 -->
+        <table class="fuel-table">
+            <tr>
+                <td class="header-cell">运行记录</td>
+            </tr>
+            <tr>
+                <td style="text-align: left; font-size: 8pt; line-height: 1.8;">
+                   负载测试启动：负载测试启动机组怠速状态下运行5-10分钟，然后升速至额定值运行30分钟，再降至怠速运行5-10分钟后关机。<br>
+                    空载测试不超过5分钟。<br><br>
+                    负载/空载测试后，发电机控制开关必须设置于自动位置上。<br>
+                    发电机测试后，所有开关必须恢复在备用状态下。<br>
+                    每月一次维护性空载运转，十二月做维护性带载运行。
+                </td>
+            </tr>
+        </table>
+        
+        <!-- 签名栏 -->
+        <div class="signature">
+            <span>操作者：____________</span>
+            <span>领班：______________</span>
+            <span>工程主任：_______________</span>
+        </div>
+    </div>
+</body>
+</html>

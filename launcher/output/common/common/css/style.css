@@ -1,0 +1,388 @@
+/* 基本样式 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Microsoft YaHei', 'PingFang SC', 'SimHei', Arial, sans-serif;
+    background-color: #f5f5f5;
+    color: #333;
+    line-height: 1.6;
+}
+
+/* 容器 */
+.container {
+    max-width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 头部 */
+header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    text-align: center;
+}
+
+header h1 {
+    font-size: 20px;
+    font-weight: 600;
+}
+
+header .subtitle {
+    font-size: 12px;
+    opacity: 0.9;
+    margin-top: 5px;
+}
+
+/* 主内容区 */
+main {
+    flex: 1;
+    padding: 15px;
+}
+
+/* 区块 */
+.section {
+    background: white;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.section h2 {
+    font-size: 16px;
+    color: #333;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+/* 分类网格（主菜单 - 5个分类卡片） */
+.category-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.category-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px 15px;
+    border-radius: 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.category-card:active {
+    transform: scale(0.98);
+}
+
+.category-icon {
+    font-size: 32px;
+    margin-bottom: 8px;
+}
+
+.category-name {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* 项目列表（分类页） */
+.item-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.item-card {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.item-card:active {
+    background: #f0f0f0;
+}
+
+.item-icon {
+    font-size: 24px;
+    margin-right: 12px;
+}
+
+.item-name {
+    font-size: 14px;
+    color: #333;
+}
+
+/* 返回按钮 */
+.btn-back {
+    background: transparent;
+    border: none;
+    color: #667eea;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 5px 0;
+    margin-bottom: 10px;
+}
+
+/* 模块头部 */
+.module-header {
+    background: white;
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.module-title {
+    font-size: 18px;
+    color: #333;
+    text-align: center;
+}
+
+/* 模块主内容 */
+.module-main {
+    padding: 15px;
+}
+
+/* 表单 */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+}
+
+.form-row {
+    display: flex;
+    gap: 10px;
+}
+
+.form-row .form-group {
+    flex: 1;
+}
+
+/* 按钮 */
+.btn {
+    display: inline-block;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.3s;
+    font-family: inherit;
+}
+
+.btn-primary {
+    background: #667eea;
+    color: white;
+}
+
+.btn-primary:active {
+    background: #5568d6;
+}
+
+.btn-secondary {
+    background: #f0f0f0;
+    color: #333;
+}
+
+.btn-success {
+    background: #52c41a;
+    color: white;
+}
+
+.btn-success:active {
+    background: #3d9e15;
+}
+
+.btn-outline {
+    background: transparent;
+    border: 1px solid #ddd;
+    color: #666;
+}
+
+.btn-outline:active {
+    background: #f0f0f0;
+}
+
+.btn-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+/* 记录表格 */
+.records-table {
+    margin-bottom: 10px;
+    overflow-x: auto;
+}
+
+.table-header {
+    display: flex;
+    background: #f5f5f5;
+    padding: 8px 5px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #666;
+    min-width: 280px;
+}
+
+.table-header span {
+    flex: 1;
+    text-align: center;
+}
+
+.record-row {
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+    min-width: 280px;
+}
+
+.row-num {
+    flex: 0.5;
+    text-align: center;
+    color: #999;
+}
+
+.voltage-input {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 14px;
+}
+
+.btn-photo {
+    flex: 1;
+    padding: 8px;
+    background: #1890ff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.btn-photo:active {
+    background: #096dd9;
+}
+
+/* 记录项（列表） */
+.record-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-bottom: 10px;
+    transition: background 0.2s;
+}
+
+.record-item:active {
+    background: #f0f0f0;
+}
+
+.record-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.record-location {
+    font-size: 14px;
+    color: #333;
+}
+
+.record-date {
+    font-size: 12px;
+    color: #999;
+    margin-top: 4px;
+}
+
+.record-meta {
+    font-size: 12px;
+    color: #667eea;
+}
+
+/* 预览区 */
+#pdf-container {
+    min-height: 200px;
+    padding: 10px;
+    background: #f5f5f5;
+    border-radius: 6px;
+    overflow-x: auto;
+}
+
+#pdf-container iframe {
+    width: 100%;
+    height: 500px;
+    border: none;
+    border-radius: 6px;
+}
+
+/* 隐藏 */
+.hidden {
+    display: none !important;
+}
+
+/* 页脚 */
+footer {
+    text-align: center;
+    padding: 15px;
+    color: #999;
+    font-size: 12px;
+}
+
+/* 空提示 */
+.empty-tip {
+    text-align: center;
+    color: #999;
+    padding: 30px;
+    font-size: 14px;
+}
+
+/* 错误提示 */
+.error {
+    color: #f5222d;
+    padding: 10px;
+    background: #fff1f0;
+    border-radius: 4px;
+}
+
+/* 成功提示 */
+.success {
+    color: #52c41a;
+    padding: 10px;
+    background: #f6ffed;
+    border-radius: 4px;
+    margin-top: 10px;
+}

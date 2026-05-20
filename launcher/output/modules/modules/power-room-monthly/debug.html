@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>jsPDF Debug</title>
+    <script src="../../common/js/jspdf.min.js"></script>
+</head>
+<body>
+    <h1>jsPDF Debug Test</h1>
+    <pre id="output"></pre>
+    <script>
+        var output = document.getElementById('output');
+        var lines = [];
+        
+        function log(msg) {
+            lines.push(msg);
+            output.textContent = lines.join('\n');
+            console.log(msg);
+        }
+        
+        log('1. Checking jsPDF...');
+        log('   typeof jsPDF: ' + typeof jsPDF);
+        log('   typeof window.jsPDF: ' + typeof window.jsPDF);
+        log('   typeof self.jsPDF: ' + typeof self.jsPDF);
+        
+        var PdfConstructor = typeof jsPDF !== 'undefined' ? jsPDF : (window.jsPDF || self.jsPDF);
+        
+        if (typeof PdfConstructor === 'function') {
+            log('2. jsPDF is loaded, creating document...');
+            try {
+                var doc = new PdfConstructor();
+                log('3. jsPDF instance created successfully');
+                doc.text('Test', 10, 10);
+                log('4. Text added to PDF');
+                doc.save('test.pdf');
+                log('5. PDF saved!');
+            } catch(e) {
+                log('ERROR: ' + e.message);
+            }
+        } else {
+            log('ERROR: jsPDF not loaded');
+        }
+    </script>
+</body>
+</html>

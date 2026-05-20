@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>物业维保管理系统</title>
+    <link rel="stylesheet" href="common/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header id="mainHeader">
+            <h1>🏠 物业维保管理系统</h1>
+            <p class="subtitle">让维保工作更高效</p>
+        </header>
+
+        <main id="app">
+            <!-- 主菜单页（5个分类卡片） -->
+            <section id="main-menu" class="section">
+                <h2>📋 维保模块</h2>
+                <div class="category-grid">
+                    <!-- 动态生成分类卡片 -->
+                </div>
+            </section>
+
+            <!-- 分类页（该分类下的项目列表） -->
+            <section id="category-page" class="section hidden">
+                <button class="btn-back" onclick="app.backToMain()">← 返回主页</button>
+                <h2 id="category-title">分类名称</h2>
+                <div class="item-list">
+                    <!-- 动态生成项目卡片 -->
+                </div>
+            </section>
+
+            <!-- 模块容器（iframe加载模块页面） -->
+            <section id="module-container" class="section hidden">
+                <iframe id="module-iframe" style="display:none; width:100%; height:calc(100vh - 120px); border:none; border-radius:8px;"></iframe>
+            </section>
+        </main>
+
+        <footer>
+            <p>© 2026 物业维保管理系统</p>
+        </footer>
+    </div>
+
+    <script src="common/js/app.js"></script>
+</body>
+</html>
