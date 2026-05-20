@@ -218,7 +218,6 @@
         var draggedSet = {};            // 记录本次拖动中已处理过的 key，避免重复
         var dragStartX = 0, dragStartY = 0; // 记录拖动起始坐标
         var dragMoved = false;          // 是否真的发生了移动（区分点击和拖动）
-        var pendingClick = false;        // onDragEnd已当作单击处理，click handler应跳过
         var mouseDown = false;           // 鼠标是否已按下（防止mousemove在按下前误触发）
 
         document.getElementById('btnBack').onclick = goBack;
@@ -381,7 +380,6 @@
             // Load existing dates for this module in new format (date_region)
             var plans = getTaskPlans(moduleId);
             selectedDates = plans.map(function(p) { return p.date + '_' + p.region; });
-            pendingClick = false;
             mouseDown = false;
             var m = null;
             for (var i = 0; i < MODS.length; i++) { if (MODS[i].id === moduleId) { m = MODS[i]; break; } }
@@ -459,20 +457,37 @@
         function removeAssignDate(key) { var idx = selectedDates.indexOf(key); if (idx > -1) selectedDates.splice(idx, 1); renderAssignCal(); }
 
         // ---------- 拖动多选 ----------
+        var _dragSuppressed = false; // true=阻止下一次click
+
         function initDragSelect() {
             var grid = document.getElementById('assignCalDays');
             if (grid.dataset.dragInit) return;
             grid.dataset.dragInit = '1';
 
-            grid.addEventListener('mousedown', onDragStart);
+            grid.addEventListener('mousedown', function(e) {
+                _dragSuppressed = false;
+                onDragStart(e);
+            });
             grid.addEventListener('mousemove', onDragMove);
-            document.addEventListener('mouseup', onDragEnd);
-            grid.addEventListener('touchstart', onDragStart, { passive: false });
+            document.addEventListener('mouseup', function(e) {
+                _dragSuppressed = true; // 阻止紧接着的click
+                onDragEnd(e);
+                // 延迟后重置，允许真正的click通过
+                setTimeout(function() { _dragSuppressed = false; }, 50);
+            });
+            grid.addEventListener('touchstart', function(e) {
+                _dragSuppressed = false;
+                onDragStart(e);
+            }, { passive: false });
             grid.addEventListener('touchmove', onDragMove, { passive: false });
-            grid.addEventListener('touchend', onDragEnd);
+            grid.addEventListener('touchend', function(e) {
+                _dragSuppressed = true; // 阻止紧接着的click
+                onDragEnd(e);
+                setTimeout(function() { _dragSuppressed = false; }, 50);
+            });
             // 单击：切换选中/取消
             grid.addEventListener('click', function(e) {
-                if (pendingClick) { pendingClick = false; return; }
+                if (_dragSuppressed) return;
                 var el = e.target.closest('.assign-day-left, .assign-day-right');
                 if (!el || !el.dataset.ds || !el.dataset.region) return;
                 toggleAssignDate(el.dataset.ds, el.dataset.region);
@@ -494,7 +509,6 @@
         }
 
         function onDragStart(e) {
-            pendingClick = false; // 重置，避免上次误触阻塞本次点击
             var el = getElFromEvent(e);
             if (el) el = el.closest('.assign-day-left, .assign-day-right');
             if (!el) return;
@@ -542,21 +556,17 @@
 
         function onDragEnd(e) {
             if (isDragging) {
-                // 拖动选择结束，阻止后续click触发toggleAssignDate
-                pendingClick = true;
                 isDragging = false;
                 dragRegion = null;
                 draggedSet = {};
             } else if (dragMoved) {
                 // 移动了但没超过阈值，当作点击处理
-                pendingClick = true;
                 var el = getElFromEvent(e);
                 if (el) el = el.closest('.assign-day-left, .assign-day-right');
                 if (el && el.dataset.ds && el.dataset.region) {
                     toggleAssignDate(el.dataset.ds, el.dataset.region);
                 }
             }
-            // else: 真正的点击，什么都不做（click事件会处理）
             mouseDown = false;
             dragMoved = false;
         }
