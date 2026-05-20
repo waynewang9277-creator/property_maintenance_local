@@ -374,7 +374,6 @@
         }
 
         function openAssignModal(moduleId) {
-            window.alert('openAssignModal: ' + moduleId);
             assignModuleId = moduleId;
             assignYear = calYear;
             assignMonth = calMonth;
@@ -457,131 +456,20 @@
 
         function removeAssignDate(key) { var idx = selectedDates.indexOf(key); if (idx > -1) selectedDates.splice(idx, 1); renderAssignCal(); }
 
-        // ---------- 拖动多选 ----------
-        var _dragSuppressed = false; // true=阻止下一次click
-
+        // ---------- 任务分配弹窗日历（简化版：仅点击选中） ----------
         function initDragSelect() {
-            console.log('[initDragSelect]');
             var grid = document.getElementById('assignCalDays');
-            if (!grid) { console.error('[initDragSelect] assignCalDays not found!'); return; }
-            if (grid.dataset.dragInit) { console.log('[initDragSelect] already inited'); return; }
+            if (!grid) return;
+            if (grid.dataset.dragInit) return;
             grid.dataset.dragInit = '1';
 
-            // 使用 Pointer Events API（统一处理 mouse/touch/pen）
-            grid.addEventListener('pointerdown', function(e) {
-                e.preventDefault(); // 阻止默认行为，包括 mouse 和 touch
-                _dragSuppressed = false;
-                onPointerDragStart(e);
-            }, { passive: false });
-
-            grid.addEventListener('pointermove', function(e) {
-                e.preventDefault();
-                onPointerDragMove(e);
-            }, { passive: false });
-
-            grid.addEventListener('pointerup', function(e) {
-                _dragSuppressed = true;
-                onPointerDragEnd(e);
-                setTimeout(function() { _dragSuppressed = false; }, 50);
-            });
-
-            grid.addEventListener('pointercancel', function(e) {
-                console.log('[pointercancel]');
-                _dragSuppressed = true;
-                mouseDown = false;
-                isDragging = false;
-                dragMoved = false;
-                setTimeout(function() { _dragSuppressed = false; }, 50);
-            });
-
-            // 单击：切换选中/取消
             grid.addEventListener('click', function(e) {
-                if (_dragSuppressed) { console.log('[click] suppressed'); return; }
                 var el = e.target.closest('.assign-day-left, .assign-day-right');
-                if (!el || !el.dataset.ds || !el.dataset.region) { return; }
+                if (!el || !el.dataset.ds || !el.dataset.region) return;
                 toggleAssignDate(el.dataset.ds, el.dataset.region);
             });
         }
-
-        function getElFromPoint(x, y) {
-            return document.elementFromPoint(x, y);
-        }
-
-        function onPointerDragStart(e) {
-            var el = getElFromPoint(e.clientX, e.clientY);
-            if (el) el = el.closest('.assign-day-left, .assign-day-right');
-            if (!el) { console.log('[onPointerDragStart] no el'); return; }
-            mouseDown = true;
-            dragStartX = e.clientX;
-            dragStartY = e.clientY;
-            isDragging = false;
-            dragMoved = false;
-            dragRegion = el.dataset.region;
-            draggedSet = {};
-            console.log('[onPointerDragStart] region:', dragRegion);
-        }
-
-        function onPointerDragMove(e) {
-            if (!mouseDown) return;
-
-            var el = getElFromPoint(e.clientX, e.clientY);
-            if (el) el = el.closest('.assign-day-left, .assign-day-right');
-            if (!el || !el.dataset.region) return;
-
-            var dx = e.clientX - dragStartX, dy = e.clientY - dragStartY;
-            var dist = Math.sqrt(dx * dx + dy * dy);
-
-            if (!isDragging && dist > 5) {
-                console.log('[onPointerDragMove] ENTER DRAG dist=' + dist.toFixed(1));
-                isDragging = true;
-                dragMoved = true;
-                dragRegion = el.dataset.region;
-                draggedSet = {};
-            }
-
-            if (!isDragging) return;
-
-            var ds = el.dataset.ds;
-            var region = el.dataset.region;
-            if (region !== dragRegion) {
-                draggedSet = {};
-                dragRegion = region;
-            }
-            if (ds) tryDragSelect(ds, region);
-        }
-
-        function onPointerDragEnd(e) {
-            console.log('[onPointerDragEnd] isDragging:', isDragging, 'dragMoved:', dragMoved);
-            if (isDragging) {
-                isDragging = false;
-                dragRegion = null;
-                draggedSet = {};
-            } else if (dragMoved) {
-                console.log('[onPointerDragEnd] short move -> click');
-                var el = getElFromPoint(e.clientX, e.clientY);
-                if (el) el = el.closest('.assign-day-left, .assign-day-right');
-                if (el && el.dataset.ds && el.dataset.region) {
-                    console.log('[onPointerDragEnd] toggle via move:', el.dataset.ds, el.dataset.region);
-                    toggleAssignDate(el.dataset.ds, el.dataset.region);
-                }
-            }
-            mouseDown = false;
-            dragMoved = false;
-        }
-        function tryDragSelect(ds, region) {
-            var key = ds + '_' + region;
-            if (draggedSet[key]) return;
-            draggedSet[key] = true;
-            var idx = selectedDates.indexOf(key);
-            console.log('[tryDragSelect]', ds, region, idx > -1 ? 'deselect' : 'select');
-            if (idx > -1) {
-                selectedDates.splice(idx, 1); // 已选中则取消
-            } else {
-                selectedDates.push(key); // 未选中则添加
-            }
-            renderAssignCal();
-        }
-        // ---------- 拖动多选结束 ----------
+        // ---------- 任务分配弹窗日历结束 ----------
 
         function confirmAssign() {
             // selectedDates are in format 'date_region', split and assign
