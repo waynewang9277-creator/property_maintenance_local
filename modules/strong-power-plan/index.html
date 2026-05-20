@@ -374,6 +374,7 @@
         }
 
         function openAssignModal(moduleId) {
+            window.alert('openAssignModal: ' + moduleId);
             assignModuleId = moduleId;
             assignYear = calYear;
             assignMonth = calMonth;
@@ -460,90 +461,85 @@
         var _dragSuppressed = false; // true=阻止下一次click
 
         function initDragSelect() {
+            console.log('[initDragSelect]');
             var grid = document.getElementById('assignCalDays');
-            if (grid.dataset.dragInit) return;
+            if (!grid) { console.error('[initDragSelect] assignCalDays not found!'); return; }
+            if (grid.dataset.dragInit) { console.log('[initDragSelect] already inited'); return; }
             grid.dataset.dragInit = '1';
 
-            grid.addEventListener('mousedown', function(e) {
+            // 使用 Pointer Events API（统一处理 mouse/touch/pen）
+            grid.addEventListener('pointerdown', function(e) {
+                e.preventDefault(); // 阻止默认行为，包括 mouse 和 touch
                 _dragSuppressed = false;
-                onDragStart(e);
-            });
-            grid.addEventListener('mousemove', onDragMove);
-            document.addEventListener('mouseup', function(e) {
-                _dragSuppressed = true; // 阻止紧接着的click
-                onDragEnd(e);
-                // 延迟后重置，允许真正的click通过
-                setTimeout(function() { _dragSuppressed = false; }, 50);
-            });
-            grid.addEventListener('touchstart', function(e) {
-                _dragSuppressed = false;
-                onDragStart(e);
+                onPointerDragStart(e);
             }, { passive: false });
-            grid.addEventListener('touchmove', onDragMove, { passive: false });
-            grid.addEventListener('touchend', function(e) {
-                _dragSuppressed = true; // 阻止紧接着的click
-                onDragEnd(e);
+
+            grid.addEventListener('pointermove', function(e) {
+                e.preventDefault();
+                onPointerDragMove(e);
+            }, { passive: false });
+
+            grid.addEventListener('pointerup', function(e) {
+                _dragSuppressed = true;
+                onPointerDragEnd(e);
                 setTimeout(function() { _dragSuppressed = false; }, 50);
             });
+
+            grid.addEventListener('pointercancel', function(e) {
+                console.log('[pointercancel]');
+                _dragSuppressed = true;
+                mouseDown = false;
+                isDragging = false;
+                dragMoved = false;
+                setTimeout(function() { _dragSuppressed = false; }, 50);
+            });
+
             // 单击：切换选中/取消
             grid.addEventListener('click', function(e) {
-                if (_dragSuppressed) return;
+                if (_dragSuppressed) { console.log('[click] suppressed'); return; }
                 var el = e.target.closest('.assign-day-left, .assign-day-right');
-                if (!el || !el.dataset.ds || !el.dataset.region) return;
+                if (!el || !el.dataset.ds || !el.dataset.region) { return; }
                 toggleAssignDate(el.dataset.ds, el.dataset.region);
             });
         }
 
-        function getElFromEvent(e) {
-            if (e.touches && e.touches.length > 0) {
-                return document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY);
-            }
-            return e.target;
+        function getElFromPoint(x, y) {
+            return document.elementFromPoint(x, y);
         }
 
-        function getTouchPos(e) {
-            if (e.touches && e.touches.length > 0) {
-                return { x: e.touches[0].clientX, y: e.touches[0].clientY };
-            }
-            return { x: e.clientX, y: e.clientY };
-        }
-
-        function onDragStart(e) {
-            var el = getElFromEvent(e);
+        function onPointerDragStart(e) {
+            var el = getElFromPoint(e.clientX, e.clientY);
             if (el) el = el.closest('.assign-day-left, .assign-day-right');
-            if (!el) return;
-            e.preventDefault();
+            if (!el) { console.log('[onPointerDragStart] no el'); return; }
             mouseDown = true;
-            var pos = getTouchPos(e);
-            dragStartX = pos.x;
-            dragStartY = pos.y;
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
             isDragging = false;
             dragMoved = false;
             dragRegion = el.dataset.region;
             draggedSet = {};
+            console.log('[onPointerDragStart] region:', dragRegion);
         }
 
-        function onDragMove(e) {
-            if (!mouseDown) return; // 没有按下鼠标，不处理
+        function onPointerDragMove(e) {
+            if (!mouseDown) return;
 
-            var el = getElFromEvent(e);
+            var el = getElFromPoint(e.clientX, e.clientY);
             if (el) el = el.closest('.assign-day-left, .assign-day-right');
             if (!el || !el.dataset.region) return;
-            e.preventDefault();
 
-            var pos = getTouchPos(e);
-            var dx = pos.x - dragStartX, dy = pos.y - dragStartY;
+            var dx = e.clientX - dragStartX, dy = e.clientY - dragStartY;
             var dist = Math.sqrt(dx * dx + dy * dy);
 
             if (!isDragging && dist > 5) {
-                // 首次超过阈值，进入拖动模式
+                console.log('[onPointerDragMove] ENTER DRAG dist=' + dist.toFixed(1));
                 isDragging = true;
                 dragMoved = true;
                 dragRegion = el.dataset.region;
                 draggedSet = {};
             }
 
-            if (!isDragging) return; // 没进入拖动模式，不处理格子
+            if (!isDragging) return;
 
             var ds = el.dataset.ds;
             var region = el.dataset.region;
@@ -554,16 +550,18 @@
             if (ds) tryDragSelect(ds, region);
         }
 
-        function onDragEnd(e) {
+        function onPointerDragEnd(e) {
+            console.log('[onPointerDragEnd] isDragging:', isDragging, 'dragMoved:', dragMoved);
             if (isDragging) {
                 isDragging = false;
                 dragRegion = null;
                 draggedSet = {};
             } else if (dragMoved) {
-                // 移动了但没超过阈值，当作点击处理
-                var el = getElFromEvent(e);
+                console.log('[onPointerDragEnd] short move -> click');
+                var el = getElFromPoint(e.clientX, e.clientY);
                 if (el) el = el.closest('.assign-day-left, .assign-day-right');
                 if (el && el.dataset.ds && el.dataset.region) {
+                    console.log('[onPointerDragEnd] toggle via move:', el.dataset.ds, el.dataset.region);
                     toggleAssignDate(el.dataset.ds, el.dataset.region);
                 }
             }
@@ -575,6 +573,7 @@
             if (draggedSet[key]) return;
             draggedSet[key] = true;
             var idx = selectedDates.indexOf(key);
+            console.log('[tryDragSelect]', ds, region, idx > -1 ? 'deselect' : 'select');
             if (idx > -1) {
                 selectedDates.splice(idx, 1); // 已选中则取消
             } else {
