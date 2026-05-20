@@ -494,6 +494,7 @@
         }
 
         function onDragStart(e) {
+            pendingClick = false; // 重置，避免上次误触阻塞本次点击
             var el = getElFromEvent(e);
             if (el) el = el.closest('.assign-day-left, .assign-day-right');
             if (!el) return;
@@ -541,6 +542,8 @@
 
         function onDragEnd(e) {
             if (isDragging) {
+                // 拖动选择结束，阻止后续click触发toggleAssignDate
+                pendingClick = true;
                 isDragging = false;
                 dragRegion = null;
                 draggedSet = {};
