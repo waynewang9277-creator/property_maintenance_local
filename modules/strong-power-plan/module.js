@@ -3,8 +3,8 @@
 
 var StrongPowerPlanModule = {
     STORAGE_KEY: 'plan_strong_power',
-    TEMPLATE_URL: '../../assets/templates/维保计划-强电-modified.xlsx',
-    
+    TEMPLATE_URL: '../../templates/维保计划-强电-modified.xlsx',
+
     // 维保项目列表（共16项）
     ITEMS: [
         { id: 1,  name: '应急装置电池放电时间测试', code: 'SHKS-RO-2579', freq: '每季度一次' },
@@ -35,7 +35,7 @@ var StrongPowerPlanModule = {
     // items[itemId].office: [days planned for office]
     // items[itemId].mall: [days planned for mall]
     // items[itemId].exec: { office: [days executed], mall: [days executed] }
-    
+
     data: {},
 
     init: function() {
@@ -75,21 +75,21 @@ var StrongPowerPlanModule = {
                 exec: { office: [], mall: [] }
             };
         }
-        
+
         // 从localStorage读取每天的数据
         for (var d = 1; d <= daysInMonth; d++) {
             var dateStr = yearMonth + '-' + String(d).padStart(2, '0');
             var dayData = this.data[dateStr];
             if (!dayData) continue;
-            
+
             for (var i = 0; i < dayData.length; i++) {
                 var entry = dayData[i];
                 var itemId = parseInt(entry.moduleId.replace('item-', ''));
                 if (!result[itemId]) continue;
-                
+
                 var region = entry.region; // 'office' or 'mall'
                 var checked = entry.checked;
-                
+
                 if (region === 'office') {
                     if (checked) {
                         result[itemId].exec.office.push(d);
@@ -105,7 +105,7 @@ var StrongPowerPlanModule = {
                 }
             }
         }
-        
+
         return result;
     },
 
@@ -123,15 +123,21 @@ var StrongPowerPlanModule = {
         var parser = new DOMParser();
         var NS = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
 
-        fetch(this.TEMPLATE_URL)
-            .then(function(res) { return res.arrayBuffer(); })
-            .then(function(buf) { return JSZip.loadAsync(buf); })
-            .then(function(zip) {
+        // Android WebView 不支持 fetch(file://)，改用 XMLHttpRequest
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', this.TEMPLATE_URL, true);
+        xhr.responseType = 'arraybuffer';
+        xhr.onload = function() {
+            if (xhr.status !== 200) {
+                alert('模板加载失败: ' + xhr.status);
+                return;
+            }
+            var buf = xhr.response;
+            JSZip.loadAsync(buf).then(function(zip) {
                 return zip.file('xl/worksheets/sheet1.xml').async('string').then(function(xml) {
                     return { zip: zip, sheetXml: xml };
                 });
-            })
-            .then(function(data) {
+            }).then(function(data) {
                 var zip = data.zip;
                 var sheetXml = data.sheetXml;
                 var doc = parser.parseFromString(sheetXml, 'text/xml');
@@ -145,38 +151,24 @@ var StrongPowerPlanModule = {
                 self.setCellValue(doc, 'AE2', String(month));
 
                 // 填充每天的单元格
-                // 日期列规律：E=day1_col1, F=day1_col2, G=day2_col1, H=day2_col2...
-                // 对于每个日期(day 1-31)，列对(col1, col2):
-                //   col1 (奇数列) = 办公楼
-                //   col2 (偶数列) = 商场
-                // 行规律：每项2行，计划行(奇数行如6,8,10...)，执行行(偶数如7,9,11...)
-                // itemId=1 -> 计划行6, 执行行7
-                // itemId=2 -> 计划行8, 执行行9
-                // ...
-                // itemId=n -> 计划行=5+n*2, 执行行=6+n*2
-
                 for (var itemId = 1; itemId <= 16; itemId++) {
-                    var planRow = 4 + itemId * 2;   // e.g. item1=6, item2=8...
-                    var execRow = planRow + 1;         // e.g. item1=7, item2=9...
+                    var planRow = 4 + itemId * 2;
+                    var execRow = planRow + 1;
                     var itemPlan = monthData[itemId];
 
-                    // 日期列填充 (day 1-31)
                     for (var day = 1; day <= 31; day++) {
-                        var col1 = self.dayCol(day, 1); // 奇数列 -> 办公楼
-                        var col2 = self.dayCol(day, 2); // 偶数列 -> 商场
-                        
+                        var col1 = self.dayCol(day, 1);
+                        var col2 = self.dayCol(day, 2);
+
                         // --- 计划行 ---
                         var hasOfficePlan = itemPlan.office.indexOf(day) >= 0;
                         var hasMallPlan = itemPlan.mall.indexOf(day) >= 0;
 
                         if (hasOfficePlan) {
-                            var cellRef = col1 + planRow;
-                            // 调试：写入 day 和 itemId 作为单元格值（临时调试用）
-                            self.setCellValueAndStyle(doc, cellRef, '', self.STYLE_BLACK);
+                            self.setCellValueAndStyle(doc, col1 + planRow, '', self.STYLE_BLACK);
                         }
                         if (hasMallPlan) {
-                            var cellRef = col2 + planRow;
-                            self.setCellValueAndStyle(doc, cellRef, '', self.STYLE_DARK_BLUE);
+                            self.setCellValueAndStyle(doc, col2 + planRow, '', self.STYLE_DARK_BLUE);
                         }
 
                         // --- 执行行 ---
@@ -184,12 +176,10 @@ var StrongPowerPlanModule = {
                         var hasMallExec = itemPlan.exec.mall.indexOf(day) >= 0;
 
                         if (hasOfficeExec) {
-                            var cellRef = col1 + execRow;
-                            self.setCellValueAndStyle(doc, cellRef, '', self.STYLE_DARK_GREEN);
+                            self.setCellValueAndStyle(doc, col1 + execRow, '', self.STYLE_DARK_GREEN);
                         }
                         if (hasMallExec) {
-                            var cellRef = col2 + execRow;
-                            self.setCellValueAndStyle(doc, cellRef, '', self.STYLE_DARK_GREEN);
+                            self.setCellValueAndStyle(doc, col2 + execRow, '', self.STYLE_DARK_GREEN);
                         }
                     }
                 }
@@ -197,34 +187,47 @@ var StrongPowerPlanModule = {
                 // 序列化修改后的XML
                 var serializer = new XMLSerializer();
                 var modifiedSheet = serializer.serializeToString(doc);
-                
+
                 zip.file('xl/worksheets/sheet1.xml', modifiedSheet);
 
                 return zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
-            })
-            .then(function(blob) {
-                var url = URL.createObjectURL(blob);
-                var link = document.createElement('a');
-                link.download = '强电维保计划_' + year + '年' + month + '月.xlsx';
-                link.href = url;
-                link.click();
-                alert('导出成功！');
-            })
-            .catch(function(e) {
-                console.error('Export error:', e);
+            }).then(function(blob) {
+                // 转换为 base64 通过 Android 桥接保存到 Downloads
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var base64 = e.target.result;
+                    var fileName = '强电维保计划_' + year + '年' + month + '月.xlsx';
+                    if (window.androidBridge && window.androidBridge.shareFile) {
+                        window.androidBridge.saveFile(base64, fileName);
+                        window.androidBridge.shareFile(base64, fileName, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+                    } else {
+                        // 降级：浏览器直接下载
+                        var url = URL.createObjectURL(blob);
+                        var link = document.createElement('a');
+                        link.download = fileName;
+                        link.href = url;
+                        link.click();
+                    }
+                    alert('导出成功！');
+                };
+                reader.readAsDataURL(blob);
+            }).catch(function(e) {
                 alert('导出失败: ' + e.message);
             });
+        };
+        xhr.onerror = function() {
+            alert('模板加载失败，请检查网络或文件路径');
+        };
+        xhr.send();
     },
 
     // 根据日期计算列字母 (day 1-31, colType 1=办公楼/奇数列, 2=商场/偶数列)
-    // day1=E(5), F(6); day2=G(7), H(8); day3=I(9), J(10)...
-    // 规律: day_n col1 = column(5 + (n-1)*2), col2 = column(6 + (n-1)*2)
     dayCol: function(day, colType) {
         var colIndex;
         if (colType === 1) {
-            colIndex = 5 + (day - 1) * 2;       // 奇数列
+            colIndex = 5 + (day - 1) * 2;
         } else {
-            colIndex = 6 + (day - 1) * 2;       // 偶数列
+            colIndex = 6 + (day - 1) * 2;
         }
         return this.colIndexToLetter(colIndex);
     },
@@ -247,12 +250,9 @@ var StrongPowerPlanModule = {
             console.warn('Cell not found:', cellRef);
             return;
         }
-        // Remove type attribute if present (we're setting plain string/number)
         cell.removeAttribute('t');
-        // Remove existing v
         var existingV = cell.querySelector('v');
         if (existingV) cell.removeChild(existingV);
-        // Add new v
         var v = doc.createElementNS('http://schemas.openxmlformats.org/spreadsheetml/2006/main', 'v');
         v.textContent = value;
         cell.appendChild(v);
@@ -265,7 +265,6 @@ var StrongPowerPlanModule = {
             console.warn('Cell not found:', cellRef);
             return;
         }
-        // Change style
         cell.setAttribute('s', String(styleIndex));
         cell.removeAttribute('t');
         var existingV = cell.querySelector('v');
