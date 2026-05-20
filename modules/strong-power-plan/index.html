@@ -37,8 +37,9 @@
         .day.empty { cursor: default; }
         .day-num { font-size: 14px; font-weight: bold; margin-bottom: 2px; }
         .day-tasks { width: 100%; display: flex; flex-direction: column; gap: 1px; align-items: center; overflow: hidden; }
-        .day-task { width: 100%; font-size: 10px; padding: 1px 2px; border-radius: 3px; text-align: center; color: #fff; overflow-x: auto; white-space: nowrap; scrollbar-width: none; -ms-overflow-style: none; display: flex; align-items: center; justify-content: center; }
-        .day-task::-webkit-scrollbar { display: none; }
+        .day-task { width: 100%; font-size: 10px; padding: 1px 2px; border-radius: 3px; text-align: center; color: #fff; overflow: hidden; white-space: nowrap; }
+        .day-task span { display: inline-block; padding-left: 100%; animation: marquee 4s linear infinite; }
+        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
         .day-task.office { border-left: 2px solid #000; }
         .day-task.mall { border-left: 2px solid #1F497D; }
         .day-task.exec { opacity: 0.6; }
@@ -313,7 +314,7 @@
                     var color = taskColors[mIdx % taskColors.length];
                     var regionClass = p.region === 'mall' ? 'mall' : 'office';
                     var execClass = p.checked ? ' exec' : '';
-                    tasksHtml += '<div class="day-task ' + regionClass + execClass + '" style="background:' + color + ';">' + m.icon + ' ' + m.name + '</div>';
+                    tasksHtml += '<div class="day-task ' + regionClass + execClass + '" style="background:' + color + ';"><span>' + m.icon + ' ' + m.name + '</span></div>';
                 }
                 html += '<div class="' + cls + '" onclick="selectDate(\'' + ds + '\')">' +
                     '<div class="day-num">' + d + '</div>' +
