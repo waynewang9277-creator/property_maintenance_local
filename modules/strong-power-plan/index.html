@@ -456,18 +456,99 @@
 
         function removeAssignDate(key) { var idx = selectedDates.indexOf(key); if (idx > -1) selectedDates.splice(idx, 1); renderAssignCal(); }
 
-        // ---------- 任务分配弹窗日历（简化版：仅点击选中） ----------
+        // ---------- 任务分配弹窗日历 ----------
+        var _dragSuppressed = false;
+        var _pointerDown = false;
+        var _pointerStartX = 0, _pointerStartY = 0;
+        var _isDragging = false;
+        var _dragMoved = false;
+        var _dragRegion = '';
+        var _draggedSet = {};
+
         function initDragSelect() {
             var grid = document.getElementById('assignCalDays');
             if (!grid) return;
             if (grid.dataset.dragInit) return;
             grid.dataset.dragInit = '1';
 
+            // 滑动多选：pointerdown/move/up
+            grid.addEventListener('pointerdown', function(e) {
+                _dragSuppressed = false;
+                _pointerDown = true;
+                _pointerStartX = e.clientX;
+                _pointerStartY = e.clientY;
+                _isDragging = false;
+                _dragMoved = false;
+                var el = getElFromPoint2(e.clientX, e.clientY);
+                if (el) el = el.closest('.assign-day-left, .assign-day-right');
+                if (el) _dragRegion = el.dataset.region;
+                _draggedSet = {};
+            }, { passive: true });
+
+            grid.addEventListener('pointermove', function(e) {
+                if (!_pointerDown) return;
+                var dx = e.clientX - _pointerStartX, dy = e.clientY - _pointerStartY;
+                var dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (!_isDragging && dist > 8) {
+                    _isDragging = true;
+                    _dragMoved = true;
+                    _draggedSet = {};
+                }
+
+                if (!_isDragging) return;
+
+                var el = getElFromPoint2(e.clientX, e.clientY);
+                if (el) el = el.closest('.assign-day-left, .assign-day-right');
+                if (!el || !el.dataset.ds || !el.dataset.region) return;
+
+                if (el.dataset.region !== _dragRegion) {
+                    _draggedSet = {};
+                    _dragRegion = el.dataset.region;
+                }
+                tryDragSelect2(el.dataset.ds, el.dataset.region);
+            }, { passive: true });
+
+            grid.addEventListener('pointerup', function(e) {
+                _dragSuppressed = _isDragging || _dragMoved;
+                _pointerDown = false;
+                _isDragging = false;
+                _dragMoved = false;
+                _dragRegion = '';
+                _draggedSet = {};
+                setTimeout(function() { _dragSuppressed = false; }, 60);
+            });
+
+            grid.addEventListener('pointercancel', function(e) {
+                _pointerDown = false;
+                _isDragging = false;
+                _dragMoved = false;
+            });
+
+            // 点击选中/取消
             grid.addEventListener('click', function(e) {
+                if (_dragSuppressed) return;
                 var el = e.target.closest('.assign-day-left, .assign-day-right');
                 if (!el || !el.dataset.ds || !el.dataset.region) return;
                 toggleAssignDate(el.dataset.ds, el.dataset.region);
             });
+        }
+
+        function getElFromPoint2(x, y) {
+            return document.elementFromPoint(x, y);
+        }
+
+        function tryDragSelect2(ds, region) {
+            var key = ds + '_' + region;
+            if (_draggedSet[key]) return;
+            _draggedSet[key] = true;
+            var idx = selectedDates.indexOf(key);
+            if (idx > -1) {
+                selectedDates.splice(idx, 1);
+            } else {
+                selectedDates.push(key);
+            }
+            renderAssignCal();
         }
         // ---------- 任务分配弹窗日历结束 ----------
 
