@@ -16,6 +16,7 @@ const app = {
             icon: '⚡',
             topId: 'weibao',  // 属于维保一级分类
             items: [
+                { id: 'strong-power-plan', name: '强电维保计划', icon: '📅' },
                 { id: 'battery-test', name: '应急装置电池放电测试', icon: '🔋' },
                 { id: 'generator', name: '发电机组维护性运转记录', icon: '⚙️' },
                 { id: 'ats', name: 'ATS维护保养记录', icon: '🔌' },
@@ -23,8 +24,7 @@ const app = {
                 { id: 'busbar-check', name: '供电母排检查及测温', icon: '⚡' },
                 { id: 'power-room-monthly', name: '强电间月度巡检', icon: '📋' },
                 { id: 'elevator-escape', name: '电梯逃生门检查', icon: '🚪' },
-                { id: 'elevator-handrail-fault', name: '电梯扶手梯故障报告', icon: '🛗' },
-                { id: 'strong-power-plan', name: '强电维保计划', icon: '📅' }
+                { id: 'elevator-handrail-fault', name: '电梯扶手梯故障报告', icon: '🛗' }
             ]
         },
         {

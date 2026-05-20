@@ -16,6 +16,7 @@ const app = {
             icon: '⚡',
             topId: 'weibao',  // 属于维保一级分类
             items: [
+                { id: 'strong-power-plan', name: '强电维保计划', icon: '📅' },
                 { id: 'battery-test', name: '应急装置电池放电测试', icon: '🔋' },
                 { id: 'generator', name: '发电机组维护性运转记录', icon: '⚙️' },
                 { id: 'ats', name: 'ATS维护保养记录', icon: '🔌' },
