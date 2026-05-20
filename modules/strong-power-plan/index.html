@@ -5,108 +5,109 @@
     <title>强电维保计划</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; }
         body { font-family: 'Microsoft YaHei', Arial; background: #f5f5f5; color: #333; }
-        .container { padding: 30px; max-width: 100%; }
-        h1 { text-align: center; font-size: 32px; margin-bottom: 25px; }
-        
-        .back { background: #667eea; color: #fff; border: none; padding: 14px 24px; border-radius: 8px; cursor: pointer; margin-bottom: 25px; font-size: 18px; }
-        
-        .view-tabs { display: flex; gap: 10px; margin-bottom: 25px; }
-        .tab { flex: 1; padding: 18px; text-align: center; background: #fff; border: none; border-radius: 10px; cursor: pointer; font-size: 18px; }
+        .container { padding: 12px; max-width: 100%; }
+        h1 { text-align: center; font-size: 20px; margin-bottom: 10px; }
+
+        .back { background: #667eea; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; margin-bottom: 10px; font-size: 14px; }
+
+        .view-tabs { display: flex; gap: 8px; margin-bottom: 10px; }
+        .tab { flex: 1; padding: 10px; text-align: center; background: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; }
         .tab.active { background: #667eea; color: #fff; }
-        
-        .cal { background: #fff; border-radius: 12px; padding: 25px; margin-bottom: 25px; }
-        .cal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-        .cal-title { font-size: 28px; font-weight: bold; }
-        .cal-nav { display: flex; gap: 12px; }
-        .cal-nav button, .cal-nav .btn-export { background: #667eea; color: #fff; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 16px; }
+
+        .cal { background: #fff; border-radius: 10px; padding: 12px; margin-bottom: 10px; }
+        .cal-head { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 10px; }
+        .cal-title { font-size: 16px; font-weight: bold; min-width: 80px; text-align: center; }
+        .cal-nav { display: flex; gap: 6px; flex-wrap: wrap; }
+        .cal-nav button, .cal-nav .btn-export { background: #667eea; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; }
         .btn-export { background: #52c41a; }
         .cal-nav .btn-export:hover { background: #3a9d0c; }
         .btn-clear { background: #ff4d4f !important; }
         .cal-nav .btn-clear:hover { background: #d93636; }
-        .week { display: flex; background: #f0f0f0; border-radius: 8px; margin-bottom: 10px; }
-        .wd { flex: 1; text-align: center; padding: 14px; font-weight: bold; font-size: 18px; color: #666; }
+        .week { display: flex; background: #f0f0f0; border-radius: 6px; margin-bottom: 6px; }
+        .wd { flex: 1; text-align: center; padding: 6px; font-weight: bold; font-size: 12px; color: #666; }
         .days { display: flex; flex-wrap: wrap; }
-        .day { width: 14.28%; min-height: 80px; display: flex; flex-direction: column; align-items: center; padding: 8px 4px; cursor: pointer; position: relative; border-radius: 8px; }
+        .day { width: 14.28%; min-height: 52px; display: flex; flex-direction: column; align-items: center; padding: 4px 2px; cursor: pointer; position: relative; border-radius: 6px; }
         .day:hover { background: #f0f0f0; }
         .day.today { background: #667eea; color: #fff; }
         .day.today .day-num { color: #fff; }
         .day.selected { background: #52c41a; color: #fff; }
         .day.selected .day-num { color: #fff; }
         .day.empty { cursor: default; }
-        .day-num { font-size: 22px; font-weight: bold; margin-bottom: 4px; }
-        .day-tasks { width: 100%; display: flex; flex-direction: column; gap: 2px; align-items: center; overflow: hidden; }
-        .day-task { width: 100%; font-size: 14px; padding: 3px 6px; border-radius: 4px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #fff; }
-        .day-task.office { border-left: 3px solid #000; }
-        .day-task.mall { border-left: 3px solid #1F497D; }
+        .day-num { font-size: 14px; font-weight: bold; margin-bottom: 2px; }
+        .day-tasks { width: 100%; display: flex; flex-direction: column; gap: 1px; align-items: center; overflow: hidden; }
+        .day-task { width: 100%; font-size: 10px; padding: 1px 2px; border-radius: 3px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #fff; }
+        .day-task.office { border-left: 2px solid #000; }
+        .day-task.mall { border-left: 2px solid #1F497D; }
         .day-task.exec { opacity: 0.6; }
-        
-        .day-plans { background: #fff; border-radius: 12px; padding: 25px; margin-bottom: 25px; }
-        .day-plans-title { font-size: 22px; font-weight: bold; margin-bottom: 15px; padding-bottom: 12px; border-bottom: 1px solid #eee; }
-        .plan-item { display: flex; align-items: center; justify-content: space-between; padding: 15px; background: #f9f9f9; border-radius: 10px; margin-bottom: 12px; }
+
+        .day-plans { background: #fff; border-radius: 10px; padding: 12px; margin-bottom: 10px; }
+        .day-plans-title { font-size: 15px; font-weight: bold; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+        .plan-item { display: flex; align-items: center; justify-content: space-between; padding: 10px; background: #f9f9f9; border-radius: 8px; margin-bottom: 8px; }
         .plan-item.checked { background: #f6ffed; border: 1px solid #b7eb8f; }
-        .plan-info { display: flex; align-items: center; gap: 15px; cursor: pointer; font-size: 22px; }
-        .plan-regions { display: flex; gap: 6px; margin-top: 4px; }
-        .region-tag { padding: 2px 8px; border-radius: 4px; font-size: 12px; color: #fff; }
+        .plan-info { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 16px; flex: 1; min-width: 0; }
+        .plan-regions { display: flex; gap: 4px; margin-top: 2px; }
+        .region-tag { padding: 1px 6px; border-radius: 3px; font-size: 11px; color: #fff; }
         .region-tag.office { background: #000; }
         .region-tag.mall { background: #1F497D; }
         .region-tag.exec { background: #00B050; }
-        .plan-del { background: #ff4d4f; color: #fff; border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 18px; cursor: pointer; }
-        .no-plan { text-align: center; padding: 40px; color: #999; font-size: 18px; }
-        
-        .task-list { background: #fff; border-radius: 8px; padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 50%; margin: 0 auto; box-sizing: border-box; }
-        .task-item { display: flex; align-items: center; padding: 12px; background: #f9f9f9; border-radius: 8px; min-width: 0; gap: 10px; overflow: hidden; }
-        .task-info { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; overflow: hidden; }
-        .task-icon { font-size: 24px; flex-shrink: 0; }
-        .task-name { font-size: 14px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-        .task-count { font-size: 12px; color: #666; margin-top: 2px; }
-        .btn-assign { background: #667eea; color: #fff; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 13px; flex-shrink: 0; white-space: nowrap; }
-        
-        .no-task { text-align: center; padding: 40px; color: #999; }
-        
+        .plan-del { background: #ff4d4f; color: #fff; border: none; border-radius: 50%; width: 26px; height: 26px; font-size: 16px; cursor: pointer; flex-shrink: 0; }
+        .no-plan { text-align: center; padding: 20px; color: #999; font-size: 14px; }
+
+        .task-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; width: 100%; }
+        .task-item { display: flex; flex-direction: column; padding: 10px; background: #fff; border-radius: 8px; gap: 6px; overflow: hidden; }
+        .task-info { display: flex; align-items: center; gap: 8px; min-width: 0; }
+        .task-icon { font-size: 20px; flex-shrink: 0; }
+        .task-name { font-size: 12px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .task-count { font-size: 11px; color: #888; }
+        .btn-assign { background: #667eea; color: #fff; border: none; padding: 6px 10px; border-radius: 5px; cursor: pointer; font-size: 12px; white-space: nowrap; }
+
+        .no-task { text-align: center; padding: 20px; color: #999; }
+
         .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
         .modal.show { display: flex; }
-        .modal-body { background: #fff; border-radius: 16px; padding: 30px; width: 90%; max-height: 85vh; overflow-y: auto; }
-        .modal-title { font-size: 26px; font-weight: bold; text-align: center; margin-bottom: 12px; }
-        .modal-subtitle { text-align: center; color: #666; margin-bottom: 20px; font-size: 18px; }
-        
-        .assign-cal { background: #fff; border-radius: 12px; padding: 25px; margin-bottom: 25px; }
-        .assign-info { text-align: center; margin-bottom: 20px; padding: 15px; background: #e6f7ff; border-radius: 12px; }
-        .assign-info .icon { font-size: 36px; }
-        .assign-info .name { font-size: 22px; font-weight: bold; margin-top: 8px; }
-        .assign-cal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .assign-cal-nav button { background: #667eea; color: #fff; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-size: 16px; }
-        .assign-week { display: flex; background: #f0f0f0; border-radius: 8px; margin-bottom: 6px; }
-        .assign-wd { flex: 1; text-align: center; padding: 10px; font-weight: bold; font-size: 16px; color: #666; }
+        .modal-body { background: #fff; border-radius: 12px; padding: 16px; width: 95%; max-height: 90vh; overflow-y: auto; }
+        .modal-title { font-size: 18px; font-weight: bold; text-align: center; margin-bottom: 8px; }
+        .modal-subtitle { text-align: center; color: #666; margin-bottom: 12px; font-size: 13px; }
+
+        .assign-cal { background: #fff; border-radius: 10px; padding: 12px; margin-bottom: 12px; }
+        .assign-info { text-align: center; margin-bottom: 12px; padding: 10px; background: #e6f7ff; border-radius: 10px; }
+        .assign-info .icon { font-size: 28px; }
+        .assign-info .name { font-size: 16px; font-weight: bold; margin-top: 6px; }
+        .assign-cal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 8px; }
+        .assign-cal-nav button { background: #667eea; color: #fff; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 13px; }
+        .assign-week { display: flex; background: #f0f0f0; border-radius: 6px; margin-bottom: 4px; }
+        .assign-wd { flex: 1; text-align: center; padding: 6px; font-weight: bold; font-size: 12px; color: #666; }
         .assign-days { display: flex; flex-wrap: wrap; }
-        .assign-day { width: 14.28%; height: 55px; display: flex; cursor: pointer; }
+        .assign-day { width: 14.28%; min-height: 48px; display: flex; cursor: pointer; }
         .assign-day:hover { background: #f0f0f0; }
         .assign-day.empty { cursor: default; }
-        .assign-day-left { flex: 1; display: flex; align-items: center; justify-content: center; border-right: 1px solid #fff; border-radius: 8px 0 0 8px; }
-        .assign-day-right { flex: 1; display: flex; align-items: center; justify-content: center; border-radius: 0 8px 8px 0; }
+        .assign-day-left { flex: 1; display: flex; align-items: center; justify-content: center; border-right: 1px solid #fff; border-radius: 6px 0 0 6px; font-size: 12px; }
+        .assign-day-right { flex: 1; display: flex; align-items: center; justify-content: center; border-radius: 0 6px 6px 0; font-size: 12px; }
         .assign-day-left.selected { background: #000; color: #fff; }
         .assign-day-right.selected { background: #1F497D; color: #fff; }
         .assign-day-left.has-task { background: #666; color: #fff; }
         .assign-day-right.has-task { background: #1F497D; color: #fff; }
         .assign-day-left.in-date, .assign-day-right.in-date { background: #52c41a; color: #fff; }
-        
-        .region-selector { display: flex; gap: 10px; margin-bottom: 20px; }
-        .region-btn { flex: 1; padding: 14px; border: 2px solid #ddd; border-radius: 10px; font-size: 18px; cursor: pointer; background: #fff; }
+
+        .region-selector { display: flex; gap: 8px; margin-bottom: 12px; }
+        .region-btn { flex: 1; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 14px; cursor: pointer; background: #fff; }
         .region-btn.active { border-color: #667eea; background: #e6f7ff; }
         .region-btn .region-name { font-weight: bold; }
-        .region-btn .region-desc { font-size: 13px; color: #888; margin-top: 4px; }
+        .region-btn .region-desc { font-size: 11px; color: #888; margin-top: 3px; }
         .region-btn.office.active { border-color: #000; background: #f5f5f5; }
         .region-btn.mall.active { border-color: #1F497D; background: #e6f0ff; }
-        
-        .selected-dates { margin-top: 20px; padding: 15px; background: #f9f9f9; border-radius: 12px; }
-        .selected-dates-title { font-size: 18px; font-weight: bold; margin-bottom: 12px; color: #666; }
-        .selected-date-tag { display: inline-block; padding: 6px 14px; background: #667eea; color: #fff; border-radius: 6px; margin: 4px; font-size: 16px; cursor: pointer; }
+
+        .selected-dates { margin-top: 12px; padding: 10px; background: #f9f9f9; border-radius: 10px; }
+        .selected-dates-title { font-size: 13px; font-weight: bold; margin-bottom: 8px; color: #666; }
+        .selected-date-tag { display: inline-block; padding: 4px 10px; background: #667eea; color: #fff; border-radius: 5px; margin: 3px; font-size: 12px; cursor: pointer; }
         .selected-date-tag.office { background: #000; }
         .selected-date-tag.mall { background: #1F497D; }
-        
-        .modal-btns { display: flex; gap: 15px; margin-top: 20px; }
-        .btn-cancel { flex: 1; padding: 16px; background: #f0f0f0; color: #333; border: none; border-radius: 10px; font-size: 20px; cursor: pointer; }
-        .btn-confirm { flex: 1; padding: 16px; background: #52c41a; color: #fff; border: none; border-radius: 10px; font-size: 20px; cursor: pointer; }
+
+        .modal-btns { display: flex; gap: 10px; margin-top: 12px; }
+        .btn-cancel { flex: 1; padding: 12px; background: #f0f0f0; color: #333; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
+        .btn-confirm { flex: 1; padding: 12px; background: #52c41a; color: #fff; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -142,7 +143,9 @@
         </div>
         
         <div id="viewTaskList" style="display:none;">
-            <div class="task-list" id="taskList"></div>
+            <div style="background:#fff;border-radius:10px;padding:10px;">
+                <div class="task-list" id="taskList"></div>
+            </div>
         </div>
     </div>
 
