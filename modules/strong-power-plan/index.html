@@ -80,7 +80,9 @@
         .assign-cal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 8px; }
         .assign-cal-nav button { background: #667eea; color: #fff; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 13px; }
         .assign-week { display: flex; background: #f0f0f0; border-radius: 6px; margin-bottom: 4px; }
-        .assign-wd { flex: 1; text-align: center; padding: 6px; font-weight: bold; font-size: 12px; color: #666; }
+        .assign-wd { flex: 1; text-align: center; padding: 6px; font-weight: bold; font-size: 12px; color: #667eea; cursor: pointer; border-radius: 6px; }
+        .assign-wd:hover { background: #e8eaff; }
+        .assign-wd:active { background: #667eea; color: #fff; }
         .assign-days { display: flex; flex-wrap: wrap; }
         .assign-day { width: 14.28%; min-height: 48px; display: flex; cursor: pointer; }
         .assign-day:hover { background: #f0f0f0; }
@@ -154,7 +156,7 @@
     <div class="modal" id="modalAssign">
         <div class="modal-body">
             <div class="modal-title">分配执行日期</div>
-            <div class="modal-subtitle">点击或长按拖动选择日期（可多选）</div>
+            <div class="modal-subtitle">点击日期左(办公楼)/右(商场)半边分配 · 点击星期选中整列</div>
             
             <div class="assign-info" id="assignInfo"></div>
             
@@ -166,8 +168,13 @@
                 </div>
                 <div style="text-align:center;margin-bottom:10px;color:#888;font-size:14px;">左半边 <b style="color:#000">●</b> 办公楼 &nbsp;|&nbsp; 右半边 <b style="color:#1F497D">●</b> 商场</div>
                 <div class="assign-week">
-                    <div class="assign-wd">日</div><div class="assign-wd">一</div><div class="assign-wd">二</div>
-                    <div class="assign-wd">三</div><div class="assign-wd">四</div><div class="assign-wd">五</div><div class="assign-wd">六</div>
+                    <div class="assign-wd" onclick="toggleWeekday(0)">日</div>
+                    <div class="assign-wd" onclick="toggleWeekday(1)">一</div>
+                    <div class="assign-wd" onclick="toggleWeekday(2)">二</div>
+                    <div class="assign-wd" onclick="toggleWeekday(3)">三</div>
+                    <div class="assign-wd" onclick="toggleWeekday(4)">四</div>
+                    <div class="assign-wd" onclick="toggleWeekday(5)">五</div>
+                    <div class="assign-wd" onclick="toggleWeekday(6)">六</div>
                 </div>
                 <div class="assign-days" id="assignCalDays"></div>
             </div>
@@ -213,12 +220,6 @@
         var assignYear = new Date().getFullYear();
         var assignMonth = new Date().getMonth();
         var selectedDates = [];  // format: 'date_office' or 'date_mall'
-        var isDragging = false;        // 是否正在拖动（鼠标按下后移动超过阈值）
-        var dragRegion = null;          // 当前拖动目标的 region（office/mall）
-        var draggedSet = {};            // 记录本次拖动中已处理过的 key，避免重复
-        var dragStartX = 0, dragStartY = 0; // 记录拖动起始坐标
-        var dragMoved = false;          // 是否真的发生了移动（区分点击和拖动）
-        var mouseDown = false;           // 鼠标是否已按下（防止mousemove在按下前误触发）
 
         document.getElementById('btnBack').onclick = goBack;
         document.getElementById('btnPrev').onclick = function() { changeMonth(-1); };
@@ -380,7 +381,6 @@
             // Load existing dates for this module in new format (date_region)
             var plans = getTaskPlans(moduleId);
             selectedDates = plans.map(function(p) { return p.date + '_' + p.region; });
-            mouseDown = false;
             var m = null;
             for (var i = 0; i < MODS.length; i++) { if (MODS[i].id === moduleId) { m = MODS[i]; break; } }
             document.getElementById('assignInfo').innerHTML =
@@ -457,99 +457,44 @@
         function removeAssignDate(key) { var idx = selectedDates.indexOf(key); if (idx > -1) selectedDates.splice(idx, 1); renderAssignCal(); }
 
         // ---------- 任务分配弹窗日历 ----------
-        var _dragSuppressed = false;
-        var _pointerDown = false;
-        var _pointerStartX = 0, _pointerStartY = 0;
-        var _isDragging = false;
-        var _dragMoved = false;
-        var _dragRegion = '';
-        var _draggedSet = {};
-
         function initDragSelect() {
             var grid = document.getElementById('assignCalDays');
             if (!grid) return;
             if (grid.dataset.dragInit) return;
             grid.dataset.dragInit = '1';
 
-            // 滑动多选：pointerdown/move/up
-            grid.addEventListener('pointerdown', function(e) {
-                e.preventDefault(); // 阻止浏览器默认滚动
-                _dragSuppressed = false;
-                _pointerDown = true;
-                _pointerStartX = e.clientX;
-                _pointerStartY = e.clientY;
-                _isDragging = false;
-                _dragMoved = false;
-                var el = getElFromPoint2(e.clientX, e.clientY);
-                if (el) el = el.closest('.assign-day-left, .assign-day-right');
-                if (el) _dragRegion = el.dataset.region;
-                _draggedSet = {};
-            }, { passive: false });
-
-            grid.addEventListener('pointermove', function(e) {
-                e.preventDefault(); // 阻止浏览器默认滚动
-                if (!_pointerDown) return;
-                var dx = e.clientX - _pointerStartX, dy = e.clientY - _pointerStartY;
-                var dist = Math.sqrt(dx * dx + dy * dy);
-
-                if (!_isDragging && dist > 8) {
-                    _isDragging = true;
-                    _dragMoved = true;
-                    _draggedSet = {};
-                }
-
-                if (!_isDragging) return;
-
-                var el = getElFromPoint2(e.clientX, e.clientY);
-                if (el) el = el.closest('.assign-day-left, .assign-day-right');
-                if (!el || !el.dataset.ds || !el.dataset.region) return;
-
-                if (el.dataset.region !== _dragRegion) {
-                    _draggedSet = {};
-                    _dragRegion = el.dataset.region;
-                }
-                tryDragSelect2(el.dataset.ds, el.dataset.region);
-            }, { passive: false });
-
-            grid.addEventListener('pointerup', function(e) {
-                _dragSuppressed = _isDragging || _dragMoved;
-                _pointerDown = false;
-                _isDragging = false;
-                _dragMoved = false;
-                _dragRegion = '';
-                _draggedSet = {};
-                setTimeout(function() { _dragSuppressed = false; }, 60);
-            });
-
-            grid.addEventListener('pointercancel', function(e) {
-                _pointerDown = false;
-                _isDragging = false;
-                _dragMoved = false;
-            });
-
-            // 点击选中/取消
             grid.addEventListener('click', function(e) {
-                if (_dragSuppressed) return;
                 var el = e.target.closest('.assign-day-left, .assign-day-right');
                 if (!el || !el.dataset.ds || !el.dataset.region) return;
                 toggleAssignDate(el.dataset.ds, el.dataset.region);
             });
         }
 
-        function getElFromPoint2(x, y) {
-            return document.elementFromPoint(x, y);
-        }
-
-        function tryDragSelect2(ds, region) {
-            var key = ds + '_' + region;
-            if (_draggedSet[key]) return;
-            _draggedSet[key] = true;
-            var idx = selectedDates.indexOf(key);
-            if (idx > -1) {
-                selectedDates.splice(idx, 1);
-            } else {
-                selectedDates.push(key);
+        // 点击星期标签 → 选中/取消当月所有该星期几的日期（办公楼和商场）
+        function toggleWeekday(weekday) {
+            var first = getFirst(assignYear, assignMonth);
+            var total = getDays(assignYear, assignMonth);
+            var keys = [];
+            for (var d = 1; d <= total; d++) {
+                var date = new Date(assignYear, assignMonth, d);
+                if (date.getDay() === weekday) {
+                    var ds = assignYear + '-' + String(assignMonth + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+                    keys.push(ds + '_office', ds + '_mall');
+                }
             }
+            // 检查是否全部已选中：是 → 取消；否 → 选中
+            var allSelected = keys.every(function(k) { return selectedDates.indexOf(k) > -1; });
+            if (allSelected) {
+                keys.forEach(function(k) {
+                    var idx = selectedDates.indexOf(k);
+                    if (idx > -1) selectedDates.splice(idx, 1);
+                });
+            } else {
+                keys.forEach(function(k) {
+                    if (selectedDates.indexOf(k) === -1) selectedDates.push(k);
+                });
+            }
+            selectedDates.sort();
             renderAssignCal();
         }
         // ---------- 任务分配弹窗日历结束 ----------
