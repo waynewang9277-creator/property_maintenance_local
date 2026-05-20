@@ -473,6 +473,7 @@
 
             // 滑动多选：pointerdown/move/up
             grid.addEventListener('pointerdown', function(e) {
+                e.preventDefault(); // 阻止浏览器默认滚动
                 _dragSuppressed = false;
                 _pointerDown = true;
                 _pointerStartX = e.clientX;
@@ -483,9 +484,10 @@
                 if (el) el = el.closest('.assign-day-left, .assign-day-right');
                 if (el) _dragRegion = el.dataset.region;
                 _draggedSet = {};
-            }, { passive: true });
+            }, { passive: false });
 
             grid.addEventListener('pointermove', function(e) {
+                e.preventDefault(); // 阻止浏览器默认滚动
                 if (!_pointerDown) return;
                 var dx = e.clientX - _pointerStartX, dy = e.clientY - _pointerStartY;
                 var dist = Math.sqrt(dx * dx + dy * dy);
@@ -507,7 +509,7 @@
                     _dragRegion = el.dataset.region;
                 }
                 tryDragSelect2(el.dataset.ds, el.dataset.region);
-            }, { passive: true });
+            }, { passive: false });
 
             grid.addEventListener('pointerup', function(e) {
                 _dragSuppressed = _isDragging || _dragMoved;
