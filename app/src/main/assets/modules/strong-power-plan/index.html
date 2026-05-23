@@ -124,6 +124,10 @@
     <div class="container">
         <button class="back" id="btnBack">← 返回</button>
         <h1>⚡ 强电维保计划</h1>
+        <div id="syncStatus" style="text-align:center;font-size:12px;color:#888;margin-bottom:8px;">
+            <span id="syncInfo">📡 未连接服务器</span>
+            <button class="cal-nav" id="btnSync" onclick="syncFromServer()" style="background:#1976D2;margin-left:8px;">🔄 同步</button>
+        </div>
         
         <div class="view-tabs">
             <button class="tab active" id="tabCal" onclick="showView('calendar')">📅 日历视图</button>
@@ -195,6 +199,7 @@
 
     <script src="../../common/js/lib/jszip.min.js"></script>
     <script src="module.js"></script>
+    <script src="../../common/js/api.js"></script>
     <script>
         const MODS = [
             { id: 'item-1',  name: '应急装置电池放电时间测试',   icon: '🔋', itemId: 1 },
@@ -553,6 +558,139 @@
 
         renderCal();
         renderDayPlans();
+        
+        // ========== 服务器同步 ==========
+        var CATEGORY = 'strong-power';
+        
+        // 页面加载时检查服务器连接
+        (function initServerSync() {
+            checkServerConnection();
+        })();
+        
+        // 检查服务器连接状态
+        async function checkServerConnection() {
+            var syncInfo = document.getElementById('syncInfo');
+            var btnSync = document.getElementById('btnSync');
+            try {
+                var ok = await ApiClient.checkHealth();
+                if (ok) {
+                    syncInfo.textContent = '✅ 服务器已连接';
+                    syncInfo.style.color = '#52c41a';
+                    btnSync.style.background = '#52c41a';
+                    
+                    // 检查最后同步时间
+                    var lastSync = API.getLastSyncTime();
+                    if (lastSync) {
+                        syncInfo.textContent = '✅ 服务器已连接 | 最后同步: ' + lastSync;
+                    }
+                    
+                    // 自动同步当月数据
+                    autoSyncCurrentMonth();
+                } else {
+                    syncInfo.textContent = '❌ 服务器连接失败';
+                    syncInfo.style.color = '#ff4d4f';
+                }
+            } catch (e) {
+                syncInfo.textContent = '❌ 服务器连接失败';
+                syncInfo.style.color = '#ff4d4f';
+            }
+        }
+        
+        // 自动同步当月数据
+        async function autoSyncCurrentMonth() {
+            var yearMonth = calYear + '-' + String(calMonth + 1).padStart(2, '0');
+            try {
+                var serverPlan = await ApiClient.getPlan(CATEGORY, yearMonth);
+                if (serverPlan && serverPlan.status === 'published') {
+                    // 服务器有已下发的数据，合并到本地
+                    mergeServerData(serverPlan.data);
+                }
+            } catch (e) {
+                console.log('自动同步失败:', e);
+            }
+        }
+        
+        // 从服务器同步数据
+        async function syncFromServer() {
+            var btnSync = document.getElementById('btnSync');
+            var syncInfo = document.getElementById('syncInfo');
+            
+            btnSync.disabled = true;
+            btnSync.textContent = '同步中...';
+            syncInfo.textContent = '🔄 正在从服务器同步...';
+            
+            var yearMonth = calYear + '-' + String(calMonth + 1).padStart(2, '0');
+            
+            try {
+                var serverPlan = await ApiClient.getPlan(CATEGORY, yearMonth);
+                
+                if (!serverPlan) {
+                    syncInfo.textContent = '📭 服务器暂无数据';
+                    syncInfo.style.color = '#faad14';
+                    btnSync.textContent = '🔄 同步';
+                    btnSync.disabled = false;
+                    return;
+                }
+                
+                if (serverPlan.status === 'published') {
+                    // 已下发，合并数据
+                    mergeServerData(serverPlan.data);
+                    syncInfo.textContent = '✅ 同步成功！';
+                    syncInfo.style.color = '#52c41a';
+                } else {
+                    syncInfo.textContent = '📝 服务器数据未下发';
+                    syncInfo.style.color = '#faad14';
+                }
+                
+                // 更新最后同步时间
+                var now = new Date();
+                var timeStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0') + ' ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+                API.setLastSyncTime(timeStr);
+                
+                renderCal();
+                renderDayPlans();
+                
+            } catch (e) {
+                console.error('同步失败:', e);
+                syncInfo.textContent = '❌ 同步失败';
+                syncInfo.style.color = '#ff4d4f';
+            }
+            
+            btnSync.textContent = '🔄 同步';
+            btnSync.disabled = false;
+        }
+        
+        // 合并服务器数据到本地
+        function mergeServerData(serverData) {
+            if (!serverData) return;
+            
+            var localData = getData();
+            
+            // 遍历服务器数据，合并到本地
+            for (var dateKey in serverData) {
+                if (!localData[dateKey]) {
+                    // 本地没有，直接使用服务器数据
+                    localData[dateKey] = serverData[dateKey];
+                } else {
+                    // 本地有，合并（服务器数据追加到本地）
+                    var localPlans = localData[dateKey];
+                    var serverPlans = serverData[dateKey];
+                    
+                    for (var i = 0; i < serverPlans.length; i++) {
+                        var sp = serverPlans[i];
+                        // 检查是否已存在
+                        var exists = localPlans.some(function(p) {
+                            return p.moduleId === sp.moduleId && p.region === sp.region;
+                        });
+                        if (!exists) {
+                            localPlans.push(sp);
+                        }
+                    }
+                }
+            }
+            
+            setData(localData);
+        }
     </script>
 </body>
 </html>
