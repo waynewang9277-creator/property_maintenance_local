@@ -603,17 +603,19 @@
             try {
                 var serverPlan = await ApiClient.getPlan(CATEGORY, yearMonth);
                 if (serverPlan) {
-                    // 不管是 draft 还是 published 都同步，让APP能看到计划
-                    mergeServerData(serverPlan.data);
-                    var statusText = serverPlan.status === 'published' ? '已下发' : '草稿';
-                    syncInfo.textContent = '✅ 服务器已连接 | 计划:' + statusText;
-                    
-                    // 如果是已发布状态，显示绿点
                     if (serverPlan.status === 'published') {
+                        // 已下发才同步
+                        mergeServerData(serverPlan.data);
+                        syncInfo.textContent = '✅ 服务器已连接 | 计划:已下发';
                         syncInfo.style.color = '#52c41a';
                     } else {
+                        // 草稿不同步，只显示状态
+                        syncInfo.textContent = '📝 服务器:草稿未下发';
                         syncInfo.style.color = '#faad14';
                     }
+                } else {
+                    syncInfo.textContent = '✅ 服务器已连接';
+                    syncInfo.style.color = '#52c41a';
                 }
             } catch (e) {
                 console.log('自动同步失败:', e);
