@@ -311,6 +311,7 @@
             if (calMonth > 11) { calMonth = 0; calYear++; }
             if (calMonth < 0) { calMonth = 11; calYear--; }
             renderCal();
+            autoSyncCurrentMonth();
         }
 
         function renderCal() {
