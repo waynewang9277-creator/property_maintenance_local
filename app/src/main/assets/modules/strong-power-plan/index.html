@@ -55,6 +55,8 @@
         .region-tag.mall { background: #1F497D; }
         .region-tag.exec { background: #00B050; }
         .plan-del { background: #ff4d4f; color: #fff; border: none; border-radius: 50%; width: 26px; height: 26px; font-size: 16px; cursor: pointer; flex-shrink: 0; }
+        .btn-complete { background: #52c41a; color: #fff; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 13px; white-space: nowrap; flex-shrink: 0; margin-left: 8px; }
+        .btn-complete:hover { background: #3a9d0c; }
         .no-plan { text-align: center; padding: 20px; color: #999; font-size: 14px; }
 
         .task-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; width: 100%; }
@@ -219,6 +221,18 @@
             { id: 'item-15', name: '电扶梯维护保养',            icon: '🛗', itemId: 15 },
             { id: 'item-16', name: '电梯逃生门检查',            icon: '🚪', itemId: 16 }
         ];
+        
+        // moduleId到模块路径的映射
+        var MODULE_MAP = {
+            'item-1': 'battery-test',
+            'item-3': 'generator',
+            'item-4': 'capacitor-check',
+            'item-5': 'busbar-check',
+            'item-6': 'power-room-monthly',
+            'item-13': 'elevator-handrail-fault',
+            'item-16': 'elevator-escape'
+        };
+        
         const KEY = 'plan_strong_power';
         var taskColors = ['#667eea','#52c41a','#ff4d4f','#faad14','#13c2c2','#722ed1','#eb2f96','#fa8c16'];
 
@@ -355,13 +369,18 @@
                 var color = mIdx >= 0 ? taskColors[mIdx % taskColors.length] : '#667eea';
                 var regionClass = p.region === 'mall' ? 'mall' : 'office';
                 var regionName = p.region === 'mall' ? '🏬 商场' : '🏢 办公楼';
+                var targetModule = MODULE_MAP[p.moduleId];
+                var completeBtn = targetModule 
+                    ? '<button class="btn-complete" onclick="goToModule(\'' + targetModule + '\')">去完成</button>' 
+                    : '';
                 html += '<div class="plan-item' + (p.checked ? ' checked' : '') + '">' +
                     '<div class="plan-info" onclick="togglePlan(\'' + selDate + '\', ' + i + ')">' +
                     '<span>' + (p.checked ? '✅' : '⬜') + '</span>' +
                     '<div>' +
                     '<div style="font-size:18px;">' + m.icon + ' ' + m.name + '</div>' +
                     '<div class="plan-regions"><span class="region-tag ' + regionClass + '">' + regionName + '</span></div>' +
-                    '</div></div></div>';
+                    '</div></div>' +
+                    completeBtn + '</div>';
             }
             list.innerHTML = html;
         }
@@ -539,6 +558,11 @@
         function goBack() {
             if (parent.app && parent.app.backToCategory) parent.app.backToCategory();
             else window.location.href = '../../index.html';
+        }
+        
+        function goToModule(modulePath) {
+            // 跳转到对应的维保模块
+            window.location.href = '../../' + modulePath + '/index.html';
         }
 
         function clearAllPlans() {
