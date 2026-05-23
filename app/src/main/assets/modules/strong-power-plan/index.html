@@ -357,30 +357,63 @@
             var list = document.getElementById('dayPlansList');
             var plans = getDatePlans(selDate);
             if (plans.length === 0) { list.innerHTML = '<div class="no-plan">暂无计划</div>'; return; }
-            var html = '';
+            
+            // 按moduleId分组
+            var grouped = {};
             for (var i = 0; i < plans.length; i++) {
                 var p = plans[i];
+                if (!grouped[p.moduleId]) {
+                    grouped[p.moduleId] = { regions: [], checked: true, planIndex: i };
+                }
+                grouped[p.moduleId].regions.push(p.region);
+                if (!p.checked) grouped[p.moduleId].checked = false;
+            }
+            
+            var html = '';
+            var idx = 0;
+            for (var moduleId in grouped) {
+                var g = grouped[moduleId];
                 var m = null;
                 var mIdx = -1;
-                for (var j = 0; j < MODS.length; j++) { if (MODS[j].id === p.moduleId) { m = MODS[j]; mIdx = j; break; } }
-                if (!m) m = { icon: '📋', name: p.moduleId };
+                for (var j = 0; j < MODS.length; j++) { if (MODS[j].id === moduleId) { m = MODS[j]; mIdx = j; break; } }
+                if (!m) m = { icon: '📋', name: moduleId };
                 var color = mIdx >= 0 ? taskColors[mIdx % taskColors.length] : '#667eea';
-                var regionClass = p.region === 'mall' ? 'mall' : 'office';
-                var regionName = p.region === 'mall' ? '🏬 商场' : '🏢 办公楼';
-                var targetModule = MODULE_MAP[p.moduleId];
+                var targetModule = MODULE_MAP[moduleId];
                 var completeBtn = targetModule 
                     ? '<button class="btn-complete" onclick="goToModule(\'' + targetModule + '\')">去完成</button>' 
                     : '';
-                html += '<div class="plan-item' + (p.checked ? ' checked' : '') + '">' +
-                    '<div class="plan-info" onclick="togglePlan(\'' + selDate + '\', ' + i + ')">' +
-                    '<span>' + (p.checked ? '✅' : '⬜') + '</span>' +
+                
+                // 生成区域标签
+                var regionTags = '';
+                if (g.regions.indexOf('office') > -1) regionTags += '<span class="region-tag office">🏢 办公楼</span>';
+                if (g.regions.indexOf('mall') > -1) regionTags += '<span class="region-tag mall">🏬 商场</span>';
+                
+                html += '<div class="plan-item' + (g.checked ? ' checked' : '') + '">' +
+                    '<div class="plan-info" onclick="toggleModulePlans(\'' + selDate + '\', \'' + moduleId + '\')">' +
+                    '<span>' + (g.checked ? '✅' : '⬜') + '</span>' +
                     '<div>' +
                     '<div style="font-size:18px;">' + m.icon + ' ' + m.name + '</div>' +
-                    '<div class="plan-regions"><span class="region-tag ' + regionClass + '">' + regionName + '</span></div>' +
+                    '<div class="plan-regions">' + regionTags + '</div>' +
                     '</div></div>' +
                     completeBtn + '</div>';
+                idx++;
             }
             list.innerHTML = html;
+        }
+        
+        // 切换某个moduleId下所有plan的选中状态
+        function toggleModulePlans(date, moduleId) {
+            var data = getData();
+            if (data[date]) {
+                for (var i = 0; i < data[date].length; i++) {
+                    if (data[date][i].moduleId === moduleId) {
+                        data[date][i].checked = !data[date][i].checked;
+                    }
+                }
+                setData(data);
+                renderCal();
+                renderDayPlans();
+            }
         }
 
         function renderTaskList() {
