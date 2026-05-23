@@ -608,6 +608,9 @@
                         mergeServerData(serverPlan.data);
                         syncInfo.textContent = '✅ 服务器已连接 | 计划:已下发';
                         syncInfo.style.color = '#52c41a';
+                        // 刷新界面显示
+                        renderCal();
+                        renderDayPlans();
                     } else {
                         // 草稿不同步，只显示状态
                         syncInfo.textContent = '📝 服务器:草稿未下发';
