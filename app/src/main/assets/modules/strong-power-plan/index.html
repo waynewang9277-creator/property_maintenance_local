@@ -23,8 +23,6 @@
         .cal-nav button, .cal-nav .btn-export { background: #667eea; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; }
         .btn-export { background: #52c41a; }
         .cal-nav .btn-export:hover { background: #3a9d0c; }
-        .btn-clear { background: #ff4d4f !important; }
-        .cal-nav .btn-clear:hover { background: #d93636; }
         .week { display: flex; background: #f0f0f0; border-radius: 6px; margin-bottom: 6px; }
         .wd { flex: 1; text-align: center; padding: 6px; font-weight: bold; font-size: 12px; color: #666; }
         .days { display: flex; flex-wrap: wrap; }
@@ -143,7 +141,6 @@
                     <span class="cal-title" id="calTitle">2026年5月</span>
                     <button class="cal-nav" id="btnNext">▶</button>
                     <button class="cal-nav btn-export" id="btnExport">📥 导出Excel</button>
-                    <button class="cal-nav btn-clear" id="btnClear" onclick="clearAllPlans()">🗑️ 清除当月</button>
                 </div>
                 <div class="week">
                     <div class="wd">日</div><div class="wd">一</div><div class="wd">二</div>
@@ -563,20 +560,6 @@
         function goToModule(modulePath) {
             // 跳转到对应的维保模块
             window.location.href = '../../modules/' + modulePath + '/index.html';
-        }
-
-        function clearAllPlans() {
-            if (!confirm('确定要清除当月（' + (calMonth + 1) + '月）所有计划吗？此操作不可恢复。')) return;
-            var data = getData();
-            for (var ds in data) {
-                var d = new Date(ds);
-                if (d.getFullYear() === calYear && d.getMonth() === calMonth) {
-                    delete data[ds];
-                }
-            }
-            setData(data);
-            renderCal();
-            renderDayPlans();
         }
 
         renderCal();
