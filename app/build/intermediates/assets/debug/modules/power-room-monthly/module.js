@@ -24,9 +24,26 @@ var PowerRoomModule = {
     selectedFloor: null,
     expandedRoom: null,
     
+    // 上下文信息（从URL参数传递）
+    context: {
+        date: null,
+        region: null,
+        category: 'strong-power'
+    },
+    
     init: function() {
+        this.parseUrlParams();
         this.loadData();
         this.render();
+    },
+    
+    parseUrlParams: function() {
+        var params = new URLSearchParams(window.location.search);
+        var date = params.get('date');
+        var region = params.get('region');
+        if (date) this.context.date = date;
+        if (region) this.context.region = region;
+        console.log('PowerRoomModule context:', this.context);
     },
     
     loadData: function() {
@@ -538,12 +555,72 @@ var PowerRoomModule = {
             // 通过原生 Android 桥接保存 PDF（避免 WebView blob 下载失效）
             var pdfBlob = pdf.output('blob');
             var reader = new FileReader();
-            reader.onload = function(e) {
+            var selfRef = self;
+            var completedDate = selfRef.formatDate(new Date());
+            reader.onload = async function(e) {
                 var base64 = e.target.result; // 包含 data:application/pdf;base64, 前缀
-                window.parent.saveFile('强电间巡检_' + self.formatDate(new Date()) + '.pdf', base64);
-                window.androidBridge.shareFile(base64, '强电间巡检_' + self.formatDate(new Date()) + '.pdf', 'application/pdf');
+                
+                // 保存PDF到本地
+                window.parent.saveFile('强电间巡检_' + completedDate + '.pdf', base64);
+                window.androidBridge.shareFile(base64, '强电间巡检_' + completedDate + '.pdf', 'application/pdf');
                 console.log('PDF saved via native bridge');
-                alert('PDF已保存到手机 Downloads 文件夹');
+                
+                // 上报到服务器
+                if (selfRef.context.date) {
+                    try {
+                        console.log('Uploading report to server...');
+                        var reportData = {
+                            category: selfRef.context.category,
+                            content: '强电间月度巡检 - ' + selfRef.context.date,
+                            executor: '',
+                            completedDate: completedDate,
+                            date: selfRef.context.date,
+                            region: selfRef.context.region,
+                            moduleId: 'item-6',
+                            photos: []
+                        };
+                        
+                        // 收集照片
+                        for (var roomId in selfRef.data) {
+                            if (selfRef.data[roomId] && selfRef.data[roomId].photos) {
+                                reportData.photos = reportData.photos.concat(selfRef.data[roomId].photos);
+                            }
+                        }
+                        
+                        var result = await ApiClient.submitReport(reportData);
+                        console.log('Report upload result:', result);
+                        
+                        if (result.success) {
+                            // 标记计划为已完成
+                            try {
+                                var completeData = {
+                                    category: selfRef.context.category,
+                                    date: selfRef.context.date,
+                                    moduleId: 'item-6',
+                                    region: selfRef.context.region,
+                                    completedDate: completedDate
+                                };
+                                var completeResult = await ApiClient.completeReport(completeData);
+                                console.log('Complete result:', completeResult);
+                                if (completeResult.success) {
+                                    alert('PDF已保存到手机 Downloads 文件夹\n报告已上传到服务器\n计划已标记为已完成');
+                                } else {
+                                    alert('PDF已保存到手机 Downloads 文件夹\n报告已上传到服务器\n计划标记完成失败');
+                                }
+                            } catch(e2) {
+                                console.error('Complete error:', e2);
+                                alert('PDF已保存到手机 Downloads 文件夹\n报告已上传到服务器\n计划标记完成失败');
+                            }
+                        } else {
+                            alert('PDF已保存到手机 Downloads 文件夹\n报告上传失败: ' + (result.message || ''));
+                        }
+                    } catch(e) {
+                        console.error('Report upload error:', e);
+                        alert('PDF已保存到手机 Downloads 文件夹\n报告上传失败: ' + e.message);
+                    }
+                } else {
+                    alert('PDF已保存到手机 Downloads 文件夹');
+                }
             };
             reader.onerror = function(e) {
                 console.error('FileReader error:', e);

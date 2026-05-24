@@ -61,12 +61,29 @@ const FaultModule = {
     // Statistics tab state
     expandedStatItems: [],
 
+    // 上下文信息
+    context: {
+        date: null,
+        region: null,
+        category: 'strong-power'
+    },
+
     init: function() {
+        this.parseUrlParams();
         window.FaultModule = this;
         this.selectedYear = new Date().getFullYear();
         this.renderMonthGrid();
         this.renderDateGrid();
         this.updateSummary();
+    },
+
+    parseUrlParams: function() {
+        var params = new URLSearchParams(window.location.search);
+        var date = params.get('date');
+        var region = params.get('region');
+        if (date) this.context.date = date;
+        if (region) this.context.region = region;
+        console.log('FaultModule context:', this.context);
     },
 
     renderMonthGrid: function() {
@@ -1011,19 +1028,74 @@ const FaultModule = {
                     window.onFileSaved = origOnFileSaved;
                     document.getElementById('loading-overlay').style.display = 'none';
                     var overlay = document.getElementById('loading-overlay');
-                    if (overlay) {
-                        overlay.innerHTML = '<div style="color:#4caf50;font-size:18px;font-weight:bold;padding:20px;">✅ 统计表已保存到手机 Downloads 文件夹！</div>';
-                        overlay.style.display = 'flex';
-                        overlay.style.justifyContent = 'center';
-                        overlay.style.alignItems = 'center';
-                        overlay.style.background = 'rgba(255,255,255,0.95)';
-                        overlay.style.flexDirection = 'column';
-                        overlay.style.gap = '10px';
-                        overlay.style.color = '#333';
-                        overlay.onclick = function() { overlay.style.display = 'none'; };
-                        setTimeout(function() { overlay.style.display = 'none'; }, 3000);
+                    var selfRef = this;
+
+                    // 上传到服务器
+                    if (selfRef.context.date) {
+                        (async function() {
+                            try {
+                                var reportData = {
+                                    category: selfRef.context.category,
+                                    content: '电梯月度故障统计 - ' + monthLabel,
+                                    executor: '',
+                                    completedDate: new Date().toISOString().slice(0,10),
+                                    date: selfRef.context.date,
+                                    region: selfRef.context.region,
+                                    moduleId: 'item-13',
+                                    fileBase64: base64
+                                };
+                                var result = await ApiClient.submitReport(reportData);
+                                console.log('Report upload result:', result);
+                                if (result.success) {
+                                    var completeData = {
+                                        category: selfRef.context.category,
+                                        date: selfRef.context.date,
+                                        moduleId: 'item-13',
+                                        region: selfRef.context.region,
+                                        completedDate: new Date().toISOString().slice(0,10)
+                                    };
+                                    await ApiClient.completeReport(completeData);
+                                    if (overlay) {
+                                        overlay.innerHTML = '<div style="color:#4caf50;font-size:18px;font-weight:bold;padding:20px;">✅ 统计表已保存到手机 Downloads 文件夹！<br>报告已上传到服务器<br>计划已标记完成</div>';
+                                    }
+                                } else {
+                                    if (overlay) {
+                                        overlay.innerHTML = '<div style="color:#4caf50;font-size:18px;font-weight:bold;padding:20px;">✅ 统计表已保存到手机 Downloads 文件夹！<br>报告上传失败</div>';
+                                    }
+                                }
+                            } catch(e) {
+                                console.error('Upload error:', e);
+                                if (overlay) {
+                                    overlay.innerHTML = '<div style="color:#4caf50;font-size:18px;font-weight:bold;padding:20px;">✅ 统计表已保存到手机 Downloads 文件夹！<br>上传出错: ' + e.message + '</div>';
+                                }
+                            }
+                            if (overlay) {
+                                overlay.style.display = 'flex';
+                                overlay.style.justifyContent = 'center';
+                                overlay.style.alignItems = 'center';
+                                overlay.style.background = 'rgba(255,255,255,0.95)';
+                                overlay.style.flexDirection = 'column';
+                                overlay.style.gap = '10px';
+                                overlay.style.color = '#333';
+                                overlay.onclick = function() { overlay.style.display = 'none'; };
+                                setTimeout(function() { overlay.style.display = 'none'; }, 3000);
+                            }
+                        })();
+                    } else {
+                        if (overlay) {
+                            overlay.innerHTML = '<div style="color:#4caf50;font-size:18px;font-weight:bold;padding:20px;">✅ 统计表已保存到手机 Downloads 文件夹！</div>';
+                            overlay.style.display = 'flex';
+                            overlay.style.justifyContent = 'center';
+                            overlay.style.alignItems = 'center';
+                            overlay.style.background = 'rgba(255,255,255,0.95)';
+                            overlay.style.flexDirection = 'column';
+                            overlay.style.gap = '10px';
+                            overlay.style.color = '#333';
+                            overlay.onclick = function() { overlay.style.display = 'none'; };
+                            setTimeout(function() { overlay.style.display = 'none'; }, 3000);
+                        }
                     }
-                };
+                }.bind(this);
                 setTimeout(function() {
                     if (!savedCallbackFired) {
                         savedCallbackFired = true;

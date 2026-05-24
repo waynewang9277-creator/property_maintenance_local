@@ -598,6 +598,7 @@
     </div>
 
     <script src="../../common/js/lib/jszip.min.js"></script>
+    <script src="../../common/js/api.js"></script>
     
     <script>
         // Toggle problem input visibility
@@ -813,6 +814,30 @@
                 link.href = url;
                 link.click();
                 URL.revokeObjectURL(url);
+                
+                // 上传报告到服务器
+                try {
+                    const dateVal = document.getElementById('input-date')?.value || new Date().toISOString().slice(0,10);
+                    const operatorVal = document.getElementById('sig-operator')?.value || '';
+                    
+                    const formData = new FormData();
+                    formData.append('category', 'generator');
+                    formData.append('content', '发电机组维护性运转记录 - ' + dateVal);
+                    formData.append('executor', operatorVal);
+                    formData.append('file', newBuffer, link.download);
+                    
+                    const uploadRes = await ApiClient.upload(API.postReports(), formData);
+                    if (uploadRes && uploadRes.success) {
+                        console.log('报告上传成功:', uploadRes);
+                        alert('报告已生成并上传成功！');
+                    } else {
+                        console.warn('报告上传返回异常:', uploadRes);
+                        alert('报告已生成，但上传失败');
+                    }
+                } catch (uploadError) {
+                    console.error('上传失败:', uploadError);
+                    alert('报告已生成，但上传失败: ' + uploadError.message);
+                }
                 
                 document.getElementById('loading-overlay').style.display = 'none';
                 

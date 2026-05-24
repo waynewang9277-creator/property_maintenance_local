@@ -563,6 +563,160 @@ var BusbarModule = {
             this.saveData();
             this.render();
         }
+    },
+
+    // 上传报告到服务器
+    uploadExcel: function() {
+        var self = this;
+
+        var dateInput = document.getElementById('check-date');
+        var roomTempInput = document.getElementById('room-temp');
+        var checkDate = dateInput ? dateInput.value : '';
+        var roomTemp = roomTempInput ? roomTempInput.value : '';
+
+        if (!checkDate) {
+            alert('请输入检查日期');
+            return;
+        }
+
+        document.getElementById('loading-overlay').style.display = 'flex';
+        document.querySelector('#loading-overlay div div').innerHTML = '<div style="font-size:14pt;color:#333;">正在上传报告...</div><div style="font-size:12pt;color:#666;margin-top:10px;">请稍候</div>';
+
+        var JSZip = window.JSZip;
+        var parser = new DOMParser();
+        var ns = { x: 'http://schemas.openxmlformats.org/spreadsheetml/2006/main' };
+
+        fetch('../../assets/templates/busbar_template.xlsx')
+            .then(function(res) { return res.arrayBuffer(); })
+            .then(function(buffer) {
+                return JSZip.loadAsync(buffer);
+            })
+            .then(function(zip) {
+                return zip.file('xl/worksheets/sheet1.xml').async('string').then(function(xmlStr) {
+                    return { zip: zip, xmlStr: xmlStr };
+                });
+            })
+            .then(function(data) {
+                var zip = data.zip;
+                var xmlStr = data.xmlStr;
+                var xmlDoc = parser.parseFromString(xmlStr, 'text/xml');
+
+                var setCellValue = function(doc, cellRef, value) {
+                    var cell = doc.querySelector('c[r="' + cellRef + '"]');
+                    if (!cell) return;
+                    cell.setAttribute('t', 'str');
+                    var existingV = cell.querySelector('v');
+                    if (existingV) cell.removeChild(existingV);
+                    var v = doc.createElementNS(ns.x, 'v');
+                    v.textContent = value;
+                    cell.appendChild(v);
+                };
+
+                var dateParts = checkDate.split('-');
+                var dateStr = dateParts[0] + '年' + parseInt(dateParts[1]) + '月' + parseInt(dateParts[2]) + '日';
+
+                setCellValue(xmlDoc, 'N3', dateStr);
+
+                if (roomTemp) {
+                    var tempVal = roomTemp.endsWith('℃') ? roomTemp : roomTemp + '℃';
+                    setCellValue(xmlDoc, 'P3', tempVal);
+                }
+
+                for (var i = 0; i < self.DEVICES.length; i++) {
+                    var device = self.DEVICES[i];
+                    var devData = self.data[device.id];
+
+                    if (devData && devData.temperature) {
+                        var tempCol = device.col + 2;
+                        var tempColLetter = String.fromCharCode(64 + tempCol);
+                        var cellRefMax = tempColLetter + device.row;
+
+                        if (devData.temperature.max || devData.temperature.min || devData.temperature.avg) {
+                            setCellValue(xmlDoc, cellRefMax, 'Max: ' + (devData.temperature.max||'') + String.fromCharCode(10) + 'Min: ' + (devData.temperature.min||'') + String.fromCharCode(10) + 'Avg: ' + (devData.temperature.avg||''));
+                        }
+                    }
+                }
+
+                var photoCount = 0;
+                for (var i = 0; i < self.DEVICES.length; i++) {
+                    var device = self.DEVICES[i];
+                    var devData = self.data[device.id];
+                    if (devData && devData.photo) {
+                        photoCount++;
+                        zip.file('xl/media/photo_' + device.id + '.png', self.base64ToUint8Array(devData.photo));
+                    }
+                }
+
+                var serializer = new XMLSerializer();
+                var sheet1WithTemp = serializer.serializeToString(xmlDoc);
+
+                if (photoCount > 0) {
+                    sheet1WithTemp = sheet1WithTemp.replace('</worksheet>', '<drawing r:id="rId1"/></worksheet>');
+                }
+
+                zip.file('xl/worksheets/sheet1.xml', sheet1WithTemp);
+
+                return zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+            })
+            .then(function(blob) {
+                // 上传到服务器
+                var formData = new FormData();
+                formData.append('category', 'busbar-check');
+                formData.append('content', '供电母排检查测温报告 - ' + checkDate);
+                formData.append('module_id', 'item-5');
+                formData.append('check_date', checkDate);
+                formData.append('room_temp', roomTemp || '');
+                formData.append('executor', localStorage.getItem('operator_name') || '');
+                formData.append('excel_file', blob, '供电母排检查测温_' + checkDate + '.xlsx');
+
+                // 收集所有照片用于上传
+                var photos = [];
+                for (var deviceId in self.data) {
+                    var devData = self.data[deviceId];
+                    if (devData && devData.photo) {
+                        photos.push(devData.photo);
+                    }
+                }
+
+                // 添加照片到表单
+                photos.forEach(function(photo, idx) {
+                    if (typeof photo === 'string' && photo.startsWith('data:')) {
+                        var blobPhoto = self.dataURLtoBlob(photo);
+                        formData.append('photos', blobPhoto, 'photo_' + idx + '.jpg');
+                    }
+                });
+
+                // 添加检查数据JSON
+                formData.append('inspection_data', JSON.stringify(self.data));
+
+                return ApiClient.upload(API.postReports(), formData);
+            })
+            .then(function(res) {
+                document.getElementById('loading-overlay').style.display = 'none';
+                if (res.success) {
+                    alert('上传成功！报告ID: ' + (res.report_id || res.id || ''));
+                } else {
+                    alert('上传失败: ' + (res.message || '未知错误'));
+                }
+            })
+            .catch(function(e) {
+                document.getElementById('loading-overlay').style.display = 'none';
+                console.log('Upload error:', e);
+                alert('上传失败: ' + e.message);
+            });
+    },
+
+    // base64转Blob
+    dataURLtoBlob: function(dataurl) {
+        var arr = dataurl.split(',');
+        var mime = arr[0].match(/:(.*?);/)[1];
+        var bstr = atob(arr[1]);
+        var n = bstr.length;
+        var u8arr = new Uint8Array(n);
+        while (n--) {
+            u8arr[n] = bstr.charCodeAt(n);
+        }
+        return new Blob([u8arr], { type: mime });
     }
 };
 
