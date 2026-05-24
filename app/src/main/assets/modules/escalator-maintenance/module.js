@@ -391,6 +391,10 @@ var EscalatorModule = {
                             }
                         }
                         
+                        // 附加 PDF 文件到报告数据
+                        reportData.fileBase64 = base64;
+                        reportData.fileName = '电扶梯维护保养_' + completedDate + '.pdf';
+                        
                         var result = await ApiClient.submitReport(reportData);
                         console.log('Report upload result:', result);
                         
