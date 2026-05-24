@@ -227,6 +227,13 @@ const ApiClient = {
                 });
             }
             
+            // 添加Excel/PDF文件（fileBase64）
+            if (reportData.fileBase64 && reportData.fileBase64.startsWith('data:')) {
+                const fileBlob = dataURLtoBlob(reportData.fileBase64);
+                const fileName = reportData.fileName || 'report.xlsx';
+                formData.append('file', fileBlob, fileName);
+            }
+            
             const res = await this.upload(API.postReports(), formData);
             return res;
         } catch (e) {
