@@ -650,18 +650,24 @@
 
                 const buffer = await new Promise(function(resolve, reject) {
                     var xhr = new XMLHttpRequest();
-                    xhr.open('GET', '../../templates/generator_template.xlsx', true);
+                    xhr.open('GET', '../../templates/generator_template.xlsx?t=' + Date.now(), true);
                     xhr.responseType = 'arraybuffer';
+                    xhr.timeout = 15000; // 15秒超时
                     console.log('[Generator] xhr opened, calling send...');
                     xhr.onload = function() {
-                        console.log('[Generator] xhr onload, status:', xhr.status);
+                        console.log('[Generator] xhr onload, status:', xhr.status, 'responseSize:', xhr.response ? xhr.response.byteLength : 0);
                         if (xhr.status === 200 || xhr.status === 0) {
-                            resolve(xhr.response);
+                            if (!xhr.response || xhr.response.byteLength === 0) {
+                                reject(new Error('模板文件为空'));
+                            } else {
+                                resolve(xhr.response);
+                            }
                         } else {
                             reject(new Error('加载模板失败: ' + xhr.status + ' (' + xhr.statusText + ')'));
                         }
                     };
-                    xhr.onerror = function() { console.error('[Generator] xhr onerror'); reject(new Error('Network error loading template')); };
+                    xhr.onerror = function() { console.error('[Generator] xhr onerror'); reject(new Error('网络错误加载模板')); };
+                    xhr.ontimeout = function() { console.error('[Generator] xhr timeout'); reject(new Error('加载模板超时，请检查网络')); };
                     xhr.send();
                 });
                 console.log('[Generator] template loaded, buffer size:', buffer.byteLength);
@@ -678,6 +684,12 @@
                     alert('JSZip加载失败: ' + e.message);
                     return;
                 }
+
+                // 添加超时保护
+                const generatePromise = zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+                const timeoutPromise = new Promise((_, reject) => {
+                    setTimeout(() => reject(new Error('Excel生成超时，请重试')), 30000);
+                });
 
                 console.log('[Generator] reading sheetXml...');
                 const sheetXml = await zip.file('xl/worksheets/sheet1.xml').async('string');
@@ -846,7 +858,7 @@
                 console.log('[Generator] writing modifiedXml to zip...');
                 zip.file('xl/worksheets/sheet1.xml', modifiedXml);
                 console.log('[Generator] calling generateAsync...');
-                const newBuffer = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+                const newBuffer = await Promise.race([generatePromise, timeoutPromise]);
                 console.log('[Generator] generateAsync done, buffer size:', newBuffer.size);
 
                 const fileName = '发电机组维护记录_' + new Date().toISOString().slice(0,10) + '.xlsx';
