@@ -98,18 +98,19 @@ var EscalatorModule = {
     
     addPhoto: function(itemId, photoData) {
         var self = this;
-        this.compressImage(photoData, function(compressedPhoto) {
-            console.log('Photo compressed, original size:', photoData.length, 'compressed size:', compressedPhoto.length);
-            
-            if (!self.data[itemId]) {
-                self.data[itemId] = { photos: [], dates: [] };
-            }
-            self.data[itemId].photos.push(compressedPhoto);
-            self.data[itemId].dates.push(self.formatDate(new Date()));
-            
-            self.saveData();
-            self.render();
-        });
+        
+        // 调试：打印原始数据长度
+        console.log('addPhoto called, data length:', photoData ? photoData.length : 'null');
+        
+        // 先跳过压缩，直接保存原图看能否显示
+        if (!self.data[itemId]) {
+            self.data[itemId] = { photos: [], dates: [] };
+        }
+        self.data[itemId].photos.push(photoData);
+        self.data[itemId].dates.push(self.formatDate(new Date()));
+        
+        self.saveData();
+        self.render();
     },
     
     // 压缩图片到100KB左右
