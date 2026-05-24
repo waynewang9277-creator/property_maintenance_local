@@ -568,48 +568,45 @@ const FaultModule = {
 
             var fileName = '电梯月度故障报告_' + month.split('-')[1] + '月.xlsx';
 
-            // 直接调用 saveFile，用超时兜底关闭 loading（Java 回调机制在部分 WebView 版本不通）
+            // 直接调用 saveFile + shareFile
             window.androidBridge.saveFile(base64, fileName);
             window.androidBridge.shareFile(base64, fileName, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-            var savedCallbackFired = false;
-            var origOnFileSaved = window.onFileSaved;
-            window.onFileSaved = function(success, errorMsg) {
-                if (savedCallbackFired) return;
-                savedCallbackFired = true;
-                window.onFileSaved = origOnFileSaved;
-                document.getElementById('loading-overlay').style.display = 'none';
-                var overlay = document.getElementById('loading-overlay');
-                if (overlay) {
-                    overlay.innerHTML = '<div style="color:#4caf50;font-size:18px;font-weight:bold;padding:20px;">✅ 报告已保存到手机 Downloads 文件夹！</div>';
-                    overlay.style.display = 'flex';
-                    overlay.style.justifyContent = 'center';
-                    overlay.style.alignItems = 'center';
-                    overlay.style.background = 'rgba(255,255,255,0.95)';
-                    overlay.style.flexDirection = 'column';
-                    overlay.style.gap = '10px';
-                    overlay.style.color = '#333';
-                    overlay.onclick = function() { overlay.style.display = 'none'; };
-                    setTimeout(function() { overlay.style.display = 'none'; }, 3000);
-                }
-            };
-            setTimeout(function() {
-                if (!savedCallbackFired) {
-                    savedCallbackFired = true;
-                    document.getElementById('loading-overlay').style.display = 'none';
-                    var overlay = document.getElementById('loading-overlay');
-                    if (overlay) {
-                        overlay.innerHTML = '<div style="color:#4caf50;font-size:18px;font-weight:bold;padding:20px;">✅ 报告已保存到手机 Downloads 文件夹！</div>';
-                        overlay.style.display = 'flex';
-                        overlay.style.justifyContent = 'center';
-                        overlay.style.alignItems = 'center';
-                        overlay.style.background = 'rgba(255,255,255,0.95)';
-                        overlay.style.flexDirection = 'column';
-                        overlay.style.gap = '10px';
-                        overlay.style.color = '#333';
-                        overlay.onclick = function() { overlay.style.display = 'none'; };
-                        setTimeout(function() { overlay.style.display = 'none'; }, 3000);
+
+            // 上传到服务器（直接调用，不依赖回调）
+            if (self.context.date) {
+                (async function() {
+                    try {
+                        var reportData = {
+                            category: self.context.category,
+                            content: '电梯月度故障报告 - ' + monthLabel,
+                            executor: '',
+                            completedDate: new Date().toISOString().slice(0,10),
+                            date: self.context.date,
+                            region: self.context.region,
+                            moduleId: 'item-13',
+                            fileBase64: base64
+                        };
+                        var result = await ApiClient.submitReport(reportData);
+                        console.log('Report upload result:', result);
+                        if (result.success) {
+                            var completeData = {
+                                category: self.context.category,
+                                date: self.context.date,
+                                moduleId: 'item-13',
+                                region: self.context.region,
+                                completedDate: new Date().toISOString().slice(0,10)
+                            };
+                            await ApiClient.completeReport(completeData);
+                        }
+                    } catch(e) {
+                        console.error('Upload error:', e);
                     }
-                }
+                })();
+            }
+
+            // 2秒超时兜底：隐藏 loading
+            setTimeout(function() {
+                document.getElementById('loading-overlay').style.display = 'none';
             }, 2000);
         } catch (err) {
             console.error(err);
