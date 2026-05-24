@@ -594,21 +594,45 @@ var PowerRoomModule = {
                         console.log('Report upload result:', result);
                         
                         if (result.success) {
-                            // 标记计划为已完成
+                            // 标记计划为已完成 - 按楼层逐层标记
                             try {
-                                var completeData = {
-                                    category: selfRef.context.category,
-                                    date: selfRef.context.date,
-                                    moduleId: 'item-6',
-                                    region: selfRef.context.region,
-                                    completedDate: completedDate
-                                };
-                                var completeResult = await ApiClient.completeReport(completeData);
-                                console.log('Complete result:', completeResult);
-                                if (completeResult.success) {
-                                    alert('PDF已保存到手机 Downloads 文件夹\n报告已上传到服务器\n计划已标记为已完成');
+                                var completedFloors = [];
+                                var allFloors = Object.keys(selfRef.FLOORS);
+                                
+                                for (var fi = 0; fi < allFloors.length; fi++) {
+                                    var floor = allFloors[fi];
+                                    var rooms = selfRef.FLOORS[floor];
+                                    var hasInspected = false;
+                                    
+                                    // 检查该楼层是否有已检查的房间
+                                    for (var ri = 0; ri < rooms.length; ri++) {
+                                        var roomId = rooms[ri];
+                                        if (selfRef.data[roomId] && selfRef.data[roomId].photos && selfRef.data[roomId].photos.length > 0) {
+                                            hasInspected = true;
+                                            break;
+                                        }
+                                    }
+                                    
+                                    if (hasInspected) {
+                                        var floorCompleteData = {
+                                            category: selfRef.context.category,
+                                            date: selfRef.context.date,
+                                            moduleId: 'item-6',
+                                            region: floor,
+                                            completedDate: completedDate
+                                        };
+                                        var floorResult = await ApiClient.completeReport(floorCompleteData);
+                                        console.log('Floor ' + floor + ' complete result:', floorResult);
+                                        if (floorResult.success) {
+                                            completedFloors.push(floor);
+                                        }
+                                    }
+                                }
+                                
+                                if (completedFloors.length > 0) {
+                                    alert('PDF已保存到手机 Downloads 文件夹\n报告已上传到服务器\n已标记完成: ' + completedFloors.join('、'));
                                 } else {
-                                    alert('PDF已保存到手机 Downloads 文件夹\n报告已上传到服务器\n计划标记完成失败');
+                                    alert('PDF已保存到手机 Downloads 文件夹\n报告已上传到服务器\n计划标记完成失败（未找到已检查的楼层）');
                                 }
                             } catch(e2) {
                                 console.error('Complete error:', e2);
