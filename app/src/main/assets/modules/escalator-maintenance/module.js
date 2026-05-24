@@ -19,13 +19,23 @@ var EscalatorModule = {
     
     loadData: function() {
         var stored = localStorage.getItem(this.STORAGE_KEY);
+        console.log('loadData: stored:', stored ? stored.substring(0, 100) : 'null');
         if (stored) {
             try {
                 var parsed = JSON.parse(stored);
+                console.log('loadData: parsed version:', parsed.version, 'current:', this.DATA_VERSION);
                 if (parsed.version === this.DATA_VERSION) {
                     this.data = parsed.data || {};
+                } else {
+                    // 版本不匹配，清除旧数据
+                    console.log('loadData: version mismatch, clearing old data');
+                    localStorage.removeItem(this.STORAGE_KEY);
+                    this.data = {};
                 }
-            } catch(e) {}
+            } catch(e) {
+                console.error('loadData: parse error:', e);
+                this.data = {};
+            }
         }
     },
     
@@ -53,11 +63,15 @@ var EscalatorModule = {
     
     render: function() {
         var main = document.getElementById('photo-cards');
+        console.log('render: main element:', main);
         if (!main) return;
+        
+        console.log('render: CHECK_ITEMS:', this.CHECK_ITEMS.length, 'items');
         
         var html = '';
         for (var i = 0; i < this.CHECK_ITEMS.length; i++) {
             var item = this.CHECK_ITEMS[i];
+            console.log('render: item:', item.name);
             var itemData = this.data[item.id];
             var photos = itemData ? itemData.photos : [];
             var dates = itemData ? itemData.dates : [];
