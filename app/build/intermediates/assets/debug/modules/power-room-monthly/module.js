@@ -202,10 +202,11 @@ var PowerRoomModule = {
         if (!this.data[roomId]) {
             this.data[roomId] = { photos: [], date: this.formatDate(new Date()) };
         }
+        var roomData = this.data[roomId]; // 保存引用，避免异步回调中this上下文丢失
         // 压缩照片到100KB左右：缩小尺寸 + JPEG质量压缩
         this.compressImage(photoData, function(compressedPhoto) {
             console.log('Photo compressed, original size:', photoData.length, 'compressed size:', compressedPhoto.length);
-            self.data[roomId].photos.push(compressedPhoto);
+            roomData.photos.push(compressedPhoto);
             self.saveData();
             self.expandedRoom = null;
             self.render();
