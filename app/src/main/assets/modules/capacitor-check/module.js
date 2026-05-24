@@ -625,7 +625,7 @@ const CapacitorModule = {
     },
 
     goBack() {
-        parent.postMessage('goBackToCategory', '*');
+        goBackWithContext();
     }
 };
 

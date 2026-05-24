@@ -155,6 +155,19 @@ const app = {
         if (!this.currentCategory) { this.backToMain(); return; }
         this.renderCategoryPage();
         this.showView('category');
+        // 如果返回到强电维保，自动刷新日历数据
+        if (this.currentCategory.id === 'strong-power') {
+            this.refreshModule('strong-power-plan');
+        }
+    },
+    // 刷新指定模块的数据
+    refreshModule(moduleId) {
+        console.log('[App] refreshModule:', moduleId);
+        // 通过 postMessage 通知 iframe 刷新数据
+        const iframe = document.getElementById('module-iframe');
+        if (iframe && iframe.contentWindow) {
+            iframe.contentWindow.postMessage({ type: 'refresh', moduleId: moduleId }, '*');
+        }
     },
     showView(view) {
         document.getElementById('main-menu').classList.toggle('hidden', view !== 'main');
@@ -314,4 +327,18 @@ window.onCameraResult = function(callbackId, base64, error) {
 // 保存文件到 Downloads 文件夹（Android WebView blob 下载）
 window.saveFile = function(fileName, base64Data) {
     window.parent.androidBridge.saveFile(base64Data, fileName);
+};
+
+// 供模块调用的智能返回函数
+// 会检查URL中的returnTo参数，如果有则返回到对应模块页，否则返回到分类页
+window.goBackWithContext = function() {
+    var params = new URLSearchParams(window.location.search);
+    var returnTo = params.get('returnTo');
+    if (returnTo) {
+        window.location.href = '../' + returnTo + '/index.html';
+    } else if (window.parent && window.parent.app && window.parent.app.backToCategory) {
+        window.parent.app.backToCategory();
+    } else {
+        window.location.href = '../../index.html';
+    }
 };

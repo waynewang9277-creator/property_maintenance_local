@@ -588,10 +588,21 @@
         }
 
         function goBack() {
+            // 返回前通知父页面刷新数据
+            if (parent.app && parent.app.refreshModule) {
+                parent.app.refreshModule('strong-power-plan');
+            }
             if (parent.app && parent.app.backToCategory) parent.app.backToCategory();
             else window.location.href = '../../index.html';
         }
-        
+
+        // 从URL解析返回目标
+        function getReturnTarget() {
+            var params = new URLSearchParams(window.location.search);
+            return params.get('returnTo'); // 如果有returnTo参数就返回到那个模块
+        }
+
+        // 跳转时带上returnTo参数，以便模块返回时能正确返回
         function goToModule(modulePath) {
             // 跳转到对应的维保模块，传递上下文信息（日期和区域）
             var url = '../../modules/' + modulePath + '/index.html';
@@ -605,6 +616,7 @@
                 }
             }
             url += '&region=' + encodeURIComponent(regions.join(','));
+            url += '&returnTo=strong-power-plan'; // 返回时回到日历视图
             window.location.href = url;
         }
 
@@ -758,6 +770,15 @@
             
             setData(localData);
         }
+
+        // 监听父页面发来的消息
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'refresh') {
+                console.log('[StrongPowerPlan] Received refresh message for:', event.data.moduleId);
+                // 从服务器重新加载数据
+                syncFromServer(true);
+            }
+        });
     </script>
 </body>
 </html>
