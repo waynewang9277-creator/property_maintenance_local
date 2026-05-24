@@ -742,32 +742,21 @@
         // 合并服务器数据到本地
         function mergeServerData(serverData) {
             if (!serverData) return;
-            
+
             var localData = getData();
-            
-            // 遍历服务器数据，合并到本地
-            for (var dateKey in serverData) {
-                if (!localData[dateKey]) {
-                    // 本地没有，直接使用服务器数据
-                    localData[dateKey] = serverData[dateKey];
-                } else {
-                    // 本地有，合并（服务器数据追加到本地）
-                    var localPlans = localData[dateKey];
-                    var serverPlans = serverData[dateKey];
-                    
-                    for (var i = 0; i < serverPlans.length; i++) {
-                        var sp = serverPlans[i];
-                        // 检查是否已存在
-                        var exists = localPlans.some(function(p) {
-                            return p.moduleId === sp.moduleId && p.region === sp.region;
-                        });
-                        if (!exists) {
-                            localPlans.push(sp);
-                        }
-                    }
+
+            // 先删除本地有但服务器没有的日期（计划被取消的情况）
+            for (var dateKey in localData) {
+                if (!serverData.hasOwnProperty(dateKey)) {
+                    delete localData[dateKey];
                 }
             }
-            
+
+            // 再用服务器数据替换本地对应日期的数据
+            for (var dateKey in serverData) {
+                localData[dateKey] = serverData[dateKey];
+            }
+
             setData(localData);
         }
 
