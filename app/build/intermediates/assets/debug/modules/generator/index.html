@@ -867,10 +867,15 @@
                 const selfContext = moduleContext;
                 reader.onload = async function() {
                     console.log('[Generator] blob converted, calling shareFile...');
+
+                    // 先隐藏overlay，让用户看到处理完成
+                    document.getElementById('loading-overlay').style.display = 'none';
+
+                    // 启动分享
                     window.androidBridge.shareFile(reader.result, fileName, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
                     console.log('[Generator] shareFile called');
 
-                    // 上传到服务器
+                    // 上传到服务器（静默后台进行，不阻塞UI）
                     if (selfContext.date) {
                         try {
                             var reportData = {
@@ -894,17 +899,14 @@
                                     completedDate: new Date().toISOString().slice(0,10)
                                 };
                                 await ApiClient.completeReport(completeData);
-                                alert('文件已保存到手机\n报告已上传服务器\n计划已标记完成');
+                                console.log('Complete success');
                             } else {
-                                alert('文件已保存到手机\n报告上传失败');
+                                console.log('Submit failed:', result.message);
                             }
                         } catch(e) {
-                            console.error('Upload error:', e);
-                            alert('文件已保存到手机\n报告上传失败: ' + e.message);
+                            console.error('Upload error:', e.message);
                         }
                     }
-
-                    document.getElementById('loading-overlay').style.display = 'none';
                 };
                 reader.onerror = function() {
                     console.error('[Generator] FileReader error');
