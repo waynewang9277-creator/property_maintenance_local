@@ -181,8 +181,14 @@ var EscalatorModule = {
     previewPhoto: function(itemId, index) {
         var data = this.data[itemId];
         if (data && data.photos && data.photos[index]) {
-            window.open(data.photos[index], '_blank');
+            document.getElementById('preview-image').src = data.photos[index];
+            document.getElementById('preview-overlay').classList.add('show');
         }
+    },
+    
+    closePreview: function() {
+        document.getElementById('preview-overlay').classList.remove('show');
+        document.getElementById('preview-image').src = '';
     },
     
     formatDate: function(date) {
