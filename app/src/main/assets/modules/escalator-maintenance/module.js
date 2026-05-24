@@ -70,10 +70,10 @@ var EscalatorModule = {
             
             html += '<div class="photo-list">';
             
-            // 渲染已上传的照片缩略图
+            // 渲染已上传的照片信息（不显示缩略图）
             for (var j = 0; j < photos.length; j++) {
-                html += '<div class="photo-thumb">';
-                html += '<img src="' + photos[j] + '">';
+                html += '<div style="display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid #eee;">';
+                html += '<span style="color:#666;font-size:11pt;">第' + (j+1) + '张 - ' + (dates[j] || '') + '</span>';
                 html += '<button class="btn-delete" onclick="EscalatorModule.deletePhoto(\'' + this.escapeHtml(item.id) + '\', ' + j + ')">×</button>';
                 html += '</div>';
             }
