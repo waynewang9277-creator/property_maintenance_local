@@ -19,6 +19,9 @@ const API = {
     postReports() {
         return `${this.BASE_URL}/api/reports`;
     },
+    completeReport() {
+        return `${this.BASE_URL}/api/reports/complete`;
+    },
     getReports() {
         return `${this.BASE_URL}/api/reports`;
     },
@@ -228,6 +231,17 @@ const ApiClient = {
             return res;
         } catch (e) {
             console.error('提交报告失败:', e);
+            throw e;
+        }
+    },
+    
+    // 标记计划项为已完成
+    async completeReport(completeData) {
+        try {
+            const res = await this.post(API.completeReport(), completeData);
+            return res;
+        } catch (e) {
+            console.error('标记完成失败:', e);
             throw e;
         }
     }

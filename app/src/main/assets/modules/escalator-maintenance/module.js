@@ -395,7 +395,26 @@ var EscalatorModule = {
                         console.log('Report upload result:', result);
                         
                         if (result.success) {
-                            alert('PDF已保存到手机 Downloads 文件夹\n报告已上传到服务器');
+                            // 标记计划为已完成
+                            try {
+                                var completeData = {
+                                    category: selfRef.context.category,
+                                    date: selfRef.context.date,
+                                    moduleId: 'item-15',
+                                    region: selfRef.context.region,
+                                    completedDate: completedDate
+                                };
+                                var completeResult = await ApiClient.completeReport(completeData);
+                                console.log('Complete result:', completeResult);
+                                if (completeResult.success) {
+                                    alert('PDF已保存到手机 Downloads 文件夹\n报告已上传到服务器\n计划已标记为已完成');
+                                } else {
+                                    alert('PDF已保存到手机 Downloads 文件夹\n报告已上传到服务器\n计划标记完成失败');
+                                }
+                            } catch(e2) {
+                                console.error('Complete error:', e2);
+                                alert('PDF已保存到手机 Downloads 文件夹\n报告已上传到服务器\n计划标记完成失败');
+                            }
                         } else {
                             alert('PDF已保存到手机 Downloads 文件夹\n报告上传失败: ' + (result.message || ''));
                         }
