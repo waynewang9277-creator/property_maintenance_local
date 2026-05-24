@@ -577,7 +577,9 @@ var PowerRoomModule = {
                             date: selfRef.context.date,
                             region: selfRef.context.region,
                             moduleId: 'item-6',
-                            photos: []
+                            photos: [],
+                            fileBase64: base64,
+                            fileName: '强电间巡检_' + completedDate + '.pdf'
                         };
                         
                         // 收集照片
