@@ -70,11 +70,11 @@ var EscalatorModule = {
             
             html += '<div class="photo-list">';
             
-            // 渲染已上传的照片信息（不显示缩略图）
+            // 渲染已上传的照片信息（点击可查看原图）
             for (var j = 0; j < photos.length; j++) {
-                html += '<div style="display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid #eee;">';
-                html += '<span style="color:#666;font-size:11pt;">第' + (j+1) + '张 - ' + (dates[j] || '') + '</span>';
-                html += '<button class="btn-delete" onclick="EscalatorModule.deletePhoto(\'' + this.escapeHtml(item.id) + '\', ' + j + ')">×</button>';
+                html += '<div class="photo-item">';
+                html += '<span class="photo-item-text" onclick="EscalatorModule.previewPhoto(\'' + this.escapeHtml(item.id) + '\', ' + j + ')">第' + (j+1) + '张 - ' + (dates[j] || '') + '（点击查看）</span>';
+                html += '<button class="btn-delete-photo" onclick="EscalatorModule.deletePhoto(\'' + this.escapeHtml(item.id) + '\', ' + j + ')">删除</button>';
                 html += '</div>';
             }
             
@@ -175,6 +175,13 @@ var EscalatorModule = {
             }
             this.saveData();
             this.render();
+        }
+    },
+    
+    previewPhoto: function(itemId, index) {
+        var data = this.data[itemId];
+        if (data && data.photos && data.photos[index]) {
+            window.open(data.photos[index], '_blank');
         }
     },
     
