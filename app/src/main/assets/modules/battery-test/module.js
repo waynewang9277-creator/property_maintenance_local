@@ -534,7 +534,74 @@ const BatteryTestModule = {
             var base64 = reader.result;
             var self = this;
             var origOnFileSaved = window.onFileSaved;
+            console.log('[Battery] Setting up onFileSaved callback, context:', self.context);
+            
+            // 超时兜底：如果 onFileSaved 5秒内没触发，直接上传
+            var uploadTriggered = false;
+            var selfRef = self;
+            var base64Ref = base64;
+            var triggerUpload = function() {
+                if (uploadTriggered) return;
+                uploadTriggered = true;
+                console.log('[Battery] onFileSaved timeout, triggering upload anyway');
+                window.onFileSaved = origOnFileSaved;
+                
+                // 直接执行上传
+                if (selfRef.context.date) {
+                    document.getElementById('pdf-container').innerHTML = '<div style="text-align:center;padding:30px;">⏳ 正在上传报告...</div>';
+                    (async function() {
+                        try {
+                            var allPhotos = [];
+                            for (var i = 0; i < selfRef.testForms.length; i++) {
+                                var test = selfRef.testForms[i];
+                                if (test.records) {
+                                    for (var j = 0; j < test.records.length; j++) {
+                                        if (test.records[j].photos) {
+                                            allPhotos = allPhotos.concat(test.records[j].photos);
+                                        }
+                                    }
+                                }
+                            }
+                            var reportData = {
+                                category: selfRef.context.category,
+                                content: '应急电池放电测试 - ' + selfRef.context.date,
+                                executor: '',
+                                completedDate: selfRef.formatDate(new Date()),
+                                date: selfRef.context.date,
+                                region: selfRef.context.region,
+                                moduleId: 'item-1',
+                                photos: allPhotos,
+                                fileBase64: base64Ref
+                            };
+                            var result = await ApiClient.submitReport(reportData);
+                            if (result.success) {
+                                await ApiClient.completeReport({
+                                    category: selfRef.context.category,
+                                    date: selfRef.context.date,
+                                    moduleId: 'item-1',
+                                    region: selfRef.context.region,
+                                    completedDate: selfRef.formatDate(new Date())
+                                });
+                                alert('报告已上传服务器，计划已标记完成');
+                            } else {
+                                alert('报告上传失败');
+                            }
+                        } catch(e) {
+                            alert('上传出错: ' + e.message);
+                        }
+                    })();
+                }
+            };
+            var timeoutId = setTimeout(triggerUpload, 5000);
+            
             window.onFileSaved = async function(success, errorMsg) {
+                if (uploadTriggered) {
+                    console.log('[Battery] onFileSaved fired after timeout ignore');
+                    window.onFileSaved = origOnFileSaved;
+                    return;
+                }
+                clearTimeout(timeoutId);
+                console.log('[Battery] onFileSaved called, success:', success, 'errorMsg:', errorMsg);
                 window.onFileSaved = origOnFileSaved;
                 if (success) {
                     document.getElementById('pdf-container').innerHTML = `
