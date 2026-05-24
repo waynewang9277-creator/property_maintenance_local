@@ -73,8 +73,8 @@ var EscalatorModule = {
             var item = this.CHECK_ITEMS[i];
             console.log('render: item:', item.name);
             var itemData = this.data[item.id];
-            var photos = itemData ? itemData.photos : [];
-            var dates = itemData ? itemData.dates : [];
+            var photos = itemData && itemData.photos ? itemData.photos : [];
+            var dates = itemData && itemData.dates ? itemData.dates : [];
             
             html += '<div class="photo-card">';
             html += '<div class="photo-card-header">';
@@ -129,7 +129,7 @@ var EscalatorModule = {
     // 压缩图片到100KB左右
     compressImage: function(dataUrl, callback) {
         var img = new Image();
-        img.crossOrigin = 'anonymous';
+        // 不设置 crossOrigin，base64数据不需要跨域检查
         
         var cleanDataUrl = dataUrl.replace(/[\r\n\s]/g, '');
         
