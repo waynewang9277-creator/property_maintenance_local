@@ -625,7 +625,7 @@ const CapacitorModule = {
     },
 
     goBack() {
-        goBackWithContext();
+        parent.goBackWithContext();
     }
 };
 

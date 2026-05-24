@@ -1022,13 +1022,13 @@ const FaultModule = {
                 window.androidBridge.shareFile(base64, statFileName, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
                 var savedCallbackFired = false;
                 var origOnFileSaved = window.onFileSaved;
+                var selfRef = this;
                 window.onFileSaved = function(success, errorMsg) {
                     if (savedCallbackFired) return;
                     savedCallbackFired = true;
                     window.onFileSaved = origOnFileSaved;
                     document.getElementById('loading-overlay').style.display = 'none';
                     var overlay = document.getElementById('loading-overlay');
-                    var selfRef = this;
 
                     // 上传到服务器
                     if (selfRef.context.date) {

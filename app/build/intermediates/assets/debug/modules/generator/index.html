@@ -900,11 +900,14 @@
                                 };
                                 await ApiClient.completeReport(completeData);
                                 console.log('Complete success');
+                                alert('报告已上传到服务器\n计划已标记完成');
                             } else {
                                 console.log('Submit failed:', result.message);
+                                alert('报告已生成！\n但上传失败: ' + result.message);
                             }
                         } catch(e) {
                             console.error('Upload error:', e.message);
+                            alert('报告已生成！\n但上传出错: ' + e.message);
                         }
                     }
                 };
