@@ -571,18 +571,19 @@ const FaultModule = {
             // 直接调用 saveFile + shareFile
             window.androidBridge.saveFile(base64, fileName);
             window.androidBridge.shareFile(base64, fileName, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            var selfRef = this;
 
             // 上传到服务器（直接调用，不依赖回调）
-            if (self.context.date) {
+            if (selfRef.context.date) {
                 (async function() {
                     try {
                         var reportData = {
-                            category: self.context.category,
+                            category: selfRef.context.category,
                             content: '电梯月度故障报告 - ' + monthLabel,
                             executor: '',
                             completedDate: new Date().toISOString().slice(0,10),
-                            date: self.context.date,
-                            region: self.context.region,
+                            date: selfRef.context.date,
+                            region: selfRef.context.region,
                             moduleId: 'item-13',
                             fileBase64: base64
                         };
@@ -590,24 +591,56 @@ const FaultModule = {
                         console.log('Report upload result:', result);
                         if (result.success) {
                             var completeData = {
-                                category: self.context.category,
-                                date: self.context.date,
+                                category: selfRef.context.category,
+                                date: selfRef.context.date,
                                 moduleId: 'item-13',
-                                region: self.context.region,
+                                region: selfRef.context.region,
                                 completedDate: new Date().toISOString().slice(0,10)
                             };
                             await ApiClient.completeReport(completeData);
+                            var overlay = document.getElementById('loading-overlay');
+                            if (overlay) {
+                                overlay.innerHTML = '<div style="color:#4caf50;font-size:16px;font-weight:bold;padding:20px;">✅ 报告已上传到服务器<br>计划已标记完成</div>';
+                                overlay.style.display = 'flex';
+                                overlay.style.justifyContent = 'center';
+                                overlay.style.alignItems = 'center';
+                                overlay.style.background = 'rgba(255,255,255,0.95)';
+                                overlay.style.flexDirection = 'column';
+                                overlay.style.gap = '10px';
+                                overlay.style.color = '#333';
+                                setTimeout(function() { overlay.style.display = 'none'; }, 3000);
+                            }
+                        } else {
+                            var overlay = document.getElementById('loading-overlay');
+                            if (overlay) {
+                                overlay.innerHTML = '<div style="color:#ff9800;font-size:16px;font-weight:bold;padding:20px;">⚠️ 报告已保存<br>但上传失败</div>';
+                                overlay.style.display = 'flex';
+                                overlay.style.justifyContent = 'center';
+                                overlay.style.alignItems = 'center';
+                                overlay.style.background = 'rgba(255,255,255,0.95)';
+                                overlay.style.flexDirection = 'column';
+                                overlay.style.gap = '10px';
+                                overlay.style.color = '#333';
+                                setTimeout(function() { overlay.style.display = 'none'; }, 3000);
+                            }
                         }
                     } catch(e) {
                         console.error('Upload error:', e);
+                        var overlay = document.getElementById('loading-overlay');
+                        if (overlay) {
+                            overlay.innerHTML = '<div style="color:#f44336;font-size:16px;font-weight:bold;padding:20px;">⚠️ 报告已保存<br>上传出错: ' + e.message + '</div>';
+                            overlay.style.display = 'flex';
+                            overlay.style.justifyContent = 'center';
+                            overlay.style.alignItems = 'center';
+                            overlay.style.background = 'rgba(255,255,255,0.95)';
+                            overlay.style.flexDirection = 'column';
+                            overlay.style.gap = '10px';
+                            overlay.style.color = '#333';
+                            setTimeout(function() { overlay.style.display = 'none'; }, 3000);
+                        }
                     }
                 })();
             }
-
-            // 2秒超时兜底：隐藏 loading
-            setTimeout(function() {
-                document.getElementById('loading-overlay').style.display = 'none';
-            }, 2000);
         } catch (err) {
             console.error(err);
             document.getElementById('loading-overlay').style.display = 'none';
@@ -1046,17 +1079,49 @@ const FaultModule = {
                                     completedDate: new Date().toISOString().slice(0,10)
                                 };
                                 await ApiClient.completeReport(completeData);
+                                var overlay = document.getElementById('loading-overlay');
+                                if (overlay) {
+                                    overlay.innerHTML = '<div style="color:#4caf50;font-size:16px;font-weight:bold;padding:20px;">✅ 统计表已上传到服务器<br>计划已标记完成</div>';
+                                    overlay.style.display = 'flex';
+                                    overlay.style.justifyContent = 'center';
+                                    overlay.style.alignItems = 'center';
+                                    overlay.style.background = 'rgba(255,255,255,0.95)';
+                                    overlay.style.flexDirection = 'column';
+                                    overlay.style.gap = '10px';
+                                    overlay.style.color = '#333';
+                                    setTimeout(function() { overlay.style.display = 'none'; }, 3000);
+                                }
+                            } else {
+                                var overlay = document.getElementById('loading-overlay');
+                                if (overlay) {
+                                    overlay.innerHTML = '<div style="color:#ff9800;font-size:16px;font-weight:bold;padding:20px;">⚠️ 统计表已保存<br>但上传失败</div>';
+                                    overlay.style.display = 'flex';
+                                    overlay.style.justifyContent = 'center';
+                                    overlay.style.alignItems = 'center';
+                                    overlay.style.background = 'rgba(255,255,255,0.95)';
+                                    overlay.style.flexDirection = 'column';
+                                    overlay.style.gap = '10px';
+                                    overlay.style.color = '#333';
+                                    setTimeout(function() { overlay.style.display = 'none'; }, 3000);
+                                }
                             }
                         } catch(e) {
                             console.error('Upload error:', e);
+                            var overlay = document.getElementById('loading-overlay');
+                            if (overlay) {
+                                overlay.innerHTML = '<div style="color:#f44336;font-size:16px;font-weight:bold;padding:20px;">⚠️ 统计表已保存<br>上传出错: ' + e.message + '</div>';
+                                overlay.style.display = 'flex';
+                                overlay.style.justifyContent = 'center';
+                                overlay.style.alignItems = 'center';
+                                overlay.style.background = 'rgba(255,255,255,0.95)';
+                                overlay.style.flexDirection = 'column';
+                                overlay.style.gap = '10px';
+                                overlay.style.color = '#333';
+                                setTimeout(function() { overlay.style.display = 'none'; }, 3000);
+                            }
                         }
                     })();
                 }
-
-                // 2秒超时兜底：隐藏 loading
-                setTimeout(function() {
-                    document.getElementById('loading-overlay').style.display = 'none';
-                }, 2000);
             } catch (err) {
                 console.error('[Debug] Catch error:', err.message, err);
                 document.getElementById('loading-overlay').style.display = 'none';
