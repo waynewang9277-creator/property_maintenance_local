@@ -24,7 +24,8 @@ const app = {
                 { id: 'busbar-check', name: '供电母排检查及测温', icon: '⚡' },
                 { id: 'power-room-monthly', name: '强电间月度巡检', icon: '📋' },
                 { id: 'elevator-escape', name: '电梯逃生门检查', icon: '🚪' },
-                { id: 'elevator-handrail-fault', name: '电梯扶手梯故障报告', icon: '🛗' }
+                { id: 'elevator-handrail-fault', name: '电梯扶手梯故障报告', icon: '🛗' },
+                { id: 'escalator-maintenance', name: '电扶梯维护保养', icon: '🔧' }
             ]
         },
         {

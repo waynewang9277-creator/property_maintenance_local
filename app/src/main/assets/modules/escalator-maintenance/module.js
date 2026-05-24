@@ -1,7 +1,7 @@
 // EscalatorMaintenance - 电扶梯维护保养模块
 var EscalatorModule = {
     STORAGE_KEY: 'escalator_maintenance_data',
-    DATA_VERSION: '1.0',
+    DATA_VERSION: '2.0',  // 升级版本号
     
     // 两个检查项
     CHECK_ITEMS: [
@@ -9,7 +9,7 @@ var EscalatorModule = {
         { id: 'work_photo', name: '上传工作照片', icon: '📷' }
     ],
     
-    // 数据: { itemId: { photo: 'base64', date: 'YYYY-MM-DD' } }
+    // 数据: { itemId: { photos: ['base64', ...], dates: ['YYYY-MM-DD', ...] } }
     data: {},
     
     init: function() {
@@ -35,7 +35,7 @@ var EscalatorModule = {
             for (var itemId in this.data) {
                 if (this.data.hasOwnProperty(itemId)) {
                     dataToSave[itemId] = {
-                        date: this.data[itemId].date
+                        dates: this.data[itemId].dates
                         // 不保存照片到localStorage，避免配额问题
                     };
                 }
@@ -59,32 +59,30 @@ var EscalatorModule = {
         for (var i = 0; i < this.CHECK_ITEMS.length; i++) {
             var item = this.CHECK_ITEMS[i];
             var itemData = this.data[item.id];
-            var hasPhoto = itemData && itemData.photo;
+            var photos = itemData ? itemData.photos : [];
+            var dates = itemData ? itemData.dates : [];
             
             html += '<div class="photo-card">';
             html += '<div class="photo-card-header">';
             html += '<span class="photo-card-title">' + item.icon + ' ' + item.name + '</span>';
-            html += '<span class="photo-card-badge ' + (hasPhoto ? 'has-photo' : 'no-photo') + '">' + (hasPhoto ? '✓ 已拍照' : '○ 待拍照') + '</span>';
+            html += '<span class="photo-card-badge">' + photos.length + '张照片</span>';
             html += '</div>';
             
-            html += '<div class="photo-card-body">';
+            html += '<div class="photo-list">';
             
-            if (hasPhoto) {
-                html += '<img class="photo-preview" src="' + itemData.photo + '" onclick="EscalatorModule.previewPhoto(\'' + this.escapeHtml(item.id) + '\')">';
-                html += '<div class="photo-info">';
-                html += '<div class="photo-info-label">拍照时间：' + itemData.date + '</div>';
-                html += '<button class="btn-retake-photo" onclick="EscalatorModule.takePhoto(\'' + this.escapeHtml(item.id) + '\')">📷 重拍</button>';
-                html += '<button class="btn-delete-photo" onclick="EscalatorModule.deletePhoto(\'' + this.escapeHtml(item.id) + '\')">🗑 删除</button>';
-                html += '</div>';
-            } else {
-                html += '<div class="photo-preview-placeholder" onclick="EscalatorModule.takePhoto(\'' + this.escapeHtml(item.id) + '\')">📷</div>';
-                html += '<div class="photo-info">';
-                html += '<div class="photo-info-label">点击拍照按钮进行拍摄</div>';
-                html += '<button class="btn-take-photo" onclick="EscalatorModule.takePhoto(\'' + this.escapeHtml(item.id) + '\')">📷 拍照</button>';
+            // 渲染已上传的照片缩略图
+            for (var j = 0; j < photos.length; j++) {
+                html += '<div class="photo-thumb">';
+                html += '<img src="' + photos[j] + '">';
+                html += '<button class="btn-delete" onclick="EscalatorModule.deletePhoto(\'' + this.escapeHtml(item.id) + '\', ' + j + ')">×</button>';
                 html += '</div>';
             }
             
-            html += '</div></div>';
+            // 渲染添加按钮（始终显示，点击即拍照）
+            html += '<div class="btn-add-photo" onclick="EscalatorModule.takePhoto(\'' + this.escapeHtml(item.id) + '\')">+</div>';
+            
+            html += '</div>';  // end photo-list
+            html += '</div>';  // end photo-card
         }
         
         main.innerHTML = html;
@@ -100,13 +98,15 @@ var EscalatorModule = {
     
     addPhoto: function(itemId, photoData) {
         var self = this;
-        // 压缩照片
         this.compressImage(photoData, function(compressedPhoto) {
             console.log('Photo compressed, original size:', photoData.length, 'compressed size:', compressedPhoto.length);
-            self.data[itemId] = {
-                photo: compressedPhoto,
-                date: self.formatDate(new Date())
-            };
+            
+            if (!self.data[itemId]) {
+                self.data[itemId] = { photos: [], dates: [] };
+            }
+            self.data[itemId].photos.push(compressedPhoto);
+            self.data[itemId].dates.push(self.formatDate(new Date()));
+            
             self.saveData();
             self.render();
         });
@@ -166,18 +166,15 @@ var EscalatorModule = {
         img.src = cleanDataUrl;
     },
     
-    deletePhoto: function(itemId) {
-        if (confirm('确定要删除这张照片吗？')) {
-            delete this.data[itemId];
+    deletePhoto: function(itemId, index) {
+        if (this.data[itemId] && this.data[itemId].photos) {
+            this.data[itemId].photos.splice(index, 1);
+            this.data[itemId].dates.splice(index, 1);
+            if (this.data[itemId].photos.length === 0) {
+                delete this.data[itemId];
+            }
             this.saveData();
             this.render();
-        }
-    },
-    
-    previewPhoto: function(itemId) {
-        var data = this.data[itemId];
-        if (data && data.photo) {
-            window.open(data.photo, '_blank');
         }
     },
     
@@ -240,12 +237,13 @@ var EscalatorModule = {
             for (var i = 0; i < this.CHECK_ITEMS.length; i++) {
                 var item = this.CHECK_ITEMS[i];
                 var itemData = this.data[item.id];
-                var hasPhoto = itemData && itemData.photo;
+                var hasPhotos = itemData && itemData.photos && itemData.photos.length > 0;
+                var photoCount = hasPhotos ? itemData.photos.length : 0;
                 
                 // 勾选框
                 pdf.setDrawColor(0, 0, 0);
                 pdf.rect(margin, y - 4, 5, 5);
-                if (hasPhoto) {
+                if (hasPhotos) {
                     pdf.setFontSize(12);
                     pdf.text('✓', margin + 0.5, y + 1);
                 }
@@ -253,9 +251,9 @@ var EscalatorModule = {
                 pdf.setFontSize(11);
                 pdf.text(item.icon + ' ' + item.name, margin + 8, y);
                 
-                if (hasPhoto) {
+                if (hasPhotos) {
                     pdf.setTextColor(76, 175, 80);
-                    pdf.text(' - Completed', margin + 120, y);
+                    pdf.text(' - Completed (' + photoCount + ' photos)', margin + 120, y);
                     pdf.setTextColor(0, 0, 0);
                 } else {
                     pdf.setTextColor(255, 152, 0);
@@ -280,30 +278,34 @@ var EscalatorModule = {
                 var item = this.CHECK_ITEMS[i];
                 var itemData = this.data[item.id];
                 
-                if (!itemData || !itemData.photo) continue;
+                if (!itemData || !itemData.photos || itemData.photos.length === 0) continue;
                 
-                console.log('Processing photo for:', item.name);
-                pdf.addPage();
-                
-                // 标题
-                pdf.setFontSize(14);
-                pdf.setFont('helvetica', 'bold');
-                pdf.text(item.icon + ' ' + item.name, margin, margin + 5);
-                
-                // 拍照时间
-                pdf.setFontSize(10);
-                pdf.setFont('helvetica', 'normal');
-                pdf.text('Photo taken: ' + itemData.date, margin, margin + 12);
-                
-                try {
-                    console.log('Adding image to PDF...');
-                    pdf.addImage(itemData.photo, 'JPEG', margin, margin + 18, pageWidth - margin * 2, pageHeight - margin * 2 - 18);
-                    console.log('Image added successfully');
-                } catch(e) {
-                    console.error('Image add failed:', e.message);
-                    pdf.setFontSize(10);
-                    pdf.setFont('helvetica', 'normal');
-                    pdf.text('[Photo failed to load]', pageWidth / 2, pageHeight / 2, { align: 'center' });
+                for (var k = 0; k < itemData.photos.length; k++) {
+                    console.log('Processing photo', k, 'for:', item.name);
+                    pdf.addPage();
+                    
+                    // 标题
+                    pdf.setFontSize(14);
+                    pdf.setFont('helvetica', 'bold');
+                    pdf.text(item.icon + ' ' + item.name + ' (' + (k + 1) + '/' + itemData.photos.length + ')', margin, margin + 5);
+                    
+                    // 拍照时间
+                    if (itemData.dates && itemData.dates[k]) {
+                        pdf.setFontSize(10);
+                        pdf.setFont('helvetica', 'normal');
+                        pdf.text('Photo taken: ' + itemData.dates[k], margin, margin + 12);
+                    }
+                    
+                    try {
+                        console.log('Adding image to PDF...');
+                        pdf.addImage(itemData.photos[k], 'JPEG', margin, margin + 18, pageWidth - margin * 2, pageHeight - margin * 2 - 18);
+                        console.log('Image added successfully');
+                    } catch(e) {
+                        console.error('Image add failed:', e.message);
+                        pdf.setFontSize(10);
+                        pdf.setFont('helvetica', 'normal');
+                        pdf.text('[Photo failed to load]', pageWidth / 2, pageHeight / 2, { align: 'center' });
+                    }
                 }
             }
             
