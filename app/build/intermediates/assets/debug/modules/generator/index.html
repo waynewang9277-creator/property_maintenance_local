@@ -596,8 +596,26 @@
     </div>
 
     <script src="../../common/js/lib/jszip.min.js"></script>
-    
+    <script src="../../common/js/api.js"></script>
+
     <script>
+        // 上下文信息（从URL参数传递）
+        var moduleContext = {
+            date: null,
+            region: null,
+            category: 'strong-power'
+        };
+
+        // 解析URL参数
+        (function() {
+            var params = new URLSearchParams(window.location.search);
+            var date = params.get('date');
+            var region = params.get('region');
+            if (date) moduleContext.date = date;
+            if (region) moduleContext.region = region;
+            console.log('Generator module context:', moduleContext);
+        })();
+
         // Toggle problem input visibility
         function toggleProblemInput(itemNum, show) {
             const row = document.getElementById('problem-row-' + itemNum);
@@ -834,10 +852,46 @@
                 const fileName = '发电机组维护记录_' + new Date().toISOString().slice(0,10) + '.xlsx';
                 console.log('[Generator] converting blob to base64...');
                 const reader = new FileReader();
-                reader.onload = function() {
+                const selfContext = moduleContext;
+                reader.onload = async function() {
                     console.log('[Generator] blob converted, calling shareFile...');
                     window.androidBridge.shareFile(reader.result, fileName, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
                     console.log('[Generator] shareFile called');
+
+                    // 上传到服务器
+                    if (selfContext.date) {
+                        try {
+                            var reportData = {
+                                category: selfContext.category,
+                                content: '发电机组维护记录 - ' + selfContext.date,
+                                executor: document.getElementById('sig-operator')?.value || '',
+                                completedDate: new Date().toISOString().slice(0,10),
+                                date: selfContext.date,
+                                region: selfContext.region,
+                                moduleId: 'item-3',
+                                fileBase64: reader.result
+                            };
+                            var result = await ApiClient.submitReport(reportData);
+                            console.log('Report upload result:', result);
+                            if (result.success) {
+                                var completeData = {
+                                    category: selfContext.category,
+                                    date: selfContext.date,
+                                    moduleId: 'item-3',
+                                    region: selfContext.region,
+                                    completedDate: new Date().toISOString().slice(0,10)
+                                };
+                                await ApiClient.completeReport(completeData);
+                                alert('文件已保存到手机\n报告已上传服务器\n计划已标记完成');
+                            } else {
+                                alert('文件已保存到手机\n报告上传失败');
+                            }
+                        } catch(e) {
+                            console.error('Upload error:', e);
+                            alert('文件已保存到手机\n报告上传失败: ' + e.message);
+                        }
+                    }
+
                     document.getElementById('loading-overlay').style.display = 'none';
                 };
                 reader.onerror = function() {

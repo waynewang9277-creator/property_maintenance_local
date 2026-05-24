@@ -4,10 +4,27 @@
 const BatteryTestModule = {
     testForms: [],      // 存储所有测试表单的数据
 
+    // 上下文信息（从URL参数传递）
+    context: {
+        date: null,
+        region: null,
+        category: 'strong-power'
+    },
+
     init() {
+        this.parseUrlParams();
         this.bindEvents();
         this.renderTestList();
         this.updateBottomActions();
+    },
+
+    parseUrlParams() {
+        var params = new URLSearchParams(window.location.search);
+        var date = params.get('date');
+        var region = params.get('region');
+        if (date) this.context.date = date;
+        if (region) this.context.region = region;
+        console.log('BatteryTestModule context:', this.context);
     },
 
     bindEvents() {
@@ -517,17 +534,99 @@ const BatteryTestModule = {
             var base64 = reader.result;
             var self = this;
             var origOnFileSaved = window.onFileSaved;
-            window.onFileSaved = function(success, errorMsg) {
+            window.onFileSaved = async function(success, errorMsg) {
                 window.onFileSaved = origOnFileSaved;
                 if (success) {
                     document.getElementById('pdf-container').innerHTML = `
                         <div style="text-align:center;padding:30px;background:#f0f8ff;border-radius:8px;margin-bottom:15px;">
-                            <div style="font-size:48px;margin-bottom:10px;">✅</div>
-                            <div style="font-size:16px;font-weight:bold;color:#333;margin-bottom:5px;">报告生成完成！</div>
-                            <div style="font-size:13px;color:#666;">已保存到：${fileName}</div>
-                            <div style="font-size:13px;color:#666;margin-top:5px;">共 ${self.testForms.length} 个测试地点，分 ${self.testForms.length} 个Sheet</div>
+                            <div style="font-size:48px;margin-bottom:10px;">⏳</div>
+                            <div style="font-size:16px;font-weight:bold;color:#333;margin-bottom:5px;">正在上传报告...</div>
+                            <div style="font-size:13px;color:#666;">${fileName}</div>
                         </div>
                     `;
+
+                    // 上传到服务器
+                    if (self.context.date) {
+                        try {
+                            // 收集所有照片
+                            var allPhotos = [];
+                            for (var i = 0; i < self.testForms.length; i++) {
+                                var test = self.testForms[i];
+                                if (test.records) {
+                                    for (var j = 0; j < test.records.length; j++) {
+                                        if (test.records[j].photos) {
+                                            allPhotos = allPhotos.concat(test.records[j].photos);
+                                        }
+                                    }
+                                }
+                            }
+
+                            var reportData = {
+                                category: self.context.category,
+                                content: '应急电池放电测试 - ' + self.context.date,
+                                executor: '',
+                                completedDate: self.formatDate(new Date()),
+                                date: self.context.date,
+                                region: self.context.region,
+                                moduleId: 'item-1',
+                                photos: allPhotos,
+                                fileBase64: base64
+                            };
+
+                            var result = await ApiClient.submitReport(reportData);
+                            console.log('Report upload result:', result);
+
+                            if (result.success) {
+                                // 标记计划为已完成
+                                var completeData = {
+                                    category: self.context.category,
+                                    date: self.context.date,
+                                    moduleId: 'item-1',
+                                    region: self.context.region,
+                                    completedDate: self.formatDate(new Date())
+                                };
+                                var completeResult = await ApiClient.completeReport(completeData);
+                                console.log('Complete result:', completeResult);
+
+                                document.getElementById('pdf-container').innerHTML = `
+                                    <div style="text-align:center;padding:30px;background:#f0f8ff;border-radius:8px;margin-bottom:15px;">
+                                        <div style="font-size:48px;margin-bottom:10px;">✅</div>
+                                        <div style="font-size:16px;font-weight:bold;color:#333;margin-bottom:5px;">报告生成完成！</div>
+                                        <div style="font-size:13px;color:#666;">已保存到：${fileName}</div>
+                                        <div style="font-size:13px;color:#52c41a;margin-top:5px;">报告已上传服务器，计划已标记完成</div>
+                                    </div>
+                                `;
+                            } else {
+                                document.getElementById('pdf-container').innerHTML = `
+                                    <div style="text-align:center;padding:30px;background:#f0f8ff;border-radius:8px;margin-bottom:15px;">
+                                        <div style="font-size:48px;margin-bottom:10px;">✅</div>
+                                        <div style="font-size:16px;font-weight:bold;color:#333;margin-bottom:5px;">报告生成完成！</div>
+                                        <div style="font-size:13px;color:#666;">已保存到：${fileName}</div>
+                                        <div style="font-size:13px;color:#faad14;margin-top:5px;">报告已上传，标记完成失败</div>
+                                    </div>
+                                `;
+                            }
+                        } catch(e) {
+                            console.error('Upload error:', e);
+                            document.getElementById('pdf-container').innerHTML = `
+                                <div style="text-align:center;padding:30px;background:#f0f8ff;border-radius:8px;margin-bottom:15px;">
+                                    <div style="font-size:48px;margin-bottom:10px;">✅</div>
+                                    <div style="font-size:16px;font-weight:bold;color:#333;margin-bottom:5px;">报告生成完成！</div>
+                                    <div style="font-size:13px;color:#666;">已保存到：${fileName}</div>
+                                    <div style="font-size:13px;color:#faad14;margin-top:5px;">报告已上传，上传过程出错</div>
+                                </div>
+                            `;
+                        }
+                    } else {
+                        document.getElementById('pdf-container').innerHTML = `
+                            <div style="text-align:center;padding:30px;background:#f0f8ff;border-radius:8px;margin-bottom:15px;">
+                                <div style="font-size:48px;margin-bottom:10px;">✅</div>
+                                <div style="font-size:16px;font-weight:bold;color:#333;margin-bottom:5px;">报告生成完成！</div>
+                                <div style="font-size:13px;color:#666;">已保存到：${fileName}</div>
+                            </div>
+                        `;
+                    }
+
                     self.testForms = [];
                     self.renderAllForms();
                     self.renderTestList();
@@ -554,6 +653,14 @@ const BatteryTestModule = {
                 </div>
             `;
         }
+    },
+
+    // 格式化日期
+    formatDate(date) {
+        var y = date.getFullYear();
+        var m = ('0' + (date.getMonth() + 1)).slice(-2);
+        var d = ('0' + date.getDate()).slice(-2);
+        return y + '-' + m + '-' + d;
     },
 
     // base64转Uint8Array

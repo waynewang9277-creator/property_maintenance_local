@@ -48,11 +48,28 @@ const CapacitorModule = {
     locationPhotos: {},
     locationTemps: {},  // { locId: { max, min, avg } }
 
+    // 上下文信息
+    context: {
+        date: null,
+        region: null,
+        category: 'strong-power'
+    },
+
     init() {
+        this.parseUrlParams();
         this.bindEvents();
         this.renderLocationGrid();
         const today = new Date().toISOString().slice(0, 10);
         document.getElementById('check-date').value = today;
+    },
+
+    parseUrlParams() {
+        var params = new URLSearchParams(window.location.search);
+        var date = params.get('date');
+        var region = params.get('region');
+        if (date) this.context.date = date;
+        if (region) this.context.region = region;
+        console.log('CapacitorModule context:', this.context);
     },
 
     bindEvents() {
@@ -540,11 +557,46 @@ const CapacitorModule = {
             
             // 把 blob 转成 base64 再传给 Android
             const reader = new FileReader();
+            const selfRef = this;
             await new Promise((resolve, reject) => {
-                reader.onload = function() {
+                reader.onload = async function() {
                     window.parent.saveFile(fileName, reader.result);
                     window.androidBridge.shareFile(reader.result, fileName, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
                     resolve();
+
+                    // 上传到服务器
+                    if (selfRef.context.date) {
+                        try {
+                            var reportData = {
+                                category: selfRef.context.category,
+                                content: '电容检查及测温 - ' + selfRef.context.date,
+                                executor: document.getElementById('inspector')?.value || '',
+                                completedDate: new Date().toISOString().slice(0,10),
+                                date: selfRef.context.date,
+                                region: selfRef.context.region,
+                                moduleId: 'item-4',
+                                fileBase64: reader.result
+                            };
+                            var result = await ApiClient.submitReport(reportData);
+                            console.log('Report upload result:', result);
+                            if (result.success) {
+                                var completeData = {
+                                    category: selfRef.context.category,
+                                    date: selfRef.context.date,
+                                    moduleId: 'item-4',
+                                    region: selfRef.context.region,
+                                    completedDate: new Date().toISOString().slice(0,10)
+                                };
+                                await ApiClient.completeReport(completeData);
+                                alert(`报告生成完成！\n已保存到：${fileName}\n已上传到服务器\n计划已标记完成`);
+                            } else {
+                                alert(`报告生成完成！\n已保存到：${fileName}\n上传失败`);
+                            }
+                        } catch(e) {
+                            console.error('Upload error:', e);
+                            alert(`报告生成完成！\n已保存到：${fileName}\n上传失败: ${e.message}`);
+                        }
+                    }
                 };
                 reader.onerror = function() {
                     reject(new Error('读取文件失败'));
@@ -553,7 +605,6 @@ const CapacitorModule = {
             });
 
             document.getElementById('loading-overlay').style.display = 'none';
-            alert(`报告生成完成！\n已保存到：${fileName}`);
 
         } catch (error) {
             console.error('生成失败:', error);
