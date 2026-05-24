@@ -227,6 +227,7 @@
             'item-5': 'busbar-check',
             'item-6': 'power-room-monthly',
             'item-13': 'elevator-handrail-fault',
+            'item-15': 'escalator-maintenance',
             'item-16': 'elevator-escape'
         };
         
@@ -592,8 +593,19 @@
         }
         
         function goToModule(modulePath) {
-            // 跳转到对应的维保模块
-            window.location.href = '../../modules/' + modulePath + '/index.html';
+            // 跳转到对应的维保模块，传递上下文信息（日期和区域）
+            var url = '../../modules/' + modulePath + '/index.html';
+            url += '?date=' + encodeURIComponent(selDate);
+            // 传递区域信息（从当前选中的plan获取）
+            var plans = getDatePlans(selDate);
+            var regions = [];
+            for (var i = 0; i < plans.length; i++) {
+                if (MODULE_MAP[plans[i].moduleId] === modulePath) {
+                    regions.push(plans[i].region);
+                }
+            }
+            url += '&region=' + encodeURIComponent(regions.join(','));
+            window.location.href = url;
         }
 
         renderCal();

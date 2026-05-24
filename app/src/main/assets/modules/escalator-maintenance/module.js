@@ -1,7 +1,7 @@
 // EscalatorMaintenance - 电扶梯维护保养模块
 var EscalatorModule = {
     STORAGE_KEY: 'escalator_maintenance_data',
-    DATA_VERSION: '2.0',  // 升级版本号
+    DATA_VERSION: '2.0',
     
     // 两个检查项
     CHECK_ITEMS: [
@@ -12,9 +12,27 @@ var EscalatorModule = {
     // 数据: { itemId: { photos: ['base64', ...], dates: ['YYYY-MM-DD', ...] } }
     data: {},
     
+    // 上下文信息（从URL参数传递）
+    context: {
+        date: null,      // 计划日期
+        region: null,    // 区域（office/mall）
+        category: 'strong-power'  // 分类
+    },
+    
     init: function() {
+        // 解析URL参数
+        this.parseUrlParams();
         this.loadData();
         this.render();
+    },
+    
+    parseUrlParams: function() {
+        var params = new URLSearchParams(window.location.search);
+        var date = params.get('date');
+        var region = params.get('region');
+        if (date) this.context.date = date;
+        if (region) this.context.region = region;
+        console.log('EscalatorModule context:', this.context);
     },
     
     loadData: function() {
@@ -341,12 +359,53 @@ var EscalatorModule = {
             // 通过原生 Android 桥接保存 PDF
             var pdfBlob = pdf.output('blob');
             var reader = new FileReader();
-            reader.onload = function(e) {
+            var selfRef = self;
+            var completedDate = selfRef.formatDate(new Date());
+            reader.onload = async function(e) {
                 var base64 = e.target.result;
-                window.parent.saveFile('电扶梯维护保养_' + self.formatDate(new Date()) + '.pdf', base64);
-                window.androidBridge.shareFile(base64, '电扶梯维护保养_' + self.formatDate(new Date()) + '.pdf', 'application/pdf');
+                
+                // 保存PDF到本地
+                window.parent.saveFile('电扶梯维护保养_' + completedDate + '.pdf', base64);
+                window.androidBridge.shareFile(base64, '电扶梯维护保养_' + completedDate + '.pdf', 'application/pdf');
                 console.log('PDF saved via native bridge');
-                alert('PDF已保存到手机 Downloads 文件夹');
+                
+                // 上报到服务器
+                if (selfRef.context.date) {
+                    try {
+                        console.log('Uploading report to server...');
+                        var reportData = {
+                            category: selfRef.context.category,
+                            content: '电扶梯维护保养 - ' + selfRef.context.date,
+                            executor: '',
+                            completedDate: completedDate,
+                            date: selfRef.context.date,
+                            region: selfRef.context.region,
+                            moduleId: 'item-15',
+                            photos: []
+                        };
+                        
+                        // 收集照片
+                        for (var itemId in selfRef.data) {
+                            if (selfRef.data[itemId] && selfRef.data[itemId].photos) {
+                                reportData.photos = reportData.photos.concat(selfRef.data[itemId].photos);
+                            }
+                        }
+                        
+                        var result = await ApiClient.submitReport(reportData);
+                        console.log('Report upload result:', result);
+                        
+                        if (result.success) {
+                            alert('PDF已保存到手机 Downloads 文件夹\n报告已上传到服务器');
+                        } else {
+                            alert('PDF已保存到手机 Downloads 文件夹\n报告上传失败: ' + (result.message || ''));
+                        }
+                    } catch(e) {
+                        console.error('Report upload error:', e);
+                        alert('PDF已保存到手机 Downloads 文件夹\n报告上传失败: ' + e.message);
+                    }
+                } else {
+                    alert('PDF已保存到手机 Downloads 文件夹');
+                }
             };
             reader.onerror = function(e) {
                 console.error('FileReader error:', e);
